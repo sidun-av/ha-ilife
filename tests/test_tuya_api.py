@@ -81,5 +81,23 @@ def test_bare_timeout_or_socket_error_is_a_tuya_error(monkeypatch, error):
         raise error
 
     monkeypatch.setattr(tuya_api.urllib.request, "urlopen", boom)
-    with pytest.raises(tuya_api.TuyaError):
+    with pytest.raises(tuya_api.TuyaNetworkError):
         tuya_api._do("openapi.tuyaeu.com", "GET", "/v1.0/token", {}, None)
+
+
+def test_unreachable_map_download_is_a_network_error(monkeypatch):
+    # The camera retries a network error within a minute, a refusal after an hour:
+    # told apart by type, never by the wording of the message.
+    def boom(*args, **kwargs):
+        raise tuya_api.urllib.error.URLError("no route to host")
+
+    monkeypatch.setattr(tuya_api.urllib.request, "urlopen", boom)
+    links = [{"map_type": 0, "map_url": "https://maps.example/file.bin"}]
+    with pytest.raises(tuya_api.TuyaNetworkError):
+        tuya_api.TuyaClient._download_map_files(links, source="stored")
+
+
+def test_a_refusal_is_not_a_network_error(client):
+    with pytest.raises(tuya_api.TuyaError) as err:
+        client.realtime_map_files("dev")
+    assert not isinstance(err.value, tuya_api.TuyaNetworkError)

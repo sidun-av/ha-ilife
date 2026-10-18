@@ -22,9 +22,8 @@ from .const import (
 )
 from .entity import device_info
 from .map import render_png
-from .tuya_api import TuyaError
+from .tuya_api import TuyaError, TuyaNetworkError
 from .tuya_cache import (
-    is_network_error,
     map_file_name,
     map_meta_from_cache,
     map_meta_to_cache,
@@ -365,7 +364,7 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
                 await self._async_update_map()
             except TuyaError as err:
                 self._note_failure(f"{type(err).__name__}: {err}",
-                                   network=is_network_error(err))
+                                   network=isinstance(err, TuyaNetworkError))
             except Exception as err:  # noqa: BLE001 — a map file we cannot read
                 self._note_failure(f"{type(err).__name__}: {err}", undecodable=True)
             self._cache_time = time.monotonic()
@@ -471,7 +470,7 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
             return await self.hass.async_add_executor_job(self.api.realtime_map_files)
         except TuyaError as err:
             self._realtime_retry_at = time.monotonic() + (
-                TUYA_REALTIME_NETWORK_RETRY_SECONDS if is_network_error(err)
+                TUYA_REALTIME_NETWORK_RETRY_SECONDS if isinstance(err, TuyaNetworkError)
                 else TUYA_REALTIME_RETRY_SECONDS)
             _LOGGER.debug("ILIFE Clean realtime map refused for %s, using the stored "
                           "map: %s", self.api.device_id, err)

@@ -88,6 +88,11 @@ class TuyaOfflineError(TuyaError):
     """Device reports offline — command not delivered."""
 
 
+class TuyaNetworkError(TuyaError):
+    """The cloud could not be reached at all (DNS, timeout, reset): short-lived and
+    routine, so it is retried soon and logged quietly, unlike a refusal."""
+
+
 # Tuya OpenAPI codes that mean "the Cloud Project/UID setup is wrong", not "try again
 # later" — these must surface as an authentication problem so the user fixes the setup
 # instead of waiting for a retry that can never succeed.
@@ -212,10 +217,10 @@ def _do(host, method, path, headers, body_bytes):
     except urllib.error.HTTPError as e:
         raw = e.read()
     except urllib.error.URLError as e:
-        raise TuyaError(f"network error: {e}") from e
+        raise TuyaNetworkError(f"network error: {e}") from e
     except (TimeoutError, OSError) as e:
         # A timeout or reset while reading is not wrapped in URLError.
-        raise TuyaError(f"network error: {e}") from e
+        raise TuyaNetworkError(f"network error: {e}") from e
     try:
         return json.loads(raw)
     except Exception as e:
@@ -500,8 +505,10 @@ class TuyaClient:
             try:
                 with urllib.request.urlopen(request, timeout=30) as response:
                     payload = response.read(MAX_MAP_FILE_SIZE + 1)
-            except (urllib.error.HTTPError, urllib.error.URLError) as err:
-                raise TuyaError(f"map file download failed: {err}") from err
+            except (urllib.error.URLError, TimeoutError, OSError) as err:
+                # URLError covers HTTPError (e.g. an expired signed URL); a timeout
+                # or reset while reading is not wrapped in it, as in _do.
+                raise TuyaNetworkError(f"map file download failed: {err}") from err
             if len(payload) > MAX_MAP_FILE_SIZE:
                 raise TuyaError(f"map file exceeds the {MAX_MAP_FILE_SIZE}-byte limit")
             files.append({

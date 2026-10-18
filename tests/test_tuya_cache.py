@@ -98,8 +98,3 @@ def test_map_meta_from_cache_rejects_junk():
     assert cache.map_meta_from_cache(None) is None
     assert cache.map_meta_from_cache({"rooms": {}}) is None
 
-
-def test_is_network_error():
-    assert cache.is_network_error(Exception("network error: <urlopen error>"))
-    assert cache.is_network_error(Exception("map file download failed: x"))
-    assert not cache.is_network_error(Exception("1106: permission deny"))

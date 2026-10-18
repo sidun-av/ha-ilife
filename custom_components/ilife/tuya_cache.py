@@ -115,12 +115,6 @@ def map_persist_due(cached: Any, png: bytes | None) -> bool:
     return cached.get("png_sha256") != hashlib.sha256(png).hexdigest()
 
 
-def is_network_error(err: BaseException) -> bool:
-    """A cloud call that failed because the cloud could not be reached at all."""
-    text = str(err)
-    return text.startswith("network error") or text.startswith("map file download failed")
-
-
 class DeviceCache:
     """Per-entry persistent cache (`.storage/ilife.<entry_id>`); saves only on change."""
 
