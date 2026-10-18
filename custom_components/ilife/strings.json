@@ -126,13 +126,35 @@
     },
     "select": {
       "water_level": {
-        "name": "Water level"
+        "name": "Water level",
+        "state": {
+          "low": "Low",
+          "middle": "Medium",
+          "high": "High",
+          "closed": "Off"
+        }
       },
       "cleaning_mode": {
-        "name": "Cleaning mode"
+        "name": "Cleaning mode",
+        "state": {
+          "smart": "Smart",
+          "chargego": "Return to dock",
+          "goto_charge": "Return to dock",
+          "zone": "Zone",
+          "pose": "Go to point",
+          "part": "Spot",
+          "edge": "Edges",
+          "explore": "Explore",
+          "exploreclean": "Explore and clean"
+        }
       },
       "cleaning_efficiency": {
-        "name": "Cleaning efficiency"
+        "name": "Cleaning efficiency",
+        "state": {
+          "careful": "Thorough",
+          "normal": "Normal",
+          "fast": "Fast"
+        }
       },
       "cleaning_program": {
         "name": "Cleaning program",
@@ -140,6 +162,25 @@
           "standard": "Standard",
           "plan_1": "Plan 1",
           "plan_2": "Plan 2"
+        }
+      },
+      "direction_control": {
+        "name": "Direction control",
+        "state": {
+          "forward": "Forward",
+          "foward": "Forward",
+          "backward": "Backward",
+          "turn_left": "Turn left",
+          "turn_right": "Turn right",
+          "stop": "Stop"
+        }
+      },
+      "request": {
+        "name": "Map request",
+        "state": {
+          "get_map": "Map",
+          "get_path": "Path",
+          "get_both": "Map and path"
         }
       }
     },
@@ -250,6 +291,22 @@
       },
       "auto_empty_frequency": {
         "name": "Auto-empty frequency"
+      }
+    },
+    "vacuum": {
+      "vacuum": {
+        "state_attributes": {
+          "fan_speed": {
+            "name": "Fan speed",
+            "state": {
+              "gentle": "Gentle",
+              "normal": "Normal",
+              "strong": "Strong",
+              "max": "Max",
+              "closed": "Off (mopping only)"
+            }
+          }
+        }
       }
     }
   },

@@ -126,13 +126,35 @@
     },
     "select": {
       "water_level": {
-        "name": "Contrôle de l'eau"
+        "name": "Contrôle de l'eau",
+        "state": {
+          "low": "Faible",
+          "middle": "Moyen",
+          "high": "Élevé",
+          "closed": "Désactivé"
+        }
       },
       "cleaning_mode": {
-        "name": "Mode de nettoyage"
+        "name": "Mode de nettoyage",
+        "state": {
+          "smart": "Intelligent",
+          "chargego": "Retour à la base",
+          "goto_charge": "Retour à la base",
+          "zone": "Zone",
+          "pose": "Aller au point",
+          "part": "Localisé",
+          "edge": "Bordures",
+          "explore": "Exploration",
+          "exploreclean": "Exploration et nettoyage"
+        }
       },
       "cleaning_efficiency": {
-        "name": "Efficacité de nettoyage"
+        "name": "Efficacité de nettoyage",
+        "state": {
+          "careful": "Minutieux",
+          "normal": "Normal",
+          "fast": "Rapide"
+        }
       },
       "cleaning_program": {
         "name": "Programme de nettoyage",
@@ -140,6 +162,25 @@
           "standard": "Standard",
           "plan_1": "Plan 1",
           "plan_2": "Plan 2"
+        }
+      },
+      "direction_control": {
+        "name": "Commande de direction",
+        "state": {
+          "forward": "Avant",
+          "foward": "Avant",
+          "backward": "Arrière",
+          "turn_left": "Tourner à gauche",
+          "turn_right": "Tourner à droite",
+          "stop": "Arrêt"
+        }
+      },
+      "request": {
+        "name": "Demande de carte",
+        "state": {
+          "get_map": "Carte",
+          "get_path": "Trajet",
+          "get_both": "Carte et trajet"
         }
       }
     },
@@ -250,6 +291,22 @@
       },
       "auto_empty_frequency": {
         "name": "Fréquence de vidage automatique"
+      }
+    },
+    "vacuum": {
+      "vacuum": {
+        "state_attributes": {
+          "fan_speed": {
+            "name": "Puissance d'aspiration",
+            "state": {
+              "gentle": "Doux",
+              "normal": "Normal",
+              "strong": "Fort",
+              "max": "Max",
+              "closed": "Désactivé (lavage seul)"
+            }
+          }
+        }
       }
     }
   },

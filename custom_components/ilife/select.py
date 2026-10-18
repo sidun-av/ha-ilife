@@ -28,6 +28,10 @@ from .tuya_dynamic import mode_commands, range_values, unknown_functions
 from .tuya_entity import TuyaEntity
 from .tuya_rooms import CLEAN_SETTINGS_CODE, PROGRAMS, active_program, with_program
 
+# Generic Enum DPs whose name and values are translated (translation key = code);
+# any other keeps its code as the name.
+GENERIC_SELECT_KEYS = {"direction_control", "request"}
+
 # Thing-model Enum DPs worth a select: {code: (translation key, icon)}.
 MODEL_SELECTS = {
     "cleaning_efficiency": ("cleaning_efficiency", "mdi:grid"),  # path density
@@ -239,7 +243,10 @@ class TuyaGenericSelect(_TuyaSelectBase):
     def __init__(self, coordinator, code, meta):
         super().__init__(coordinator)
         self._code = code
-        self._attr_name = code.replace("_", " ").title()
+        if code in GENERIC_SELECT_KEYS:
+            self._attr_translation_key = code
+        else:
+            self._attr_name = code.replace("_", " ").title()
         self._attr_unique_id = f"{self.api.device_id}_{code}"
         self._attr_options = [str(v) for v in (meta.get("values") or {}).get("range") or []]
         if code in TUYA_TECHNICAL_DP_CODES:

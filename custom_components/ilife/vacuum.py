@@ -224,6 +224,8 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
     live /specifications response — nothing here assumes a DP the device didn't advertise."""
 
     _attr_name = None
+    # the name stays the device's; the key only names the fan_speed values
+    _attr_translation_key = "vacuum"
 
     def __init__(self, coordinator):
         super().__init__(coordinator)

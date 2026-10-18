@@ -1,0 +1,398 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Выберите приложение ILIFE",
+        "description": "Укажите приложение, к которому подключён пылесос.",
+        "menu_options": {
+          "ilifehome": "ILIFEHOME (облако Alibaba IoT)",
+          "ilife_clean": "ILIFE Clean (облако Tuya)"
+        }
+      },
+      "ilifehome": {
+        "description": "Войдите с учётной записью ILIFE или партнёрского бренда (например, AVA, ZACO). Выберите бренд и регион, в котором создана учётная запись.",
+        "data": {
+          "brand": "Бренд",
+          "email": "Эл. почта",
+          "password": "Пароль",
+          "region": "Регион"
+        }
+      },
+      "ilife_clean": {
+        "description": "Пылесосы ILIFE Clean (например, T20s) работают через облако Tuya. Создайте бесплатный Cloud Project на iot.tuya.com (способ разработки «Smart Home») и привяжите к нему учётную запись пылесоса в разделе Devices → Link App Account. QR-код привязки сканируется только из приложения Tuya Smart / Smart Life — в ILIFE Clean такого сканера нет, поэтому пылесос сначала нужно заново подключить в Tuya Smart (см. README). Затем введите Access ID и Access Secret проекта и UID привязанной учётной записи, выбрав дата-центр, в котором создан проект.",
+        "data": {
+          "access_id": "Access ID (Client ID)",
+          "access_secret": "Access Secret (Client Secret)",
+          "uid": "UID привязанной учётной записи",
+          "region": "Дата-центр"
+        }
+      },
+      "reauth_confirm": {
+        "description": "Введите пароль для {email} ещё раз.",
+        "data": {
+          "password": "Пароль"
+        }
+      },
+      "reauth_confirm_tuya": {
+        "description": "Введите Access ID и Access Secret проекта Tuya Cloud ещё раз.",
+        "data": {
+          "access_id": "Access ID (Client ID)",
+          "access_secret": "Access Secret (Client Secret)"
+        }
+      }
+    },
+    "error": {
+      "invalid_auth": "Неверные учётные данные — точную причину от сервера смотрите в Настройки → Система → Журналы",
+      "cannot_connect": "Не удалось подключиться — подробности в Настройки → Система → Журналы",
+      "no_devices": "Подключение есть, но у этого UID нет устройств. Проверьте, что это UID из раздела Devices → Link App Account вашего Tuya Cloud Project и что пылесос подключён к этой учётной записи."
+    },
+    "abort": {
+      "already_configured": "Эта учётная запись уже настроена",
+      "reauth_successful": "Повторная авторизация выполнена"
+    }
+  },
+  "exceptions": {
+    "device_offline": {
+      "message": "Пылесос спит на базе и сейчас недоступен через облако. Для уборок по расписанию он просыпается сам; команды по запросу работают, только пока он не спит."
+    },
+    "command_unsupported": {
+      "message": "{device} не объявляет точку данных для «{action}», поэтому отправить команду нечем. Если официальное приложение это умеет, создайте issue и приложите диагностику интеграции."
+    },
+    "fan_speed_unsupported": {
+      "message": "«{fan_speed}» — не уровень всасывания этого пылесоса. Доступны: {options}."
+    },
+    "room_unknown": {
+      "message": "Комнаты «{room}» нет на карте пылесоса. Известные комнаты: {rooms}."
+    },
+    "ilife_clean_only": {
+      "message": "«{action}» есть только у пылесосов ILIFE Clean (Tuya); в ILIFEHOME такой команды нет."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery": {
+        "name": "Батарея"
+      },
+      "main_brush": {
+        "name": "Основная щётка"
+      },
+      "side_brush": {
+        "name": "Боковая щётка"
+      },
+      "filter": {
+        "name": "Фильтр"
+      },
+      "current_area": {
+        "name": "Текущая площадь"
+      },
+      "current_time": {
+        "name": "Текущая длительность"
+      },
+      "total_area": {
+        "name": "Всего убрано"
+      },
+      "total_time": {
+        "name": "Общее время уборки"
+      },
+      "total_count": {
+        "name": "Всего уборок"
+      },
+      "last_area": {
+        "name": "Последняя площадь"
+      },
+      "last_duration": {
+        "name": "Последняя длительность"
+      },
+      "last_clean": {
+        "name": "Последняя уборка"
+      },
+      "history": {
+        "name": "История"
+      },
+      "fault": {
+        "name": "Ошибка"
+      },
+      "schedules": {
+        "name": "Расписания"
+      }
+    },
+    "binary_sensor": {
+      "online": {
+        "name": "В сети"
+      },
+      "problem": {
+        "name": "Проблема"
+      }
+    },
+    "select": {
+      "water_level": {
+        "name": "Подача воды",
+        "state": {
+          "low": "Низкий",
+          "middle": "Средний",
+          "high": "Высокий",
+          "closed": "Выкл."
+        }
+      },
+      "cleaning_mode": {
+        "name": "Режим уборки",
+        "state": {
+          "smart": "Авто",
+          "chargego": "На базу",
+          "goto_charge": "На базу",
+          "zone": "Зона",
+          "pose": "К точке",
+          "part": "Локально",
+          "edge": "Вдоль стен",
+          "explore": "Разведка",
+          "exploreclean": "Разведка с уборкой"
+        }
+      },
+      "cleaning_efficiency": {
+        "name": "Тщательность уборки",
+        "state": {
+          "careful": "Тщательно",
+          "normal": "Обычно",
+          "fast": "Быстро"
+        }
+      },
+      "cleaning_program": {
+        "name": "Программа уборки",
+        "state": {
+          "standard": "Стандартная",
+          "plan_1": "План 1",
+          "plan_2": "План 2"
+        }
+      },
+      "direction_control": {
+        "name": "Управление направлением",
+        "state": {
+          "forward": "Вперёд",
+          "foward": "Вперёд",
+          "backward": "Назад",
+          "turn_left": "Влево",
+          "turn_right": "Вправо",
+          "stop": "Стоп"
+        }
+      },
+      "request": {
+        "name": "Запрос карты",
+        "state": {
+          "get_map": "Карта",
+          "get_path": "Маршрут",
+          "get_both": "Карта и маршрут"
+        }
+      }
+    },
+    "switch": {
+      "carpet": {
+        "name": "Распознавание ковров"
+      },
+      "schedule_1_enable": {
+        "name": "Расписание: понедельник"
+      },
+      "schedule_2_enable": {
+        "name": "Расписание: вторник"
+      },
+      "schedule_3_enable": {
+        "name": "Расписание: среда"
+      },
+      "schedule_4_enable": {
+        "name": "Расписание: четверг"
+      },
+      "schedule_5_enable": {
+        "name": "Расписание: пятница"
+      },
+      "schedule_6_enable": {
+        "name": "Расписание: суббота"
+      },
+      "schedule_7_enable": {
+        "name": "Расписание: воскресенье"
+      },
+      "y_mop": {
+        "name": "Y-образная влажная уборка"
+      },
+      "carpet_boost": {
+        "name": "Усиление на коврах"
+      },
+      "do_not_disturb": {
+        "name": "Не беспокоить"
+      },
+      "resume_after_charge": {
+        "name": "Продолжить после зарядки"
+      },
+      "auto_empty": {
+        "name": "Автоочистка на базе"
+      }
+    },
+    "time": {
+      "schedule_1_time": {
+        "name": "Время: понедельник"
+      },
+      "schedule_2_time": {
+        "name": "Время: вторник"
+      },
+      "schedule_3_time": {
+        "name": "Время: среда"
+      },
+      "schedule_4_time": {
+        "name": "Время: четверг"
+      },
+      "schedule_5_time": {
+        "name": "Время: пятница"
+      },
+      "schedule_6_time": {
+        "name": "Время: суббота"
+      },
+      "schedule_7_time": {
+        "name": "Время: воскресенье"
+      }
+    },
+    "camera": {
+      "map": {
+        "name": "Карта"
+      }
+    },
+    "button": {
+      "forward": {
+        "name": "Вперёд"
+      },
+      "backward": {
+        "name": "Назад"
+      },
+      "left": {
+        "name": "Влево"
+      },
+      "right": {
+        "name": "Вправо"
+      },
+      "rc_pause": {
+        "name": "Стоп (пульт)"
+      },
+      "dust_collection": {
+        "name": "Очистить пылесборник"
+      },
+      "reset_main_brush": {
+        "name": "Сбросить основную щётку"
+      },
+      "reset_side_brush": {
+        "name": "Сбросить боковую щётку"
+      },
+      "reset_filter": {
+        "name": "Сбросить фильтр"
+      },
+      "reset_map": {
+        "name": "Сбросить карту"
+      }
+    },
+    "number": {
+      "volume": {
+        "name": "Громкость"
+      },
+      "auto_empty_frequency": {
+        "name": "Частота автоочистки"
+      }
+    },
+    "vacuum": {
+      "vacuum": {
+        "state_attributes": {
+          "fan_speed": {
+            "name": "Мощность всасывания",
+            "state": {
+              "gentle": "Тихая",
+              "normal": "Средняя",
+              "strong": "Сильная",
+              "max": "Максимальная",
+              "closed": "Выкл. (только мытьё)"
+            }
+          }
+        }
+      }
+    }
+  },
+  "services": {
+    "clean_rooms": {
+      "name": "Убрать комнаты",
+      "description": "Убирает только указанные комнаты (лазерные модели ILIFE Clean).",
+      "fields": {
+        "rooms": {
+          "name": "Комнаты",
+          "description": "Названия комнат как в приложении или их номера (атрибут пылесоса «rooms» перечисляет и то и другое)."
+        },
+        "passes": {
+          "name": "Проходы",
+          "description": "1 или 2 — добавить второй, поперечный проход."
+        }
+      }
+    },
+    "clean_zone": {
+      "name": "Убрать зону",
+      "description": "Убирает указанные прямоугольники (лазерные модели ILIFE Clean; атрибут calibration_points камеры карты переводит пиксели изображения в эти координаты).",
+      "fields": {
+        "zone": {
+          "name": "Зоны",
+          "description": "До 5 прямоугольников [x1, y1, x2, y2] в клетках карты от её начала, ось y вверх (клетка 5 см у A30 Pro)."
+        },
+        "repeats": {
+          "name": "Проходы",
+          "description": "1 или 2 — убрать каждую зону дважды."
+        }
+      }
+    },
+    "set_schedule": {
+      "name": "Задать расписание",
+      "description": "Создаёт расписание уборки или меняет указанные поля существующего (лазерные модели ILIFE Clean).",
+      "fields": {
+        "slot": {
+          "name": "Слот",
+          "description": "Расписание 1–7, которое нужно изменить; оставьте пустым, чтобы создать новое."
+        },
+        "time": {
+          "name": "Время",
+          "description": "Время начала."
+        },
+        "days": {
+          "name": "Дни",
+          "description": "Дни недели, 0 = понедельник .. 6 = воскресенье."
+        },
+        "enabled": {
+          "name": "Включено",
+          "description": "Запускать ли это расписание."
+        },
+        "rooms": {
+          "name": "Комнаты",
+          "description": "Комнаты для уборки (названия как в приложении или номера); пустой список — весь дом."
+        },
+        "cycles": {
+          "name": "Циклы",
+          "description": "Сколько раз убирать."
+        }
+      }
+    },
+    "delete_schedule": {
+      "name": "Удалить расписание",
+      "description": "Удаляет расписание уборки.",
+      "fields": {
+        "slot": {
+          "name": "Слот",
+          "description": "Расписание 1–7, которое нужно удалить."
+        }
+      }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Локальное управление",
+        "description": "ILIFE Clean может связываться с пылесосом напрямую по вашей сети (быстрее и работает без облака). Облако остаётся запасным каналом.",
+        "data": {
+          "local": "Управление по локальной сети",
+          "host": "IP-адрес пылесоса (оставьте пустым для автопоиска)"
+        }
+      }
+    },
+    "abort": {
+      "no_options": "У этого типа учётной записи нет настроек."
+    }
+  }
+}
