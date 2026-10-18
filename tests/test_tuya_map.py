@@ -442,6 +442,42 @@ class TestRendering:
         # Cells 8..39 are rows 1-4 of the 8x6 grid: its middle is the room.
         assert image.getpixel((4 * scale, 3 * scale)) == tuya_map.ROOM_COLORS[0]
 
+    def test_no_light_seam_where_two_rooms_meet_without_a_wall(self):
+        """A doorway: two room colours side by side, no wall cell. The boundary pixel
+        must be as opaque as the rooms, not a lighter line between them."""
+        pil = pytest.importorskip("PIL.Image", reason="Pillow ships with Home Assistant")
+        width, height = 16, 12
+        grid = bytearray()
+        for _row in range(height):
+            grid += bytes([0]) * 8 + bytes([1 << 2]) * 8   # room 0 | room 1
+        png, metadata = tuya_map.render_tuya_map_png(_map(
+            grid=bytes(grid), rooms=[_room_block(0), _room_block(1)],
+            width=width, height=height))
+        image = pil.open(io.BytesIO(png)).convert("RGBA")
+        scale = metadata["map_scale"]
+        alpha = tuya_map.ROOM_COLORS[0][3]
+        assert tuya_map.ROOM_COLORS[1][3] == alpha
+        y = 9 * scale + scale // 2          # away from the dock marker
+        for x in (8 * scale - 1, 8 * scale):  # either side of the boundary
+            assert image.getpixel((x, y))[3] == alpha
+        # ...while the colours still blend there and are each their own inside.
+        assert image.getpixel((2 * scale, y)) == tuya_map.ROOM_COLORS[0]
+        assert image.getpixel((14 * scale, y)) == tuya_map.ROOM_COLORS[1]
+
+    def test_the_edge_against_the_outside_still_fades(self):
+        pil = pytest.importorskip("PIL.Image", reason="Pillow ships with Home Assistant")
+        grid = _grid({i: 0 for i in range(8, 40)}, fill=OUT)   # rows 1-4
+        png, metadata = tuya_map.render_tuya_map_png(_map(grid=grid, rooms=[_room_block(0)]))
+        image = pil.open(io.BytesIO(png)).convert("RGBA")
+        scale = metadata["map_scale"]
+        alphas = [image.getpixel((2 * scale, y))[3] for y in range(0, 2 * scale)]
+        assert alphas[0] == 0 and alphas[-1] == tuya_map.ROOM_COLORS[0][3]
+        assert any(0 < a < tuya_map.ROOM_COLORS[0][3] for a in alphas)
+        assert alphas == sorted(alphas)
+        # The room colour itself reaches the edge, not a darkened version of it.
+        r, g, b, a = image.getpixel((2 * scale, scale))
+        assert 0 < a and (r, g, b) == tuya_map.ROOM_COLORS[0][:3]
+
     def test_a_large_grid_is_drawn_at_a_smaller_scale(self):
         pil = pytest.importorskip("PIL.Image", reason="Pillow ships with Home Assistant")
         width, height = 800, 90                         # 72,000 cells

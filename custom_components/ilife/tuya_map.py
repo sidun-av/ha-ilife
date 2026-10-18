@@ -99,6 +99,17 @@ C_DOCK = (34, 197, 94, 255)
 C_ROBOT = (59, 130, 246, 255)
 C_HALO = (255, 255, 255, 245)
 
+# Smooth edges: each colour's cells, scaled up, are blurred by EDGE_BLUR_CELLS of a
+# cell and cut again through a lookup table. The cut drops everything under
+# EDGE_CUT_LOW, the blur's faint tail that would leave a halo, then ramps up
+# EDGE_CUT_GAIN times as steeply, reaching full at 151: the transition is a pixel
+# or two wide, centred near the blur's 50% level (127), which is where the cell
+# boundary is, so shapes keep their size. A one-cell wall blurs to a peak of about
+# 187, above the cut, so it does not vanish.
+EDGE_BLUR_CELLS = 0.45
+EDGE_CUT_LOW = 100
+EDGE_CUT_GAIN = 5
+
 
 def _signed16(value: int) -> int:
     return value - 65536 if value > 32767 else value
@@ -520,7 +531,7 @@ def render_tuya_map_png(
     `room_names` ({room id: name}) replaces the names in the file, which the A30
     Pro leaves empty; the app keeps them in separate DPs (see tuya_rooms).
     """
-    from PIL import Image, ImageDraw, ImageFilter
+    from PIL import Image, ImageChops, ImageDraw, ImageFilter
 
     decoded = decode_tuya_map(layout, path_file, include_path=include_path)
     for room in decoded["rooms"]:
@@ -534,6 +545,7 @@ def render_tuya_map_png(
     kind_colors = {KIND_OUTSIDE: C_OUTSIDE, KIND_FLOOR: C_FLOOR, KIND_WALL: C_WALL,
                    KIND_CARPET: C_CARPET, KIND_UNKNOWN: C_UNKNOWN}
     layers: dict[tuple[int, int, int, int], bytearray] = {}
+    covered = bytearray(width * height)  # every cell of any layer
     for index, (kind, room_id) in enumerate(decoded["cells"]):
         if kind != KIND_FLOOR or room_id not in room_ids:
             color = kind_colors[kind]
@@ -541,17 +553,43 @@ def render_tuya_map_png(
             color = ROOM_COLORS[room_id % len(ROOM_COLORS)]
         if color[3]:
             layers.setdefault(color, bytearray(width * height))[index] = 255
+            covered[index] = 255
 
     # Each layer is scaled up as a mask, blurred and cut again, which rounds the
     # cell staircase into smooth, anti-aliased edges. Walls go last, on top.
+    #
+    # Pasting a colour through such a mask blends all four channels, alpha too.
+    # Where two colours meet with no wall between them (a doorway) both masks are
+    # about half, and pasting them onto a transparent image left the seam at about
+    # 168 alpha against 215 inside the rooms: a faint light line. So the colours
+    # and the transparency are made apart:
+    #   1. each colour is laid down flat over its cells and the blur's reach, so
+    #      every edge pixel has a colour under it (not transparent black);
+    #   2. the smoothed masks are pasted on top: neighbouring colours blend
+    #      smoothly and, being equally opaque, keep their alpha across the seam;
+    #   3. the alpha is then cut by one smoothed mask of all the cells together,
+    #      so only the edges against the outside fade.
     size = (width * scale, height * scale)
-    blur = ImageFilter.GaussianBlur(scale * 0.45)
-    edge = [0] * 100 + [min(255, (value - 100) * 5) for value in range(100, 256)]
+    blur = ImageFilter.GaussianBlur(scale * EDGE_BLUR_CELLS)
+    edge = [0] * EDGE_CUT_LOW + [min(255, (value - EDGE_CUT_LOW) * EDGE_CUT_GAIN)
+                                 for value in range(EDGE_CUT_LOW, 256)]
+    reach = [0] + [255] * 255
+    full = (0, 0, *size)
+
+    def blurred(cells: bytes):
+        mask = Image.frombytes("L", (width, height), cells)
+        return mask.resize(size, Image.Resampling.NEAREST).filter(blur)
+
+    order = sorted(layers, key=lambda color: color == C_WALL)
     image = Image.new("RGBA", size, C_OUTSIDE)
-    for color in sorted(layers, key=lambda color: color == C_WALL):
-        mask = Image.frombytes("L", (width, height), bytes(layers[color]))
-        mask = mask.resize(size, Image.Resampling.NEAREST).filter(blur).point(edge)
-        image.paste(Image.new("RGBA", size, color), (0, 0), mask)
+    # The blur is redone in the second loop rather than kept: on a large map each
+    # mask is megabytes, one per colour.
+    for color in order:
+        image.paste(color, full, blurred(bytes(layers[color])).point(reach))
+    for color in order:
+        image.paste(color, full, blurred(bytes(layers[color])).point(edge))
+    outline = blurred(bytes(covered)).point(edge)
+    image.putalpha(ImageChops.multiply(image.getchannel("A"), outline))
 
     def canvas(cell: tuple[float, float]) -> tuple[float, float]:
         # Coordinates name a cell; draw at its centre.
