@@ -72,22 +72,24 @@ TAG_NO_GO_ZONES = 0x1B
 # (the run back to the dock). It is a marker, not a position.
 PATH_BREAK = [-31022, -31021]
 
+# Muted, partly see-through colours on a transparent background: the image sits
+# on the card's own background, so it reads the same in light and dark themes.
 ROOM_COLORS = (
-    (249, 66, 79, 255),
-    (253, 208, 43, 255),
-    (70, 168, 144, 255),
-    (32, 140, 255, 255),
-    (190, 120, 157, 255),
-    (168, 231, 114, 255),
-    (73, 249, 202, 255),
-    (124, 248, 255, 255),
+    (88, 146, 236, 215),
+    (46, 170, 150, 215),
+    (240, 168, 72, 215),
+    (232, 112, 112, 215),
+    (150, 118, 210, 215),
+    (110, 180, 100, 215),
+    (64, 178, 206, 215),
+    (220, 120, 170, 215),
 )
-C_OUTSIDE = (216, 222, 232, 255)
-C_FLOOR = (184, 196, 214, 255)
-C_WALL = (86, 89, 96, 255)
-C_CARPET = (197, 184, 232, 255)
-C_UNKNOWN = (236, 239, 243, 255)
-C_PATH = (255, 255, 255, 235)
+C_OUTSIDE = (0, 0, 0, 0)
+C_FLOOR = (140, 150, 165, 120)
+C_WALL = (120, 128, 140, 255)
+C_CARPET = (160, 140, 200, 150)
+C_UNKNOWN = (0, 0, 0, 0)
+C_PATH = (255, 255, 255, 220)
 C_TRAVEL = (255, 255, 255, 110)
 # Light fill + red edge: stays visible over every room colour, red rooms included.
 C_NO_GO = (255, 255, 255, 110)
@@ -95,7 +97,6 @@ C_NO_GO_EDGE = (220, 38, 38, 230)
 C_VIRTUAL_WALL = (239, 68, 68, 255)
 C_DOCK = (34, 197, 94, 255)
 C_ROBOT = (59, 130, 246, 255)
-C_LABEL = (31, 41, 55, 255)
 C_HALO = (255, 255, 255, 245)
 
 
@@ -378,43 +379,6 @@ def _dashed_line(draw, start, end, fill, width, dash=18, gap=10) -> None:
         position += dash + gap
 
 
-# Fonts with wide Latin coverage, tried before Pillow's built-in one, which lacks
-# letters such as "Ł" and draws a box for them.
-LABEL_FONTS = ("DejaVuSans.ttf", "NotoSans-Regular.ttf", "LiberationSans-Regular.ttf",
-               "Arial.ttf")
-_FOLD = str.maketrans({"Ł": "L", "ł": "l", "Đ": "D", "đ": "d", "Ø": "O", "ø": "o",
-                       "Ħ": "H", "ħ": "h", "ı": "i", "Œ": "OE", "œ": "oe"})
-
-
-def _label_font(size: int):
-    """(font, whether it covers more than Latin-1)."""
-    from PIL import ImageFont
-
-    for name in LABEL_FONTS:
-        try:
-            return ImageFont.truetype(name, size), True
-        except OSError:
-            continue
-    try:
-        return ImageFont.load_default(size=size), False
-    except TypeError:  # Pillow < 10.1
-        return ImageFont.load_default(), False
-
-
-def _fold_to_latin1(text: str) -> str:
-    """Strip what the built-in font cannot draw: "Łazienka" -> "Lazienka"."""
-    import unicodedata
-
-    out = []
-    for char in text.translate(_FOLD):
-        if ord(char) < 256:
-            out.append(char)
-            continue
-        base = unicodedata.normalize("NFKD", char).encode("latin-1", "ignore").decode("latin-1")
-        out.append(base or "?")
-    return "".join(out)
-
-
 def decode_tuya_map(
     layout: bytes, path_file: bytes | None = None, *, include_path: bool = True
 ) -> dict[str, Any]:
@@ -556,7 +520,7 @@ def render_tuya_map_png(
     `room_names` ({room id: name}) replaces the names in the file, which the A30
     Pro leaves empty; the app keeps them in separate DPs (see tuya_rooms).
     """
-    from PIL import Image, ImageDraw
+    from PIL import Image, ImageDraw, ImageFilter
 
     decoded = decode_tuya_map(layout, path_file, include_path=include_path)
     for room in decoded["rooms"]:
@@ -566,24 +530,28 @@ def render_tuya_map_png(
     scale = max(1, min(scale, MAX_IMAGE_SIDE // max(width, height, 1)))
     room_ids = {room["room_id"] for room in decoded["rooms"]}
 
-    # One pass over the grid: colour each cell and gather each room's centroid.
+    # One pass over the grid: sort each cell into a layer, one per colour.
     kind_colors = {KIND_OUTSIDE: C_OUTSIDE, KIND_FLOOR: C_FLOOR, KIND_WALL: C_WALL,
                    KIND_CARPET: C_CARPET, KIND_UNKNOWN: C_UNKNOWN}
-    pixels = []
-    sums: dict[int, list[int]] = {room_id: [0, 0, 0] for room_id in room_ids}
+    layers: dict[tuple[int, int, int, int], bytearray] = {}
     for index, (kind, room_id) in enumerate(decoded["cells"]):
         if kind != KIND_FLOOR or room_id not in room_ids:
-            pixels.append(kind_colors[kind])
-            continue
-        pixels.append(ROOM_COLORS[room_id % len(ROOM_COLORS)])
-        total = sums[room_id]
-        total[0] += index % width
-        total[1] += index // width
-        total[2] += 1
+            color = kind_colors[kind]
+        else:
+            color = ROOM_COLORS[room_id % len(ROOM_COLORS)]
+        if color[3]:
+            layers.setdefault(color, bytearray(width * height))[index] = 255
 
-    image = Image.new("RGBA", (width, height))
-    image.putdata(pixels)
-    image = image.resize((width * scale, height * scale), Image.Resampling.NEAREST)
+    # Each layer is scaled up as a mask, blurred and cut again, which rounds the
+    # cell staircase into smooth, anti-aliased edges. Walls go last, on top.
+    size = (width * scale, height * scale)
+    blur = ImageFilter.GaussianBlur(scale * 0.45)
+    edge = [0] * 100 + [min(255, (value - 100) * 5) for value in range(100, 256)]
+    image = Image.new("RGBA", size, C_OUTSIDE)
+    for color in sorted(layers, key=lambda color: color == C_WALL):
+        mask = Image.frombytes("L", (width, height), bytes(layers[color]))
+        mask = mask.resize(size, Image.Resampling.NEAREST).filter(blur).point(edge)
+        image.paste(Image.new("RGBA", size, color), (0, 0), mask)
 
     def canvas(cell: tuple[float, float]) -> tuple[float, float]:
         # Coordinates name a cell; draw at its centre.
@@ -642,22 +610,8 @@ def render_tuya_map_png(
            C_DOCK, max(5, scale))
     if robot is not None:
         marker(robot, C_ROBOT, max(4, scale - 1))
-
-    font, full_unicode = _label_font(max(12, scale * 2))
-    pad = max(3, scale // 2)
-    for room in decoded["rooms"]:
-        sum_x, sum_y, count = sums[room["room_id"]]
-        if not count:
-            continue
-        center = canvas((sum_x / count, sum_y / count))
-        label = room["name"] if full_unicode else _fold_to_latin1(room["name"])
-        box = draw.textbbox(center, label, font=font, anchor="mm")
-        draw.rounded_rectangle(
-            [box[0] - pad, box[1] - pad, box[2] + pad, box[3] + pad],
-            radius=pad,
-            fill=(255, 255, 255, 190),
-        )
-        draw.text(center, label, fill=C_LABEL, font=font, anchor="mm")
+    # Room names are not drawn: the map card puts its own room icons and
+    # labels there, and a name baked into the image would sit under them.
 
     output = io.BytesIO()
     image.save(output, format="PNG", optimize=True)

@@ -112,14 +112,18 @@ TUYA_MODE_FULL_CLEAN = ("smart", "auto", "clean", "smart_clean", "autoclean")
 # Status enum values, as reported. A model can report a value that is not in the range
 # it advertises in its own /specifications (the A12 Pro reports "base_charging" while
 # advertising only "charging" and "charge_done"), so this is observation, not spec.
+# The A30 Pro says "base_sleeping" once full on the dock, "continuation_charging"
+# while topping up in the middle of a run, "adapter_*" on the charging cable.
 TUYA_STATUS_DOCKED = {"charging", "charge_done", "chargecompleted", "standby_charge",
-                      "base_charging"}
+                      "base_charging", "base_sleeping", "adapter_charging",
+                      "adapter_sleeping", "continuation_charging"}
 TUYA_STATUS_RETURNING = {"goto_charge", "docking", "back_charge"}
 TUYA_STATUS_IDLE = {"standby", "sleep"}
 TUYA_STATUS_PAUSED = {"pause", "paused"}
 TUYA_STATUS_CLEANING = {"cleaning", "smart", "smart_clean", "zone_clean", "part_clean",
                         "spot_clean", "selectroom_clean", "mop_clean", "goto_pos",
-                        "pos_arrived", "pos_unarrive", "curpoint_clean"}
+                        "pos_arrived", "pos_unarrive", "curpoint_clean", "edge",
+                        "explore", "explore_clean"}
 
 # DP codes surfaced through dedicated entities. Any other DP code the device actually
 # advertises (in its live /specifications response) gets a *generic* entity instead of

@@ -432,6 +432,16 @@ class TestRendering:
         )
         assert metadata["path_points"] == 0
 
+    def test_outside_is_transparent_and_rooms_are_not(self):
+        pil = pytest.importorskip("PIL.Image", reason="Pillow ships with Home Assistant")
+        grid = _grid({i: 0 for i in range(8, 40)}, fill=OUT)
+        png, metadata = tuya_map.render_tuya_map_png(_map(grid=grid, rooms=[_room_block(0)]))
+        image = pil.open(io.BytesIO(png)).convert("RGBA")
+        scale = metadata["map_scale"]
+        assert image.getpixel((0, 0))[3] == 0
+        # Cells 8..39 are rows 1-4 of the 8x6 grid: its middle is the room.
+        assert image.getpixel((4 * scale, 3 * scale)) == tuya_map.ROOM_COLORS[0]
+
     def test_a_large_grid_is_drawn_at_a_smaller_scale(self):
         pil = pytest.importorskip("PIL.Image", reason="Pillow ships with Home Assistant")
         width, height = 800, 90                         # 72,000 cells
@@ -446,11 +456,6 @@ class TestRendering:
             grid=bytes([OUT]) * (width * height), width=width, height=height))["header"]
         assert metadata["calibration_points"] == tuya_map.calibration_points(header, 3)
 
-    def test_labels_fold_what_the_builtin_font_cannot_draw(self):
-        assert tuya_map._fold_to_latin1("Łazienka żółta") == "Lazienka zólta"
-
-
-class TestHistory:
     def test_thumbnail_uses_the_cards_format(self):
         grid = _grid({0: 0, 1: 0, 2: WALL, 8: 1 << 2})
         raw = base64.b64decode(tuya_map.clean_map_thumbnail(_map(grid=grid), factor=1))

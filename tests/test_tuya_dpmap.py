@@ -56,3 +56,16 @@ def test_round_trip_dict(m):
     again = dpmap.DpMap.from_dict(json.loads(json.dumps(m.to_dict())))
     assert again.code_for("1") == "power_go" and again.dp_for("switch_go") == "1"
     assert again.to_dict() == m.to_dict()
+
+
+def test_every_a30_status_has_a_meaning():
+    # An unlisted status fell through to "idle": the robot full on its dock
+    # ("base_sleeping") showed as idle instead of docked.
+    spec = importlib.util.spec_from_file_location("_ilife_const", _PKG / "const.py")
+    const = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(const)
+    status = next(item for item in MODEL["services"][0]["properties"] if item["code"] == "status")
+    known = (const.TUYA_STATUS_DOCKED | const.TUYA_STATUS_RETURNING | const.TUYA_STATUS_IDLE
+             | const.TUYA_STATUS_PAUSED | const.TUYA_STATUS_CLEANING)
+    assert set(status["typeSpec"]["range"]) - known == set()
+    assert "base_sleeping" in const.TUYA_STATUS_DOCKED
