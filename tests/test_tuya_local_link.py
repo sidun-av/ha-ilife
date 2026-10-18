@@ -27,13 +27,16 @@ KEYB = KEY.encode()
 DEV = "bf0000000000000000test"
 
 
-def device_frame(seqno: int, cmd: int, payload: dict | None, rc: bool = True) -> bytes:
+def device_frame(seqno: int, cmd: int, payload: dict | None, rc: bool = True,
+                 retcode: int = 0) -> bytes:
     body = b""
     if payload is not None:
         body = b"3.3" + b"\0" * 12 + tl._encrypt(
             json.dumps(payload, separators=(",", ":")).encode(), KEYB)
+    if retcode:
+        body = b"data format error"
     if rc:
-        body = struct.pack(">I", 0) + body
+        body = struct.pack(">I", retcode) + body
     head = struct.pack(">IIII", 0x000055AA, seqno, cmd, len(body) + 8)
     crc = binascii.crc32(head + body) & 0xFFFFFFFF
     return head + body + struct.pack(">II", crc, 0x0000AA55)
@@ -57,6 +60,7 @@ class FakeDevice:
         self.writers: list[asyncio.StreamWriter] = []
         self.queries = 0
         self.ack_control = True
+        self.control_retcode = 0
         self.server = None
 
     async def start(self):
@@ -73,7 +77,7 @@ class FakeDevice:
                     self.queries += 1
                     writer.write(device_frame(seq, cmd, {"dps": self.dps}))
                 elif cmd == tl.CMD_CONTROL and self.ack_control:
-                    writer.write(device_frame(seq, cmd, None))
+                    writer.write(device_frame(seq, cmd, None, retcode=self.control_retcode))
                 elif cmd == tl.CMD_HEART_BEAT:
                     writer.write(device_frame(seq, cmd, None))
                 await writer.drain()
@@ -150,6 +154,21 @@ async def test_set_dps_without_ack_raises(rig):
     await until(lambda: link.connected)
     with pytest.raises(tl.TuyaLocalError):
         await link.set_dps({"2": True})
+
+
+@pytest.mark.asyncio
+async def test_set_dps_refused_raises_at_once(rig):
+    dev, link, got, states = rig
+    dev.control_retcode = 1
+    await link.start()
+    await until(lambda: link.connected)
+    loop = asyncio.get_running_loop()
+    started = loop.time()
+    with pytest.raises(tl.TuyaLocalRefused) as err:
+        await link.set_dps({"2": True})
+    assert err.value.retcode == 1
+    assert loop.time() - started < link.ACK_TIMEOUT
+    assert link.connected
 
 
 @pytest.mark.asyncio
@@ -241,7 +260,7 @@ async def test_discover_returns_sender_and_version():
 async def test_discover_ignores_other_devices_and_times_out():
     port = _free_udp_port()
     sender = asyncio.create_task(_broadcast_soon(port, [DISCOVERY]))
-    assert await tl.discover("someotherdeviceid", timeout=0.4, ports=(port,)) is None
+    assert await tl.discover_device("someotherdeviceid", timeout=0.4, ports=(port,)) is None
     await sender
 
 
@@ -271,3 +290,17 @@ def test_udp_socket_closed_when_bind_fails(monkeypatch):
     with pytest.raises(OSError):
         tl._udp_socket(6667)
     assert len(made) == 1 and made[0].closed
+
+
+@pytest.mark.asyncio
+async def test_discovery_warns_once_when_no_port_can_be_bound(monkeypatch, caplog):
+    def busy(port):
+        raise OSError(98, "Address already in use")
+
+    monkeypatch.setattr(tl, "_udp_socket", busy)
+    monkeypatch.setattr(tl, "_bind_warned", False)
+    with caplog.at_level("DEBUG", logger=tl.__name__):
+        assert await tl.discover_device(DEV, timeout=0.1, ports=(1, 2)) is None
+        assert await tl.discover_device(DEV, timeout=0.1, ports=(1, 2)) is None
+    warnings = [r for r in caplog.records if r.levelname == "WARNING"]
+    assert len(warnings) == 1 and "options" in warnings[0].getMessage()

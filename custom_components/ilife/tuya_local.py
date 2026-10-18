@@ -69,9 +69,11 @@ class StreamDecoder:
         self._key = key
         self._buf = b""
 
-    def feed(self, data: bytes) -> list[tuple[int, int, dict | None]]:
+    def feed(self, data: bytes) -> list[tuple[int, int, dict | None, int | None]]:
+        """Complete frames as (seqno, cmd, payload, return code); the return code is
+        None for a push that carries none."""
         self._buf += data
-        out: list[tuple[int, int, dict | None]] = []
+        out: list[tuple[int, int, dict | None, int | None]] = []
         while True:
             start = self._buf.find(_PREFIX_BYTES)
             if start < 0:
@@ -95,21 +97,27 @@ class StreamDecoder:
                 _LOGGER.debug("Dropping Tuya frame with bad CRC (seq %s, cmd %s)", seqno, cmd)
                 continue
             try:
-                out.append((seqno, cmd, self._decode_body(frame[_HEAD.size:-8])))
+                out.append((seqno, cmd, *self._decode_body(frame[_HEAD.size:-8])))
             except Exception:  # noqa: BLE001 - one bad frame must not kill the link
                 _LOGGER.debug("Dropping undecodable Tuya frame (seq %s, cmd %s)", seqno, cmd)
         return out
 
-    def _decode_body(self, body: bytes) -> dict | None:
+    def _decode_body(self, body: bytes) -> tuple[dict | None, int | None]:
         # Replies/acks carry a 4-byte return code; some firmware's unsolicited
         # STATUS pushes start straight with the "3.3" header instead.
+        retcode = None
         if not body.startswith(b"3.3"):
+            retcode = int.from_bytes(body[:4], "big") if len(body) >= 4 else None
             body = body[4:]
+        if retcode:
+            # A refusal: its body is a plain-text reason, not an encrypted payload,
+            # and decrypting it would drop the whole frame, acknowledgement and all.
+            return None, retcode
         if body.startswith(b"3.3"):
             body = body[len(_VERSION_HEADER):]
         if not body:
-            return None
-        return json.loads(_decrypt(body, self._key))
+            return None, retcode
+        return json.loads(_decrypt(body, self._key)), retcode
 
 
 def decode_discovery(packet: bytes) -> dict[str, Any]:
@@ -119,6 +127,8 @@ def decode_discovery(packet: bytes) -> dict[str, Any]:
 
 
 DISCOVERY_PORTS = (6666, 6667)
+# Set once a discovery found none of DISCOVERY_PORTS free (see discover_device).
+_bind_warned = False
 
 
 def _decode_any_discovery(packet: bytes) -> dict | None:
@@ -172,6 +182,7 @@ async def discover_device(
     loop = asyncio.get_running_loop()
     found: asyncio.Future = loop.create_future()
     transports = []
+    errors = []
     try:
         for port in ports:
             try:
@@ -179,9 +190,20 @@ async def discover_device(
                     lambda: _DiscoveryProtocol(device_id, found), sock=_udp_socket(port))
             except OSError as err:
                 _LOGGER.debug("Cannot listen for Tuya discovery on UDP %s: %s", port, err)
+                errors.append(f"{port}: {err}")
                 continue
             transports.append(transport)
         if not transports:
+            # Usually another Tuya integration holding the ports without
+            # SO_REUSEPORT. Retried every few minutes, so said once, not each time:
+            # the way out (the robot's address in the options) is the user's to take.
+            global _bind_warned
+            if not _bind_warned:
+                _bind_warned = True
+                _LOGGER.warning(
+                    "Cannot listen for Tuya LAN discovery (%s); set the robot's "
+                    "address in the integration options to use local control",
+                    "; ".join(errors))
             return None
         try:
             return await asyncio.wait_for(asyncio.shield(found), timeout)
@@ -194,16 +216,16 @@ async def discover_device(
             found.cancel()
 
 
-async def discover(
-    device_id: str, timeout: float = 10, ports: tuple[int, ...] = DISCOVERY_PORTS
-) -> str | None:
-    """The device's LAN address from its UDP broadcast, or None on timeout."""
-    found = await discover_device(device_id, timeout, ports)
-    return found[0] if found else None
-
-
 class TuyaLocalError(Exception):
     """Local command could not be delivered or acknowledged."""
+
+
+class TuyaLocalRefused(TuyaLocalError):
+    """The device answered the command with a non-zero return code."""
+
+    def __init__(self, retcode: int) -> None:
+        super().__init__(f"device refused the command (return code {retcode})")
+        self.retcode = retcode
 
 
 class TuyaLocalLink:
@@ -376,11 +398,13 @@ class TuyaLocalLink:
                 if not data:
                     return reached
                 last_rx = time.monotonic()
-                for seq, cmd, payload in decoder.feed(data):
+                for seq, cmd, payload, retcode in decoder.feed(data):
                     if cmd == CMD_DP_QUERY:
                         if payload:
                             self._deliver(payload.get("dps"))
-                        if not self.connected:
+                        # A refused query (e.g. a stale local key) is no answer:
+                        # the session keeps waiting and times out as before.
+                        if not self.connected and not retcode:
                             self._warned = False
                             self.failures = 0
                             reached = True
@@ -392,7 +416,10 @@ class TuyaLocalLink:
                     elif cmd == CMD_CONTROL:
                         fut = self._pending.get(seq)
                         if fut is not None and not fut.done():
-                            fut.set_result(None)
+                            if retcode:
+                                fut.set_exception(TuyaLocalRefused(retcode))
+                            else:
+                                fut.set_result(None)
         finally:
             self._writer = None
             self._set_connected(False)
