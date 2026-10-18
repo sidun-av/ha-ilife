@@ -339,6 +339,12 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
                 )
             )
             self._render_key = render_key
+            # The rooms on the map, also for the vacuum's area cleaning (segments).
+            rooms = dict(self._render_metadata.get("rooms") or {})
+            if hasattr(self.coordinator, "set_map_rooms"):
+                self.coordinator.set_map_rooms(rooms)
+            else:
+                self.coordinator.map_rooms = rooms
         self._cache_metadata = {
             **self._render_metadata,
             "map_source": source,

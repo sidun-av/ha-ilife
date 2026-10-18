@@ -1,6 +1,8 @@
 """ILIFE vacuum entity (ILIFEHOME) and ILIFE Clean (Tuya) vacuum entity."""
 from __future__ import annotations
 
+import logging
+
 import voluptuous as vol
 
 from homeassistant.components.vacuum import (
@@ -10,6 +12,11 @@ from homeassistant.components.vacuum import (
 )
 from homeassistant.exceptions import HomeAssistantError
 from homeassistant.helpers import config_validation as cv, entity_platform
+
+try:  # recent Home Assistant (2026.6 has it): native area cleaning
+    from homeassistant.components.vacuum import Segment
+except ImportError:  # pragma: no cover - older Home Assistant
+    Segment = None
 
 from .api import ILifeError, ILifeOfflineError
 from .const import (
@@ -51,7 +58,14 @@ from .tuya_dynamic import (
     unpause_flag,
 )
 from .tuya_entity import TuyaEntity
-from .tuya_rooms import CLEAN_ROOMS_CODE, MAX_PASSES, clean_rooms_value
+from .tuya_pause import PauseTracker
+from .tuya_rooms import (
+    CLEAN_ROOMS_CODE,
+    MAX_PASSES,
+    clean_rooms_value,
+    segments_from_rooms,
+)
+from .tuya_zones import CLEAN_ZONE_CODE, MAX_ZONE_PASSES, MAX_ZONES, clean_zone_value
 from .tuya_schedule import (
     EMPTY_SLOT,
     MAX_CYCLES,
@@ -60,11 +74,20 @@ from .tuya_schedule import (
     parse_schedule,
 )
 
+_LOGGER = logging.getLogger(__name__)
 
 SERVICE_CLEAN_ROOMS = "clean_rooms"
 CLEAN_ROOMS_SCHEMA = {
     vol.Required("rooms"): vol.All(cv.ensure_list, [vol.Any(vol.Coerce(int), cv.string)]),
     vol.Optional("passes", default=1): vol.All(vol.Coerce(int), vol.Range(1, MAX_PASSES)),
+}
+# Field names as the xiaomi-vacuum-map-card sends them: zones in vacuum
+# coordinates, which are map cells in the robot frame (camera calibration_points).
+SERVICE_CLEAN_ZONE = "clean_zone"
+_ZONE = vol.All(vol.ExactSequence([vol.Coerce(float)] * 4, msg="a zone is [x1, y1, x2, y2]"), lambda zone: [round(v) for v in zone])
+CLEAN_ZONE_SCHEMA = {
+    vol.Required("zone"): vol.All(cv.ensure_list, vol.Length(1, MAX_ZONES), [_ZONE]),
+    vol.Optional("repeats", default=1): vol.All(vol.Coerce(int), vol.Range(1, MAX_ZONE_PASSES)),
 }
 SERVICE_SET_SCHEDULE = "set_schedule"
 SERVICE_DELETE_SCHEDULE = "delete_schedule"
@@ -91,6 +114,8 @@ async def async_setup_entry(hass, entry, async_add_entities):
     platform = entity_platform.async_get_current_platform()
     platform.async_register_entity_service(
         SERVICE_CLEAN_ROOMS, CLEAN_ROOMS_SCHEMA, "async_clean_rooms")
+    platform.async_register_entity_service(
+        SERVICE_CLEAN_ZONE, CLEAN_ZONE_SCHEMA, "async_clean_zone")
     platform.async_register_entity_service(
         SERVICE_SET_SCHEDULE, SET_SCHEDULE_SCHEMA, "async_set_schedule")
     platform.async_register_entity_service(
@@ -172,6 +197,9 @@ class ILifeVacuum(ILifeEntity, StateVacuumEntity):
     async def async_clean_rooms(self, rooms, passes=1):
         self._unsupported("clean rooms")
 
+    async def async_clean_zone(self, zone, repeats=1):
+        self._unsupported("clean zone")
+
     async def async_set_schedule(self, **kwargs):
         self._unsupported("set schedule")
 
@@ -251,6 +279,24 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
             features |= VacuumEntityFeature.FAN_SPEED
             self._attr_fan_speed_list = self._suction_range
         self._attr_supported_features = features
+        self._pause = PauseTracker(TUYA_STATUS_CLEANING)
+
+    @property
+    def supported_features(self):
+        features = self._attr_supported_features
+        # Rooms come with the product properties, which can arrive after setup.
+        clean_area = getattr(VacuumEntityFeature, "CLEAN_AREA", None)
+        if clean_area is not None and Segment is not None \
+                and self.coordinator.supports_room_clean:
+            features |= clean_area
+        return features
+
+    def _handle_coordinator_update(self) -> None:
+        data = self.coordinator.data or {}
+        power_go = data.get(TUYA_DP_POWER_GO)
+        self._pause.on_status(data.get(TUYA_DP_STATUS),
+                              power_go if isinstance(power_go, bool) else None)
+        super()._handle_coordinator_update()
 
     @property
     def activity(self):
@@ -258,6 +304,9 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
         status = data.get(TUYA_DP_STATUS)
         if isinstance(status, str):
             s = status.lower()
+            # A pause sent over the LAN leaves the robot in plain `standby`.
+            if s == "standby" and self._pause.paused_by_us():
+                return VacuumActivity.PAUSED
             if s in TUYA_STATUS_DOCKED:
                 return VacuumActivity.DOCKED
             if s in TUYA_STATUS_RETURNING:
@@ -300,18 +349,41 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
                 attrs[key] = value
         return attrs
 
-    async def _send_many(self, commands):
+    async def _send_many(self, commands, pause=False):
+        """Send through the coordinator (LAN first, else cloud).
+
+        Only a LAN pause of a running clean is tracked (the cloud path keeps the
+        v0.7.1 behaviour). It is armed before the send, because the robot's
+        answering push can beat the acknowledgement; any other command ends a
+        tracked pause only once it went through."""
+        before = self._pause.snapshot()
+        if pause and self.activity == VacuumActivity.CLEANING \
+                and self.coordinator.local_connected:
+            self._pause.on_pause_sent()
+        _LOGGER.debug("ILIFE Clean %s: sending %s (%s)", self.api.device_id, commands,
+                      "local" if self.coordinator.local_connected else "cloud")
         try:
-            await self.hass.async_add_executor_job(self.api.send_many, commands)
+            await self.coordinator.async_send(commands)
         except TuyaOfflineError as err:
+            self._after_failed_send(before, pause)
             raise HomeAssistantError(
                 translation_domain=DOMAIN, translation_key="device_offline"
             ) from err
         except TuyaError as err:
+            self._after_failed_send(before, pause)
             raise HomeAssistantError(str(err)) from err
-        await self.coordinator.async_request_refresh()
+        if not pause:
+            self._pause.on_command_sent()
 
-    async def _run(self, commands, action):
+    def _after_failed_send(self, before, pause) -> None:
+        """A failed pause leaves nothing paused; any other failed command leaves a
+        real pause in place (the robot never got it)."""
+        if pause:
+            self._pause.on_command_sent()
+        else:
+            self._pause.restore(before)
+
+    async def _run(self, commands, action, pause=False):
         if not commands:
             raise HomeAssistantError(
                 translation_domain=DOMAIN, translation_key="command_unsupported",
@@ -320,12 +392,12 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
                     "device": self.api.device.get("product_name") or "this vacuum",
                 },
             )
-        await self._send_many(commands)
+        await self._send_many(commands, pause=pause)
 
     @property
     def _is_paused(self):
         data = self.coordinator.data or {}
-        if data.get(TUYA_DP_PAUSE) is True:
+        if data.get(TUYA_DP_PAUSE) is True or self.activity == VacuumActivity.PAUSED:
             return True
         return str(data.get(TUYA_DP_STATUS) or "").lower() in TUYA_STATUS_PAUSED
 
@@ -338,7 +410,7 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
         await self._run(self._cmd_start, "start")
 
     async def async_pause(self):
-        await self._run(self._cmd_pause, "pause")
+        await self._run(self._cmd_pause, "pause", pause=True)
 
     async def async_stop(self, **kwargs):
         await self._run(self._cmd_stop, "stop")
@@ -407,6 +479,40 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
         except ValueError as err:
             raise HomeAssistantError(str(err)) from err
         await self._write(CLEAN_ROOMS_CODE, value)
+        self._pause.on_command_sent()
+
+    async def async_clean_zone(self, zone, repeats=1):
+        """Clean rectangles [x1, y1, x2, y2] in map cells (robot frame, y up)."""
+        if not self.coordinator.supports_zone_clean:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="command_unsupported",
+                translation_placeholders={
+                    "action": "clean zone",
+                    "device": self.api.device.get("product_name") or "this vacuum",
+                },
+            )
+        try:
+            value = clean_zone_value([tuple(z) for z in zone], repeats)
+        except ValueError as err:
+            raise HomeAssistantError(str(err)) from err
+        await self._write(CLEAN_ZONE_CODE, value)
+        self._pause.on_command_sent()
+
+    async def async_get_segments(self):
+        """The rooms of the vacuum's map, for Home Assistant's area cleaning.
+
+        Mapped rooms come from the map camera: while it is disabled or has not
+        rendered yet, only the rooms named in the app are offered."""
+        return [Segment(id=segment_id, name=name)
+                for segment_id, name in segments_from_rooms(
+                    self.coordinator.room_names, self.coordinator.map_rooms)]
+
+    async def async_clean_segments(self, segment_ids, **kwargs):
+        try:
+            rooms = [int(segment_id) for segment_id in segment_ids]
+        except ValueError as err:
+            raise HomeAssistantError(f"unknown segment in {segment_ids}") from err
+        await self.async_clean_rooms(rooms)
 
     async def _write(self, code, value):
         try:
