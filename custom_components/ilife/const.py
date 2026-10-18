@@ -155,3 +155,6 @@ TUYA_KNOWN_DP_CODES = {
     *TUYA_CONSUMABLES, *(reset for _, reset, _, _ in TUYA_CONSUMABLES.values()),
     *TUYA_SETTING_SWITCHES,
 }
+
+# ILIFE Clean options (LAN control)
+CONF_LOCAL = "local"

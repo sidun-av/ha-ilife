@@ -1,6 +1,7 @@
 """ILIFE Vacuum integration (Alibaba IoT cloud)."""
 from __future__ import annotations
 
+import asyncio
 import logging
 import time as _time  # aliased: a sibling submodule is named time.py (TimeEntity platform)
 from datetime import timedelta
@@ -12,6 +13,7 @@ from homeassistant.const import (
     CONF_PASSWORD,
     CONF_REGION,
     EVENT_HOMEASSISTANT_STARTED,
+    EVENT_HOMEASSISTANT_STOP,
     Platform,
 )
 from homeassistant.core import CoreState, HomeAssistant
@@ -32,6 +34,7 @@ from .const import (
     CONF_ACCESS_SECRET,
     CONF_BACKEND,
     CONF_BRAND,
+    CONF_LOCAL,
     CONF_UID,
     DEFAULT_START_MODE,
     DOMAIN,
@@ -47,12 +50,25 @@ from .tuya_api import (
     TuyaAuthError,
     TuyaClient,
     TuyaError,
+    TuyaNoDevicesError,
     TuyaVacuum,
     parse_record_extend,
+    parse_thing_model,
 )
+from .tuya_cache import (
+    DeviceCache,
+    map_rooms_from_cache,
+    map_rooms_to_cache,
+    pick,
+    seed_status,
+    status_save_due,
+)
+from .tuya_dpmap import DpMap, apply_local_dps, split_local_dps
 from .tuya_dynamic import parse_functions, range_values
+from .tuya_local import TuyaLocalError, TuyaLocalLink, discover_device
 from .tuya_map import clean_map_path, clean_map_thumbnail
-from .tuya_rooms import CLEAN_ROOMS_CODE, parse_room_names
+from .tuya_rooms import CLEAN_ROOMS_CODE, ROOM_INFO_CODES, parse_room_names
+from .tuya_zones import CLEAN_ZONE_CODE
 from .tuya_schedule import parse_schedules
 
 _LOGGER = logging.getLogger(__name__)
@@ -81,6 +97,19 @@ PLATFORMS = ILIFEHOME_PLATFORMS
 
 # ILIFE Clean cleaning history: how many stored maps (one per clean) to list.
 HISTORY_SIZE = 10
+
+# ILIFE Clean local (LAN) control: Tuya protocol 3.3 only.
+LOCAL_PROTOCOL = "3.3"
+# While the LAN link is up the cloud is read only for history and product properties.
+LOCAL_POLL = timedelta(seconds=300)
+CLOUD_POLL = timedelta(seconds=30)
+# Look for the robot again after this many failed connection attempts in a row,
+# and never more often than this.
+REDISCOVER_AFTER_FAILURES = 3
+REDISCOVER_EVERY = 120
+# Setup with no status at all (cloud down, nothing cached): how long to wait for the
+# robot's answer over the LAN before the platforms build their entities.
+FIRST_LOCAL_WAIT = 10
 
 CARD_URL = "/ilife_cards/ilife-vacuum-card.js"
 CARD_FILENAME = "ilife-vacuum-card.js"
@@ -186,21 +215,27 @@ class ILifeCoordinator(DataUpdateCoordinator):
 class ILifeTuyaCoordinator(DataUpdateCoordinator):
     """Polls one ILIFE Clean (Tuya) vacuum's status: {dp_code: value}."""
 
-    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, device: TuyaVacuum) -> None:
+    def __init__(self, hass: HomeAssistant, entry: ConfigEntry, device: TuyaVacuum,
+                 cache: DeviceCache | None = None) -> None:
         super().__init__(
             hass, _LOGGER, name=f"{DOMAIN}_{device.device_id}",
             update_interval=timedelta(seconds=30), config_entry=entry,
         )
         self.api = device
-        self.online: bool | None = None
+        # Last good cloud answers, for a restart while the cloud is unreachable.
+        self.cache = cache
+        self._cloud_online: bool | None = None
         self.spec: dict = {}
         self.spec_functions: dict = {}
         self._spec_loaded = False
         # Product DPs outside the standard instruction set (see tuya_rooms). They
         # change only when the map is edited in the app, so they are read slowly.
         self.model: dict[str, dict] = {}
+        self.model_raw: dict = {}
         self.properties: dict[str, Any] = {}
         self.room_names: dict[int, str] = {}
+        # Room ids on the decoded map, published by the map camera once it renders.
+        self.map_rooms: dict[int, str] = {}
         self._properties_next = 0.0
         # Cleaning history: one stored map per clean (A30 Pro), newest first, in the
         # card's "cleans" shape; start, area and duration come from each record.
@@ -210,10 +245,37 @@ class ILifeTuyaCoordinator(DataUpdateCoordinator):
         self._history_next = _time.monotonic() + 30
         self._history_fast_until = 0.0
         self._was_cleaning = False
+        # LAN link (Tuya local protocol 3.3), started after the first refresh.
+        self.local: TuyaLocalLink | None = None
+        self._dpmap: DpMap | None = None
+        self._model_codes: set[str] = set()
+        self._standard_codes: set[str] = set()
+        self._local_closing = False
+        self._discovering = False
+        self._discover_next = 0.0
+        self._local_refused = False
+        # Set by the first local status, for a setup that has nothing else.
+        self.first_local_status = asyncio.Event()
+        self._status_saved_at: float | None = None
+
+    @property
+    def local_connected(self) -> bool:
+        return bool(self.local is not None and self.local.connected)
+
+    @property
+    def online(self) -> bool | None:
+        """Reachable: the LAN link is up, else what the cloud says."""
+        return True if self.local_connected else self._cloud_online
 
     @property
     def supports_room_clean(self) -> bool:
         return CLEAN_ROOMS_CODE in self.properties
+
+    @property
+    def supports_zone_clean(self) -> bool:
+        # dp 139 reads back empty, so it may be missing from the properties while
+        # the thing model still has it.
+        return CLEAN_ZONE_CODE in self.properties or CLEAN_ZONE_CODE in self._model_codes
 
     @property
     def schedules(self) -> dict[int, dict]:
@@ -309,17 +371,241 @@ class ILifeTuyaCoordinator(DataUpdateCoordinator):
         return (self.model.get(code) or {}).get("range") or range_values(
             self.spec_functions, code)
 
-    async def async_write(self, code: str, value) -> None:
-        """Write one DP by the standard command when the spec covers it, else through
-        the thing model (e.g. suction "closed", which /specifications leaves out)."""
+    def _is_standard_command(self, code: str, value) -> bool:
         spec_range = range_values(self.spec_functions, code)
-        if code in self.spec_functions and (not spec_range or value in spec_range):
-            await self.hass.async_add_executor_job(self.api.send, code, value)
-        else:
-            await self.hass.async_add_executor_job(self.api.issue_properties, {code: value})
+        return code in self.spec_functions and (not spec_range or value in spec_range)
+
+    async def async_send(self, commands: list[dict]) -> None:
+        """Send [{code, value}] as one instruction: over the LAN when the link is up
+        (one frame: the robot needs pause/mode/switch_go together), else, or when a
+        code has no dp id or the LAN send fails, through the cloud."""
+        if await self._async_send(commands):
+            await self.async_request_refresh()
+
+    async def _async_send(self, commands: list[dict]) -> bool:
+        """True when it went through the cloud (whose status must be re-read)."""
+        if self.local_connected and self._dpmap is not None:
+            dps: dict[str, Any] | None = {}
+            for command in commands:
+                dp = self._dpmap.dp_for(command["code"])
+                if dp is None:
+                    dps = None
+                    break
+                dps[dp] = command["value"]
+            if dps:
+                try:
+                    await self.local.set_dps(dps)
+                except TuyaLocalError as err:
+                    _LOGGER.debug("ILIFE Clean local send failed (%s); using the cloud", err)
+                else:
+                    return False
+        # Standard commands by the instruction set; the rest through the thing model
+        # (e.g. suction "closed", which /specifications leaves out).
+        standard = [c for c in commands if self._is_standard_command(c["code"], c["value"])]
+        product = {c["code"]: c["value"] for c in commands
+                   if not self._is_standard_command(c["code"], c["value"])}
+        if standard:
+            await self.hass.async_add_executor_job(self.api.send_many, standard)
+        if product:
+            await self.hass.async_add_executor_job(self.api.issue_properties, product)
+        return True
+
+    async def async_write(self, code: str, value) -> None:
+        """Write one DP (see async_send)."""
+        via_cloud = await self._async_send([{"code": code, "value": value}])
+        if not self._is_standard_command(code, value):
             self.properties[code] = value
             self._properties_next = 0.0
-        await self.async_request_refresh()
+        if via_cloud:
+            await self.async_request_refresh()
+
+    # -- local (LAN) link ----------------------------------------------------
+
+    def _on_local_dps(self, dps: dict[str, Any]) -> None:
+        """A local push or query answer: {dp id: value}."""
+        if self._local_closing or self._dpmap is None:
+            return
+        update = split_local_dps(dps, self._dpmap)
+        if not update:
+            return
+        status, properties = apply_local_dps(
+            self.data, self.properties, update, self._model_codes, self._standard_codes)
+        self.properties = properties
+        if any(code in ROOM_INFO_CODES for code in update):
+            self._set_room_names()
+        was_cleaning = self._was_cleaning
+        self._watch_run_end(status)
+        # Not async_set_updated_data: that reschedules the poll on every push, and a
+        # chatty robot would starve the cloud history/properties refresh for good.
+        self.data = status
+        self.last_update_success = True
+        self.first_local_status.set()
+        self.async_update_listeners()
+        self._maybe_save_status(status)
+        if was_cleaning and not self._was_cleaning:
+            self.hass.async_create_task(self.async_request_refresh())
+
+    def _on_local_state(self, up: bool) -> None:
+        if self._local_closing:
+            return
+        if up:
+            _LOGGER.info("ILIFE Clean %s: local link connected (%s)",
+                         self.api.device_id, self.local.host if self.local else "?")
+            self.update_interval = LOCAL_POLL
+        else:
+            _LOGGER.debug("ILIFE Clean %s: local link down, polling the cloud",
+                          self.api.device_id)
+            self.update_interval = CLOUD_POLL
+            self.hass.async_create_task(self.async_request_refresh())
+        self.async_update_listeners()
+
+    def _local_wanted(self) -> bool:
+        entry = self.config_entry
+        return bool(
+            entry is not None and entry.options.get(CONF_LOCAL, True)
+            and not self._local_refused and not self._local_closing
+            and self._dpmap is not None
+            and self.cache is not None and self.cache.get(self.api.device_id).get("local_key")
+        )
+
+    async def _async_find_host(self) -> tuple[str, str] | None:
+        """(host, version) from the robot's UDP broadcast; never the cloud's `ip`,
+        which is the device's public address."""
+        self._discover_next = _time.monotonic() + REDISCOVER_EVERY
+        return await discover_device(self.api.device_id, timeout=10)
+
+    def _refuse_protocol(self, version: str) -> None:
+        self._local_refused = True
+        _LOGGER.warning("ILIFE Clean %s: local protocol %s is not supported (only %s); "
+                        "staying on the cloud", self.api.device_id, version, LOCAL_PROTOCOL)
+
+    async def async_start_local(self) -> None:
+        """Start the LAN link: host from the option, else the cache, else discovery."""
+        if self.local is not None or self._discovering or not self._local_wanted():
+            return
+        self._discovering = True
+        try:
+            record = self.cache.get(self.api.device_id)
+            option_host = self.config_entry.options.get("host") or None
+            host = option_host or record.get("host") or None
+            if not host:
+                found = await self._async_find_host()
+                if not found:
+                    _LOGGER.debug("ILIFE Clean %s: not found on the LAN yet",
+                                  self.api.device_id)
+                    return
+                host, version = found
+                if version != LOCAL_PROTOCOL:
+                    self._refuse_protocol(version)
+                    return
+                await self._async_cache(host=host)
+            if not self._local_wanted() or self.local is not None:
+                return
+            # Protocol 3.3 assumed for a configured or cached host: the link only
+            # reports connected once a 3.3 query is answered.
+            self.local = TuyaLocalLink(
+                self.api.device_id, record["local_key"], host,
+                self._on_local_dps, self._on_local_state)
+            await self.local.start()
+        finally:
+            self._discovering = False
+
+    async def _async_rediscover(self) -> None:
+        """The link keeps failing: the robot may have a new address."""
+        self._discovering = True
+        try:
+            found = await self._async_find_host()
+        finally:
+            self._discovering = False
+        if not found or self.local is None or self._local_closing:
+            return
+        host, version = found
+        if version != LOCAL_PROTOCOL:
+            self._refuse_protocol(version)
+            await self.async_stop_local()
+            return
+        if host != self.local.host:
+            _LOGGER.info("ILIFE Clean %s: robot moved to %s on the LAN",
+                         self.api.device_id, host)
+            self.local.host = host
+            self.local.failures = 0
+            await self._async_cache(host=host)
+
+    def _maybe_start_local(self) -> None:
+        """From the poll: start the link if it is not up, rediscover if it fails."""
+        if self._discovering or _time.monotonic() < self._discover_next:
+            return
+        entry = self.config_entry
+        if self.local is None:
+            if self._local_wanted():
+                entry.async_create_background_task(
+                    self.hass, self.async_start_local(), f"{DOMAIN} local start")
+        elif (not self.local.connected and not self.config_entry.options.get("host")
+              and self.local.failures >= REDISCOVER_AFTER_FAILURES):
+            entry.async_create_background_task(
+                self.hass, self._async_rediscover(), f"{DOMAIN} local rediscover")
+
+    async def async_stop_local(self) -> None:
+        link, self.local = self.local, None
+        if link is not None:
+            await link.stop()
+        self.update_interval = CLOUD_POLL
+
+    async def async_shutdown_local(self) -> None:
+        """Unload: stop() fires on_state(False), which must not schedule a refresh."""
+        self._local_closing = True
+        link, self.local = self.local, None
+        if link is not None:
+            await link.stop()
+
+    def _maybe_save_status(self, status: dict[str, Any]) -> None:
+        """Keep the last status for a restart without the cloud (see tuya_cache)."""
+        if self.cache is None or self._local_closing:
+            return
+        now = _time.monotonic()
+        if not status_save_due(self.cache.get(self.api.device_id).get("status"),
+                               status, self._status_saved_at, now):
+            return
+        self._status_saved_at = now
+        self.hass.async_create_task(self._async_cache(status=dict(status)))
+
+    def set_map_rooms(self, rooms: dict[int, str]) -> None:
+        """From the map camera: the rooms on the decoded map, kept for a restart so
+        area cleaning has its segments before the camera renders again."""
+        rooms = dict(rooms or {})
+        if rooms == self.map_rooms:
+            return
+        self.map_rooms = rooms
+        if rooms:
+            self.hass.async_create_task(
+                self._async_cache(map_rooms=map_rooms_to_cache(rooms)))
+
+    def seed_from_cache(self) -> bool:
+        """No status yet (first refresh failed): start from the cached one."""
+        if self.data is not None or self.cache is None:
+            return False
+        seeded = seed_status(self.cache.get(self.api.device_id).get("status"))
+        if seeded is None:
+            return False
+        _LOGGER.info("ILIFE Clean %s: cloud unavailable, starting from the last "
+                     "known status", self.api.device_id)
+        self.data = seeded
+        return True
+
+    def _set_room_names(self) -> None:
+        try:
+            self.room_names = parse_room_names(self.properties)
+        except Exception:  # noqa: BLE001 — names are cosmetic, keep the old ones
+            _LOGGER.debug("ILIFE Clean room names unreadable", exc_info=True)
+
+    async def _async_cache(self, **fresh) -> None:
+        """Persist fresh cloud answers; a storage failure never fails the poll."""
+        if self.cache is None:
+            return
+        try:
+            await self.cache.async_update(self.api.device_id, **fresh)
+        except Exception:  # noqa: BLE001
+            _LOGGER.debug("ILIFE Clean cache not saved", exc_info=True)
 
     async def _async_update_properties(self) -> None:
         if _time.monotonic() < self._properties_next:
@@ -330,32 +616,89 @@ class ILifeTuyaCoordinator(DataUpdateCoordinator):
         except (TuyaError, AttributeError, TypeError):
             _LOGGER.debug("ILIFE Clean product properties unavailable", exc_info=True)
             return
+        self._set_room_names()
+        await self._async_cache(properties=dict(self.properties) or None)
+
+    async def _async_load_spec(self) -> None:
+        """Specification, thing model and last properties, once per setup: from the
+        cloud, else from the cache, so a restart offline keeps every feature."""
+        cached = self.cache.get(self.api.device_id) if self.cache is not None else {}
+        spec = model_raw = None
         try:
-            self.room_names = parse_room_names(self.properties)
-        except Exception:  # noqa: BLE001 — names are cosmetic, keep the old ones
-            _LOGGER.debug("ILIFE Clean room names unreadable", exc_info=True)
+            spec = await self.hass.async_add_executor_job(self.api.specification)
+        except TuyaError:
+            _LOGGER.debug("ILIFE Clean specification unavailable", exc_info=True)
+        try:
+            model_raw = await self.hass.async_add_executor_job(self.api.model_raw)
+        except (TuyaError, AttributeError, TypeError):
+            _LOGGER.debug("ILIFE Clean thing model unavailable", exc_info=True)
+        if (not spec or not model_raw) and cached:
+            _LOGGER.info("ILIFE Clean %s: cloud specification/model unavailable, "
+                         "using the cached copy", self.api.device_id)
+        cached_spec, cached_model = cached.get("spec"), cached.get("model_raw")
+        self.spec = pick(spec, cached_spec if isinstance(cached_spec, dict) else None)
+        self.spec_functions = parse_functions(self.spec)
+        self.model_raw = pick(model_raw, cached_model if isinstance(cached_model, dict) else None)
+        try:
+            self.model = parse_thing_model(self.model_raw)
+        except (AttributeError, TypeError):
+            _LOGGER.debug("ILIFE Clean thing model unreadable", exc_info=True)
+            self.model = {}
+        try:
+            dpmap = DpMap.from_model(self.model_raw)
+        except Exception:  # noqa: BLE001 — local control is optional
+            _LOGGER.debug("ILIFE Clean dp map unreadable", exc_info=True)
+            dpmap = DpMap({})
+        self._dpmap = dpmap if dpmap.to_dict() else None
+        self._model_codes = set(dpmap.to_dict().values())
+        self._standard_codes = set(self.spec_functions) | {
+            s.get("code") for s in self.spec.get("status") or []
+            if isinstance(s, dict) and s.get("code")}
+        if not self.properties and isinstance(cached.get("properties"), dict):
+            # Replaced by the cloud read that follows when the cloud answers.
+            self.properties = dict(cached["properties"])
+            self._set_room_names()
+        if not self.map_rooms:
+            # Replaced when the map camera renders.
+            self.map_rooms = map_rooms_from_cache(cached.get("map_rooms"))
+        await self._async_cache(spec=spec or None, model_raw=model_raw or None)
 
     async def _async_update_data(self) -> dict[str, Any]:
         if not self._spec_loaded:
-            try:
-                self.spec = await self.hass.async_add_executor_job(self.api.specification)
-                self.spec_functions = parse_functions(self.spec)
-            except TuyaError:
-                _LOGGER.debug("ILIFE Clean specification unavailable", exc_info=True)
-                self.spec = {}
-            try:
-                self.model = await self.hass.async_add_executor_job(self.api.model)
-            except (TuyaError, AttributeError, TypeError):
-                _LOGGER.debug("ILIFE Clean thing model unavailable", exc_info=True)
+            await self._async_load_spec()
             self._spec_loaded = True
         await self._async_update_properties()
+        if self.local_connected:
+            # Status comes from local pushes; the cloud only for what it alone has.
+            # Nothing here may fail the update: the entities are fine over the LAN.
+            try:
+                await self._async_update_history()
+            except Exception:  # noqa: BLE001
+                _LOGGER.debug("ILIFE Clean history update failed", exc_info=True)
+            fast = _time.monotonic() < self._history_fast_until
+            self.update_interval = timedelta(seconds=60) if fast else LOCAL_POLL
+            return dict(self.data or {})
+        self.update_interval = CLOUD_POLL
+        self._maybe_start_local()
         try:
             detail = await self.hass.async_add_executor_job(self.api.detail)
         except TuyaError as err:
+            # Entities are built from the codes in `data`: a restart with the cloud
+            # down starts from the last status kept, so none goes missing.
+            self.seed_from_cache()
             raise UpdateFailed(str(err)) from err
-        self.online = detail.get("online")
+        local_key = detail.get("local_key")
+        if (isinstance(local_key, str) and local_key
+                and self.config_entry is not None
+                and self.config_entry.options.get(CONF_LOCAL, True)):
+            await self._async_cache(local_key=local_key)
+        self._cloud_online = detail.get("online")
+        if self.local_connected:
+            # The link came up during the call: its pushes are fresher.
+            return dict(self.data or {})
         status = {s["code"]: s.get("value") for s in detail.get("status") or [] if s.get("code")}
         self._watch_run_end(status)
+        self._maybe_save_status(status)
         try:
             await self._async_update_history()
         except Exception:  # noqa: BLE001 — the history must never fail the status poll
@@ -420,12 +763,31 @@ async def _async_setup_ilife_clean_entry(hass: HomeAssistant, entry: ConfigEntry
         entry.data[CONF_ACCESS_ID], entry.data[CONF_ACCESS_SECRET],
         entry.data[CONF_UID], entry.data.get(CONF_REGION, "eu"),
     )
+    cache = DeviceCache(hass, entry.entry_id)
+    try:
+        await cache.load()
+    except Exception:  # noqa: BLE001 — a broken cache file must not block setup
+        _LOGGER.warning("ILIFE Clean: device cache unreadable, ignoring it", exc_info=True)
     try:
         devices = await hass.async_add_executor_job(client.list_devices)
     except TuyaAuthError as err:
         raise ConfigEntryAuthFailed(str(err)) from err
-    except TuyaError as err:
+    except TuyaNoDevicesError as err:
+        # The cloud answered: nothing is bound. Not an outage, so no cached devices.
         raise ConfigEntryNotReady(str(err)) from err
+    except TuyaError as err:
+        devices = cache.devices()
+        if not devices:
+            raise ConfigEntryNotReady(str(err)) from err
+        _LOGGER.warning("ILIFE Clean: cloud unreachable (%s); setting up %d cached "
+                        "device(s)", err, len(devices))
+    else:
+        for dev in devices:
+            if dev.get("id"):
+                try:
+                    await cache.async_update(dev["id"], device=dev)
+                except Exception:  # noqa: BLE001
+                    _LOGGER.debug("ILIFE Clean cache not saved", exc_info=True)
 
     vacuums = [d for d in devices if d.get("category") == TUYA_CATEGORY_VACUUM]
     if not vacuums:
@@ -446,12 +808,32 @@ async def _async_setup_ilife_clean_entry(hass: HomeAssistant, entry: ConfigEntry
 
     coordinators: dict[str, ILifeTuyaCoordinator] = {}
     for dev in vacuums:
-        coordinator = ILifeTuyaCoordinator(hass, entry, TuyaVacuum(client, dev))
+        coordinator = ILifeTuyaCoordinator(hass, entry, TuyaVacuum(client, dev), cache)
         await coordinator.async_refresh()
         coordinators[dev["id"]] = coordinator
+        # In the background: discovery can take a few seconds.
+        entry.async_create_background_task(
+            hass, coordinator.async_start_local(), f"{DOMAIN} local start {dev['id']}")
     if not coordinators:
         raise ConfigEntryNotReady("no device set up")
+    for coordinator in coordinators.values():
+        # Nothing from the cloud and nothing cached: the entities are built from
+        # the status codes, so give the LAN a moment to answer first.
+        if coordinator.data is None and coordinator._local_wanted():
+            try:
+                async with asyncio.timeout(FIRST_LOCAL_WAIT):
+                    await coordinator.first_local_status.wait()
+            except TimeoutError:
+                _LOGGER.debug("ILIFE Clean %s: no local status within %ss",
+                              coordinator.api.device_id, FIRST_LOCAL_WAIT)
     _async_remove_replaced_generic_entities(hass, entry, coordinators)
+
+    async def _async_stop_local(_event) -> None:
+        for coordinator in coordinators.values():
+            await coordinator.async_shutdown_local()
+
+    entry.async_on_unload(
+        hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STOP, _async_stop_local))
 
     hass.data.setdefault(DOMAIN, {})[entry.entry_id] = {
         "backend": BACKEND_ILIFE_CLEAN, "client": client, "coordinators": coordinators,
@@ -470,14 +852,24 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     await _async_register_frontend(hass)
     platforms = hass.data[DOMAIN][entry.entry_id]["platforms"]
     await hass.config_entries.async_forward_entry_setups(entry, platforms)
+    if entry.data.get(CONF_BACKEND) == BACKEND_ILIFE_CLEAN:
+        entry.async_on_unload(entry.add_update_listener(_async_options_updated))
     return True
 
 
+async def _async_options_updated(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Apply changed LAN options by reloading the entry."""
+    await hass.config_entries.async_reload(entry.entry_id)
+
+
 async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
-    platforms = (hass.data.get(DOMAIN, {}).get(entry.entry_id) or {}).get(
-        "platforms", ILIFEHOME_PLATFORMS)
+    store = hass.data.get(DOMAIN, {}).get(entry.entry_id) or {}
+    platforms = store.get("platforms", ILIFEHOME_PLATFORMS)
     unloaded = await hass.config_entries.async_unload_platforms(entry, platforms)
     if unloaded:
+        for coordinator in (store.get("coordinators") or {}).values():
+            if isinstance(coordinator, ILifeTuyaCoordinator):
+                await coordinator.async_shutdown_local()
         hass.data[DOMAIN].pop(entry.entry_id, None)
         # keep the '_card_*' flags; only drop DOMAIN when no entries remain
         if not any(isinstance(v, dict) and "coordinators" in v
@@ -485,6 +877,20 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             for k in ("_card_served", "_card_registered"):
                 hass.data.get(DOMAIN, {}).pop(k, None)
     return unloaded
+
+
+async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
+    """Drop the ILIFE Clean device cache: it holds the robot's local key."""
+    if entry.data.get(CONF_BACKEND) != BACKEND_ILIFE_CLEAN:
+        return
+    from homeassistant.helpers.storage import Store
+
+    from .tuya_cache import STORAGE_VERSION
+
+    try:
+        await Store(hass, STORAGE_VERSION, f"ilife.{entry.entry_id}").async_remove()
+    except Exception:  # noqa: BLE001
+        _LOGGER.debug("ILIFE Clean device cache not removed", exc_info=True)
 
 
 async def async_remove_config_entry_device(

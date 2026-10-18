@@ -10,6 +10,7 @@ Pure functions, no Home Assistant and no network: the transport is replaced.
 from __future__ import annotations
 
 import importlib.util
+import json
 import pathlib
 import sys
 import types
@@ -56,3 +57,29 @@ def test_other_endpoints_keep_the_setup_hint(client):
     with pytest.raises(tuya_api.TuyaAuthError) as caught:
         client.device_detail("device")
     assert "Smart Home Basic Service" in str(caught.value)
+
+
+def test_device_model_raw_returns_parsed_model_and_device_model_flattens_it(monkeypatch):
+    raw = {"services": [{"properties": [{"abilityId": 1, "code": "switch_go",
+                                          "accessMode": "rw", "typeSpec": {"type": "bool"}}]}]}
+    reply = {"success": True, "result": {"model": json.dumps(raw)}}
+    monkeypatch.setattr(tuya_api, "_do", lambda *args: reply)
+    tuya = tuya_api.TuyaClient("access-id", "access-secret", "uid")
+    tuya._token, tuya._token_expiry = "token", float("inf")
+    assert tuya.device_model_raw("dev") == raw
+    assert tuya.device_model("dev") == {"switch_go": {"type": "bool", "access": "rw"}}
+    reply["result"]["model"] = "[1]"
+    with pytest.raises(tuya_api.TuyaError):
+        tuya.device_model_raw("dev")
+
+
+@pytest.mark.parametrize("error", [TimeoutError("timed out"), ConnectionResetError(54, "reset")])
+def test_bare_timeout_or_socket_error_is_a_tuya_error(monkeypatch, error):
+    # Not wrapped in URLError by urllib: must still be a TuyaError, so an offline
+    # setup falls back to the device cache instead of failing.
+    def boom(*args, **kwargs):
+        raise error
+
+    monkeypatch.setattr(tuya_api.urllib.request, "urlopen", boom)
+    with pytest.raises(tuya_api.TuyaError):
+        tuya_api._do("openapi.tuyaeu.com", "GET", "/v1.0/token", {}, None)

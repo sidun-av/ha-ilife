@@ -213,6 +213,9 @@ def _do(host, method, path, headers, body_bytes):
         raw = e.read()
     except urllib.error.URLError as e:
         raise TuyaError(f"network error: {e}") from e
+    except (TimeoutError, OSError) as e:
+        # A timeout or reset while reading is not wrapped in URLError.
+        raise TuyaError(f"network error: {e}") from e
     try:
         return json.loads(raw)
     except Exception as e:
@@ -235,6 +238,24 @@ def parse_record_extend(extend: object) -> dict | None:
     except ValueError:
         return None
     return {"started": started, "area": int(fields[3]), "duration": int(fields[4])}
+
+
+def parse_thing_model(model: dict) -> dict:
+    """{code: {"type", "access", "range"|"min"|"max"...}} from a raw thing model."""
+    out = {}
+    for service in (model or {}).get("services") or []:
+        if not isinstance(service, dict):
+            continue
+        for prop in service.get("properties") or []:
+            if not isinstance(prop, dict):
+                continue
+            code = prop.get("code")
+            if code:
+                out[code] = {
+                    **(prop.get("typeSpec") or {}),
+                    "access": prop.get("accessMode"),
+                }
+    return out
 
 
 class TuyaClient:
@@ -340,13 +361,8 @@ class TuyaClient:
             if isinstance(item, dict) and item.get("code")
         }
 
-    def device_model(self, device_id: str) -> dict:
-        """The product's thing model: {code: {"type", "access", "range"|"min"|"max"...}}.
-
-        Wider than /specifications, which only covers the standard instruction set:
-        on the A30 Pro it is the one place that says suction and water accept
-        "closed", and what `cleaning_efficiency` can be set to.
-        """
+    def device_model_raw(self, device_id: str) -> dict:
+        """The parsed thing-model JSON (`services[].properties[]`, with `abilityId`)."""
         self.authenticate()
         result = self._call(
             "GET", f"/v2.0/cloud/thing/{urllib.parse.quote(device_id)}/model"
@@ -359,20 +375,16 @@ class TuyaClient:
             raise TuyaError("unexpected thing model response") from err
         if not isinstance(model, dict):
             raise TuyaError("unexpected thing model response")
-        out = {}
-        for service in model.get("services") or []:
-            if not isinstance(service, dict):
-                continue
-            for prop in service.get("properties") or []:
-                if not isinstance(prop, dict):
-                    continue
-                code = prop.get("code")
-                if code:
-                    out[code] = {
-                        **(prop.get("typeSpec") or {}),
-                        "access": prop.get("accessMode"),
-                    }
-        return out
+        return model
+
+    def device_model(self, device_id: str) -> dict:
+        """The product's thing model: {code: {"type", "access", "range"|"min"|"max"...}}.
+
+        Wider than /specifications, which only covers the standard instruction set:
+        on the A30 Pro it is the one place that says suction and water accept
+        "closed", and what `cleaning_efficiency` can be set to.
+        """
+        return parse_thing_model(self.device_model_raw(device_id))
 
     def issue_properties(self, device_id: str, properties: dict) -> None:
         """Write product DPs by code — the way to reach non-standard DPs."""
@@ -529,6 +541,9 @@ class TuyaVacuum:
 
     def model(self) -> dict:
         return self.client.device_model(self.device_id)
+
+    def model_raw(self) -> dict:
+        return self.client.device_model_raw(self.device_id)
 
     def issue_properties(self, properties: dict) -> None:
         self.client.issue_properties(self.device_id, properties)
