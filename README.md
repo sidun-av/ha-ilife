@@ -494,6 +494,11 @@ removed this way (they would just come back on the next refresh).
   speeds, setup and options flow). The ILIFEHOME selects keep their app labels
   (Gentle / Standard / S‑shape…), which Home Assistant can't key a translation on.
 
+## Contributing
+
+Tests run offline, in two tiers (pure Python, and inside Home Assistant): see
+[CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

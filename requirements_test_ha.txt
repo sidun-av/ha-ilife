@@ -1,0 +1,4 @@
+# The Home Assistant test tier (tests/ha), on Python 3.13. The plugin pins a
+# matching homeassistant release (0.13.316 = Home Assistant 2026.2.3) and pulls
+# pytest, pytest-asyncio and the rest. See CONTRIBUTING.md.
+pytest-homeassistant-custom-component==0.13.316
