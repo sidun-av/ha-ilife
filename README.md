@@ -286,6 +286,86 @@ never coming. "Downloaded but could not be decoded" means the map arrived in a
 shape the decoder does not know: please open an issue with the diagnostics file,
 which describes the map file without including the floor plan.
 
+## Local control (ILIFE Clean)
+
+Newer ILIFE Clean robots (Tuya-based) are controlled **over your local network**
+in this fork, using Tuya's LAN protocol 3.3. Commands (start, pause, dock, suction,
+rooms, zones...) and state updates go straight between Home Assistant and the robot:
+they are fast, and they keep working when the internet is down. **It is on by default.**
+
+**What runs where**
+
+| Local (LAN) | Needs the cloud |
+|-------------|-----------------|
+| Start / pause / stop / dock, fan speed, volume, room and zone cleaning | First setup (login, device list and the robot's local key) |
+| Live state: status, battery, errors | The map and the cleaning history |
+| Reconnects by itself, falling back to the cloud while the LAN link is down | Schedules and the thing-model properties are still read from the cloud |
+
+**Discovery and host.** The robot is found automatically from its UDP broadcast
+(ports 6666/6667) and its address is remembered. If discovery cannot work on your
+network (VLANs, no broadcast), set **Vacuum IP address** in the integration options.
+Only protocol 3.3 is supported; other versions stay on the cloud.
+
+**Options.** *Settings -> Devices & services -> ILIFE Vacuum -> Configure*:
+**Control over the local network** (turn it off to use the cloud only) and
+**Vacuum IP address** (leave empty for automatic discovery).
+
+**Reserve the robot's address.** Give the robot a fixed DHCP lease in your router
+so the address does not change. If it does, the integration rediscovers it, but a
+reservation avoids the gap.
+
+**Offline behaviour.** The last good cloud answers (device, features, properties,
+status, room names) are cached in `.storage`, so Home Assistant can start and control
+the robot with no internet. The map still comes from the cloud, but the **last rendered
+map is kept** (a PNG in `.storage` plus its calibration) and the map camera keeps
+showing it, also right after a restart, until the cloud is back. One line in the log,
+"cloud unreachable, showing last map", marks the outage.
+
+**Privacy.** The robot's local key is stored in Home Assistant's `.storage` (the
+device cache) and is redacted in the diagnostics file. Removing the integration
+deletes the cache and the saved map.
+
+### Zone cleaning
+
+`ilife.clean_zone` cleans one or more rectangles (up to 5), given as
+`[x1, y1, x2, y2]` in map cells of the robot's frame (y up), with `repeats` of 1 or 2.
+The camera exposes the matching `calibration_points` and `rooms` in its attributes,
+which is what [xiaomi-vacuum-map-card](https://github.com/PiotrMachowski/lovelace-xiaomi-vacuum-map-card)
+needs to turn a rectangle drawn on the map into those coordinates:
+
+```yaml
+type: custom:xiaomi-vacuum-map-card
+entity: vacuum.robot
+map_source:
+  camera: camera.robot_map
+calibration_source:
+  camera: true
+map_modes:
+  - name: Zone cleaning
+    icon: mdi:select-drag
+    selection_type: MANUAL_RECTANGLE
+    max_selections: 5
+    repeats_type: INTERNAL
+    max_repeats: 2
+    service_call_schema:
+      service: ilife.clean_zone
+      service_data:
+        entity_id: "[[entity_id]]"
+        zone: "[[selection]]"
+        repeats: "[[repeats]]"
+```
+
+Adapt the `zone` template to your card version if it wraps the selection differently;
+`ilife.clean_zone` expects a list of `[x1, y1, x2, y2]`.
+
+### Cleaning by Home Assistant area
+
+On Home Assistant versions that support it, the vacuum offers native **area
+cleaning**: the rooms of the robot's map are its segments. Map them to your areas in
+the vacuum's entity settings (*Configure clean areas*), then use `vacuum.clean_area`
+with an HA area. The room list comes from the map, so it needs a map to have been
+rendered once (it is cached afterwards).
+
 ## Rooms, programs and schedules (ILIFE Clean)
 
 Laser models that keep rooms store them in product data points outside the

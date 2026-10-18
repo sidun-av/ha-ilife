@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import time as _time  # aliased: a sibling submodule is named time.py (TimeEntity platform)
 from datetime import timedelta
 from typing import Any
@@ -885,10 +886,26 @@ async def async_remove_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
         return
     from homeassistant.helpers.storage import Store
 
-    from .tuya_cache import STORAGE_VERSION
+    from .tuya_cache import STORAGE_VERSION, map_file_name
+
+    store = Store(hass, STORAGE_VERSION, f"ilife.{entry.entry_id}")
+    try:
+        cached = await store.async_load()
+    except Exception:  # noqa: BLE001
+        cached = None
+    paths = [hass.config.path(".storage", map_file_name(device_id))
+             for device_id in (cached if isinstance(cached, dict) else {})]
+
+    def _remove_maps() -> None:
+        for path in paths:
+            try:
+                os.remove(path)
+            except OSError:
+                pass
 
     try:
-        await Store(hass, STORAGE_VERSION, f"ilife.{entry.entry_id}").async_remove()
+        await hass.async_add_executor_job(_remove_maps)
+        await store.async_remove()
     except Exception:  # noqa: BLE001
         _LOGGER.debug("ILIFE Clean device cache not removed", exc_info=True)
 

@@ -7,13 +7,20 @@ good cloud answers are kept in an HA `Store`, one record per device:
     {device_id: {"device": {...list_devices entry...}, "spec": {...},
                  "model_raw": {...}, "properties": {...},
                  "local_key": str, "host": str, "status": {...last status...},
-                 "map_rooms": {"<room id>": "<label>"}}}
+                 "map_rooms": {"<room id>": "<label>"},
+                 "last_map_meta": {calibration_points, map_scale, rooms,
+                                   png_sha256}}}
+
+The last rendered map PNG itself is a file next to the Store
+(`.storage/ilife_map_<device id>.png`, see `map_file_name`).
 
 `merge_cache` and `pick` are pure (unit-tested without Home Assistant); `DeviceCache`
 imports HA only when constructed. The local key is never logged.
 """
 from __future__ import annotations
 
+import hashlib
+import re
 from typing import Any
 
 STORAGE_VERSION = 1
@@ -72,6 +79,46 @@ def map_rooms_from_cache(cached: Any) -> dict[int, str]:
         except (TypeError, ValueError):
             continue
     return out
+
+
+def map_file_name(device_id: str) -> str:
+    """File name (in `.storage`) of a device's last rendered map PNG."""
+    return "ilife_map_" + re.sub(r"[^A-Za-z0-9_-]", "_", str(device_id)) + ".png"
+
+
+def map_meta_to_cache(meta: dict | None, png: bytes) -> dict:
+    """The render metadata worth keeping with the cached PNG (JSON-safe)."""
+    meta = meta or {}
+    return {
+        "calibration_points": meta.get("calibration_points") or [],
+        "map_scale": meta.get("map_scale"),
+        "rooms": map_rooms_to_cache(meta.get("rooms") or {}),
+        "png_sha256": hashlib.sha256(png).hexdigest(),
+    }
+
+
+def map_meta_from_cache(cached: Any) -> dict | None:
+    """Render metadata back from the cache (rooms with int ids), None if unusable."""
+    if not isinstance(cached, dict) or not cached.get("png_sha256"):
+        return None
+    meta = {k: v for k, v in cached.items() if k != "png_sha256"}
+    meta["rooms"] = map_rooms_from_cache(cached.get("rooms"))
+    return meta
+
+
+def map_persist_due(cached: Any, png: bytes | None) -> bool:
+    """Whether `png` differs from the one the cached metadata describes."""
+    if not png:
+        return False
+    if not isinstance(cached, dict):
+        return True
+    return cached.get("png_sha256") != hashlib.sha256(png).hexdigest()
+
+
+def is_network_error(err: BaseException) -> bool:
+    """A cloud call that failed because the cloud could not be reached at all."""
+    text = str(err)
+    return text.startswith("network error") or text.startswith("map file download failed")
 
 
 class DeviceCache:

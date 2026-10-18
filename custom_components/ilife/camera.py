@@ -4,6 +4,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import logging
+import os
 import time
 from functools import partial
 
@@ -22,6 +23,13 @@ from .const import (
 from .entity import device_info
 from .map import render_png
 from .tuya_api import TuyaError
+from .tuya_cache import (
+    is_network_error,
+    map_file_name,
+    map_meta_from_cache,
+    map_meta_to_cache,
+    map_persist_due,
+)
 from .tuya_entity import tuya_device_info
 from .tuya_dynamic import enum_command
 from .tuya_map import render_tuya_map_png
@@ -41,6 +49,21 @@ ISSUES_URL = "https://github.com/maximedeprince/ha-ilife/issues"
 # coordinator tick — otherwise their owners get a cloud call and a traceback every
 # 30s for a map that is never coming.
 TUYA_MAP_RETRY_BACKOFF = (30, 60, 300, 900, 3600)
+
+
+def _read_file(path: str) -> bytes | None:
+    try:
+        with open(path, "rb") as handle:
+            return handle.read() or None
+    except OSError:
+        return None
+
+
+def _write_file(path: str, data: bytes) -> None:
+    tmp = path + ".tmp"
+    with open(tmp, "wb") as handle:
+        handle.write(data)
+    os.replace(tmp, path)
 
 
 def _map_payload(files: list[dict], map_type: int) -> bytes | None:
@@ -134,9 +157,47 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
         self._request_time = 0.0
         self._was_cleaning = self._is_cleaning()
         self._post_clean_until = 0.0
+        self._offline_logged = False
+
+    def _map_path(self) -> str:
+        return self.hass.config.path(".storage", map_file_name(self.api.device_id))
+
+    async def _async_load_last_map(self) -> None:
+        """Start from the last rendered map, so a restart without the cloud has one."""
+        cache = getattr(self.coordinator, "cache", None)
+        if cache is None:
+            return
+        meta = map_meta_from_cache(cache.get(self.api.device_id).get("last_map_meta"))
+        if meta is None:
+            return
+        png = await self.hass.async_add_executor_job(_read_file, self._map_path())
+        if not png or self._cache_png is not None:
+            return
+        self._cache_png = png
+        self._render_metadata = {k: v for k, v in meta.items()}
+        self._cache_metadata = {**self._render_metadata, "map_source": "cache"}
+
+    async def _async_persist_map(self) -> None:
+        """Keep the PNG just rendered for the next start; only when it changed."""
+        cache = getattr(self.coordinator, "cache", None)
+        png = self._cache_png
+        if cache is None or not png:
+            return
+        saved = cache.get(self.api.device_id).get("last_map_meta")
+        if not map_persist_due(saved, png):
+            return
+        try:
+            await self.hass.async_add_executor_job(_write_file, self._map_path(), png)
+            await cache.async_update(
+                self.api.device_id,
+                last_map_meta=map_meta_to_cache(self._render_metadata, png),
+            )
+        except Exception:  # noqa: BLE001 — losing the offline copy is not fatal
+            _LOGGER.debug("ILIFE Clean map not persisted", exc_info=True)
 
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
+        await self._async_load_last_map()
         self._schedule_background_refresh(force=True)
 
     async def async_will_remove_from_hass(self) -> None:
@@ -217,7 +278,8 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
     def extra_state_attributes(self):
         return self._cache_metadata
 
-    def _note_failure(self, reason: str, *, undecodable: bool = False) -> None:
+    def _note_failure(self, reason: str, *, undecodable: bool = False,
+                      network: bool = False) -> None:
         """Record a failed refresh, loudly the first time and quietly after that.
 
         The first failure is worth a warning: it is usually the Cloud Project
@@ -231,7 +293,20 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
             "map_last_error": reason,
             "map_fetched_at": int(time.time()),
         }
-        if self._failures == 1 and undecodable:
+        if network:
+            # Not a missing subscription: the cloud is simply out of reach.
+            if not self._offline_logged:
+                self._offline_logged = True
+                _LOGGER.warning(
+                    "ILIFE Clean cloud unreachable for %s, %s",
+                    self.api.device_id,
+                    "showing last map" if self._cache_png is not None
+                    else "no map to show yet",
+                )
+            else:
+                _LOGGER.debug("ILIFE Clean cloud still unreachable for %s: %s",
+                              self.api.device_id, reason)
+        elif self._failures == 1 and undecodable:
             # The download worked, so the service is authorized: pointing at the
             # Tuya console here would send the user the wrong way (#30).
             _LOGGER.warning(
@@ -269,7 +344,8 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
             try:
                 await self._async_update_map()
             except TuyaError as err:
-                self._note_failure(f"{type(err).__name__}: {err}")
+                self._note_failure(f"{type(err).__name__}: {err}",
+                                   network=is_network_error(err))
             except Exception as err:  # noqa: BLE001 — a map file we cannot read
                 self._note_failure(f"{type(err).__name__}: {err}", undecodable=True)
             self._cache_time = time.monotonic()
@@ -339,6 +415,7 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
                 )
             )
             self._render_key = render_key
+            await self._async_persist_map()
             # The rooms on the map, also for the vacuum's area cleaning (segments).
             rooms = dict(self._render_metadata.get("rooms") or {})
             if hasattr(self.coordinator, "set_map_rooms"):
@@ -357,6 +434,7 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
         if self._failures:
             _LOGGER.info("ILIFE Clean map recovered for %s", self.api.device_id)
         self._failures = 0
+        self._offline_logged = False
 
     async def _async_realtime_files(self) -> list[dict]:
         """The realtime map files, or [] when the endpoint refuses us.

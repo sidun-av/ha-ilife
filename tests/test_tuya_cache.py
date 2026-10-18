@@ -72,3 +72,34 @@ def test_map_rooms_round_trip_through_json_keys():
     assert cache.map_rooms_from_cache(stored) == rooms
     assert cache.map_rooms_from_cache({"x": "bad", "3": "Room 3"}) == {3: "Room 3"}
     assert cache.map_rooms_from_cache(None) == {}
+
+
+def test_map_file_name_is_filesystem_safe():
+    assert cache.map_file_name("abc123") == "ilife_map_abc123.png"
+    assert cache.map_file_name("a/../b c") == "ilife_map_a____b_c.png"
+
+
+def test_map_meta_roundtrip_and_persist_due():
+    png = b"\x89PNG-fake"
+    meta = {"calibration_points": [{"vacuum": {"x": 0, "y": 0}, "map": {"x": 1.5, "y": 2}}],
+            "map_scale": 8, "rooms": {3: "Kitchen"}, "other": object()}
+    stored = cache.map_meta_to_cache(meta, png)
+    assert stored["rooms"] == {"3": "Kitchen"} and "other" not in stored
+    back = cache.map_meta_from_cache(stored)
+    assert back["rooms"] == {3: "Kitchen"} and back["map_scale"] == 8
+    assert back["calibration_points"] == meta["calibration_points"]
+    assert not cache.map_persist_due(stored, png)
+    assert cache.map_persist_due(stored, png + b"x")
+    assert cache.map_persist_due(None, png)
+    assert not cache.map_persist_due(None, None)
+
+
+def test_map_meta_from_cache_rejects_junk():
+    assert cache.map_meta_from_cache(None) is None
+    assert cache.map_meta_from_cache({"rooms": {}}) is None
+
+
+def test_is_network_error():
+    assert cache.is_network_error(Exception("network error: <urlopen error>"))
+    assert cache.is_network_error(Exception("map file download failed: x"))
+    assert not cache.is_network_error(Exception("1106: permission deny"))
