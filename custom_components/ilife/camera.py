@@ -41,6 +41,11 @@ TUYA_MAP_POST_CLEAN_SECONDS = 600
 TUYA_MAP_REQUEST_SECONDS = 60
 # A refused realtime endpoint is asked again this much later, not on every refresh.
 TUYA_REALTIME_RETRY_SECONDS = 3600
+# ...but a plain network error is routine and short-lived.
+TUYA_REALTIME_NETWORK_RETRY_SECONDS = 60
+# While a run redraws the path every few seconds, the PNG and the Store are written
+# at most this often (plus once when the run ends).
+TUYA_MAP_PERSIST_SECONDS = 300
 ISSUES_URL = "https://github.com/maximedeprince/ha-ilife/issues"
 # Not every setup gets a map: a Cloud Project without the Sweeping Robot service
 # never will, and a model may simply have none. (The V20, the A30 Pro and the T20s
@@ -158,6 +163,9 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
         self._was_cleaning = self._is_cleaning()
         self._post_clean_until = 0.0
         self._offline_logged = False
+        self._persisted_at = None
+        self._run_ended = False
+        self._persist_pending = False
 
     def _map_path(self) -> str:
         return self.hass.config.path(".storage", map_file_name(self.api.device_id))
@@ -174,15 +182,23 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
         if not png or self._cache_png is not None:
             return
         self._cache_png = png
-        self._render_metadata = {k: v for k, v in meta.items()}
+        self._render_metadata = dict(meta)
         self._cache_metadata = {**self._render_metadata, "map_source": "cache"}
 
-    async def _async_persist_map(self) -> None:
-        """Keep the PNG just rendered for the next start; only when it changed."""
+    async def _async_persist_map(self, *, force: bool = False) -> None:
+        """Keep the PNG just rendered for the next start; only when it changed,
+        and at most every TUYA_MAP_PERSIST_SECONDS unless `force`."""
         cache = getattr(self.coordinator, "cache", None)
         png = self._cache_png
         if cache is None or not png:
             return
+        now = time.monotonic()
+        if not force and self._persisted_at is not None \
+                and now - self._persisted_at < TUYA_MAP_PERSIST_SECONDS:
+            self._persist_pending = True
+            return
+        self._persist_pending = False
+        self._persisted_at = now
         saved = cache.get(self.api.device_id).get("last_map_meta")
         if not map_persist_due(saved, png):
             return
@@ -234,6 +250,7 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
             if self._cache_png is not None:
                 self._failures = 0
             if self._was_cleaning and not cleaning:
+                self._run_ended = True
                 self._post_clean_until = time.monotonic() + TUYA_MAP_POST_CLEAN_SECONDS
             elif cleaning:
                 self._post_clean_until = 0.0
@@ -291,8 +308,11 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
         self._cache_metadata = {
             **self._cache_metadata,
             "map_last_error": reason,
-            "map_fetched_at": int(time.time()),
         }
+        if self._cache_png is not None:
+            self._cache_metadata["map_source"] = "cache"
+        else:
+            self._cache_metadata["map_fetched_at"] = int(time.time())
         if network:
             # Not a missing subscription: the cloud is simply out of reach.
             if not self._offline_logged:
@@ -415,7 +435,8 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
                 )
             )
             self._render_key = render_key
-            await self._async_persist_map()
+            await self._async_persist_map(force=self._run_ended)
+            self._run_ended = False
             # The rooms on the map, also for the vacuum's area cleaning (segments).
             rooms = dict(self._render_metadata.get("rooms") or {})
             if hasattr(self.coordinator, "set_map_rooms"):
@@ -449,7 +470,9 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
         try:
             return await self.hass.async_add_executor_job(self.api.realtime_map_files)
         except TuyaError as err:
-            self._realtime_retry_at = time.monotonic() + TUYA_REALTIME_RETRY_SECONDS
+            self._realtime_retry_at = time.monotonic() + (
+                TUYA_REALTIME_NETWORK_RETRY_SECONDS if is_network_error(err)
+                else TUYA_REALTIME_RETRY_SECONDS)
             _LOGGER.debug("ILIFE Clean realtime map refused for %s, using the stored "
                           "map: %s", self.api.device_id, err)
             return []

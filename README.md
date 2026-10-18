@@ -341,11 +341,29 @@ map_source:
 calibration_source:
   camera: true
 map_modes:
+  - name: Room cleaning
+    icon: mdi:floor-plan
+    selection_type: ROOM
+    max_selections: 4
+    repeats_type: EXTERNAL
+    max_repeats: 2
+    service_call_schema:
+      service: ilife.clean_rooms
+      service_data:
+        entity_id: "[[entity_id]]"
+        rooms: "[[selection]]"
+        passes: "[[repeats]]"
+    predefined_selections:
+      # One entry per room id (see the camera's `rooms` attribute); x/y place the icon.
+      - id: 0
+        icon: {name: mdi:broom, x: -20, y: -40}
+      - id: 1
+        icon: {name: mdi:broom, x: 30, y: 10}
   - name: Zone cleaning
     icon: mdi:select-drag
     selection_type: MANUAL_RECTANGLE
     max_selections: 5
-    repeats_type: INTERNAL
+    repeats_type: EXTERNAL
     max_repeats: 2
     service_call_schema:
       service: ilife.clean_zone
@@ -355,8 +373,8 @@ map_modes:
         repeats: "[[repeats]]"
 ```
 
-Adapt the `zone` template to your card version if it wraps the selection differently;
-`ilife.clean_zone` expects a list of `[x1, y1, x2, y2]`.
+`ilife.clean_zone` expects a list of `[x1, y1, x2, y2]`; `ilife.clean_rooms` takes
+the room ids (or names) from the card's selection.
 
 ### Cleaning by Home Assistant area
 
