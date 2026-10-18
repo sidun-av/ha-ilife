@@ -59,7 +59,7 @@ back the four fields and the brand ships.
 - 🔋 Battery, brushes and filter wear, last clean, connectivity (online/offline)
 - 🗺️ Live map camera + **clickable cleaning history with the day's map**
 - 🖼️ Each cleaning is archived as a tiny PNG in `www/ilife_maps/`
-- 🧩 Bundled **ILIFE Vacuum Card** — added from the UI, **responsive** (2 columns on desktop, 1 on mobile), English + French + Polish
+- 🧩 Bundled **ILIFE Vacuum Card** — added from the UI, **responsive** (2 columns on desktop, 1 on mobile), English + French + Polish + Russian
 - 👥 Multiple vacuums and multiple accounts supported
 - 🧾 **Download diagnostics** (credentials redacted) and 🗑️ **remove old / replaced devices** from the UI
 
@@ -121,6 +121,19 @@ the rooms, the schedule editor and the cleaning history appear on models that re
 them (see [Rooms, programs and schedules](#rooms-programs-and-schedules-ilife-clean)),
 and the map tile says *No map yet* until the camera has one — see
 [The map on ILIFE Clean](#the-map-on-ilife-clean).
+
+To show only some of the blocks — say, schedules and history next to another map
+card — tick them in the editor, or list them under `show` (leaving it out shows
+everything): `header`, `map`, `controls`, `rooms`, `overview`, `consumables`,
+`settings`, `schedules`, `history`.
+
+```yaml
+type: custom:ilife-vacuum-card
+entity: vacuum.my_vacuum
+show: [schedules, history, consumables]
+```
+
+Times follow your profile's 12/24‑hour setting.
 
 The card is registered automatically for storage‑mode dashboards. For
 **YAML‑mode** dashboards, add the resource manually:
@@ -477,6 +490,9 @@ removed this way (they would just come back on the next refresh).
   written to logs. ILIFEHOME's shared API keys are baked in (identical for
   all ILIFE users) — no personal secret is included in this repository..
 - This is an unofficial integration, not affiliated with ILIFE, 3irobotix or Tuya.
+- Translations: English, French and Russian (entity names, select values, fan
+  speeds, setup and options flow). The ILIFEHOME selects keep their app labels
+  (Gentle / Standard / S‑shape…), which Home Assistant can't key a translation on.
 
 ## License
 
