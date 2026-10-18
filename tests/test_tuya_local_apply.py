@@ -68,11 +68,25 @@ def test_cloud_status_overtaken_by_the_link_keeps_cloud_only_codes():
     # the link overtook must not lose them, while the LAN values stay fresher.
     cloud = {"status": "standby", "switch_disturb": False, "dust_collection_switch": False}
     local = {"status": "base_charging", "break_clean": True}
-    assert dpmap.merge_cloud_status(cloud, local) == {
+    lan = {"status", "break_clean"}
+    assert dpmap.merge_cloud_status(cloud, local, lan) == {
         "status": "base_charging", "break_clean": True,
         "switch_disturb": False, "dust_collection_switch": False}
-    assert dpmap.merge_cloud_status(None, local) == local
-    assert dpmap.merge_cloud_status(cloud, None) == cloud
+    assert dpmap.merge_cloud_status(None, local, lan) == local
+    assert dpmap.merge_cloud_status(cloud, None, lan) == cloud
+
+
+def test_fresh_cloud_read_beats_an_older_status_the_link_did_not_deliver():
+    # `current` holds the previous cloud poll (DND off) plus the LAN answer, which
+    # leaves DND out; the user turned DND on in the app meanwhile. The fresh read
+    # must win for DND, the LAN for what it did deliver.
+    current = {"status": "base_charging", "switch_disturb": False, "volume_set": 40}
+    cloud = {"status": "standby", "switch_disturb": True}
+    assert dpmap.merge_cloud_status(cloud, current, {"status"}) == {
+        "status": "base_charging", "switch_disturb": True, "volume_set": 40}
+    # Nothing delivered over the LAN yet: the cloud read wins outright.
+    assert dpmap.merge_cloud_status(cloud, current) == {
+        "status": "standby", "switch_disturb": True, "volume_set": 40}
 
 
 def test_setting_value_falls_back_to_properties():

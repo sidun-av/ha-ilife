@@ -261,6 +261,9 @@ class ILifeTuyaCoordinator(DataUpdateCoordinator):
         self._discovering = False
         self._discover_next = 0.0
         self._local_refused = False
+        # Codes the link has delivered since it came up: fresher than any cloud read
+        # (see merge_cloud_status). Cleared when it goes down.
+        self._lan_codes: set[str] = set()
         # Set by the first local status, for a setup that has nothing else.
         self.first_local_status = asyncio.Event()
         self._status_saved_at: float | None = None
@@ -458,6 +461,7 @@ class ILifeTuyaCoordinator(DataUpdateCoordinator):
         status, properties = apply_local_dps(
             self.data, self.properties, update, self._standard_codes)
         self.properties = properties
+        self._lan_codes.update(update)
         if any(code in ROOM_INFO_CODES for code in update):
             self._set_room_names()
         was_cleaning = self._was_cleaning
@@ -482,6 +486,9 @@ class ILifeTuyaCoordinator(DataUpdateCoordinator):
         else:
             _LOGGER.debug("ILIFE Clean %s: local link down, polling the cloud",
                           self.api.device_id)
+            # Not on the way up: the query answer is delivered before the link
+            # reports connected.
+            self._lan_codes.clear()
             self.update_interval = CLOUD_POLL
             self._background(self.async_request_refresh(), "refresh, link down")
         self.async_update_listeners()
@@ -722,6 +729,16 @@ class ILifeTuyaCoordinator(DataUpdateCoordinator):
             # Entities are built from the codes in `data`: a restart with the cloud
             # down starts from the last status kept, so none goes missing.
             self.seed_from_cache()
+            if self.local_connected and self.data is not None:
+                # The link came up during the call (a restart with the trial
+                # expired or the cloud down: its answer beats the cloud's error).
+                # Failing the update now would mark every entity unavailable,
+                # LAN control included, until the robot next pushes a change.
+                # A robot that is really gone drops the link (DEAD_AFTER), and the
+                # poll that follows fails as usual.
+                _LOGGER.debug("ILIFE Clean %s: cloud read failed (%s), the local link "
+                              "is up", self.api.device_id, err)
+                return dict(self.data)
             raise UpdateFailed(str(err)) from err
         local_key = detail.get("local_key")
         if (isinstance(local_key, str) and local_key
@@ -742,7 +759,7 @@ class ILifeTuyaCoordinator(DataUpdateCoordinator):
         if self.local_connected:
             # The link came up during the call: its pushes are fresher, but the
             # cloud has the codes the robot leaves out of its LAN answer.
-            return merge_cloud_status(status, self.data)
+            return merge_cloud_status(status, self.data, self._lan_codes)
         self._watch_run_end(status)
         self._maybe_save_status(status)
         try:
@@ -752,7 +769,7 @@ class ILifeTuyaCoordinator(DataUpdateCoordinator):
         if self.local_connected:
             # The history awaits downloads: a link that came up meanwhile delivered
             # its query answer then, which is fresher than this cloud status.
-            return merge_cloud_status(status, self.data)
+            return merge_cloud_status(status, self.data, self._lan_codes)
         return status
 
 

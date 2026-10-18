@@ -10,6 +10,7 @@ Pure functions, no Home Assistant, no network.
 """
 from __future__ import annotations
 
+from collections.abc import Collection
 from typing import Any
 
 MODEL_TO_STANDARD = {
@@ -101,17 +102,26 @@ def apply_local_dps(
     return new_status, new_props
 
 
-def merge_cloud_status(cloud: dict | None, local: dict | None) -> dict:
-    """A cloud status read that the LAN link overtook: the local codes win, the
-    cloud keeps the rest.
+def merge_cloud_status(cloud: dict | None, current: dict | None,
+                       lan_codes: Collection[str] = ()) -> dict:
+    """A cloud status read that the LAN link overtook: the codes the link delivered
+    win, the fresh cloud read wins over everything else.
+
+    `current` is the coordinator's whole status, `lan_codes` the codes the link has
+    delivered since it came up. The rest of `current` is an older read (the previous
+    cloud poll, the cache): kept for the codes this read lacks, never over it.
 
     The robot leaves some datapoints out of its answer to a LAN query (the A30 Pro:
     do-not-disturb, auto-empty, the reset and joystick DPs) and only pushes them
     when they change, so a status built from the LAN alone lacks them. Dropping the
     cloud read because the link came up during it left those entities `unknown`
-    until the next restart that happened to go the other way.
+    until the next restart that happened to go the other way; letting the older
+    status win kept a setting changed in the app meanwhile wrong until it changed
+    again.
     """
-    return {**(cloud or {}), **(local or {})}
+    current = current or {}
+    return {**current, **(cloud or {}),
+            **{code: current[code] for code in lan_codes if code in current}}
 
 
 def setting_value(status: dict | None, properties: dict | None, code: str) -> Any:
