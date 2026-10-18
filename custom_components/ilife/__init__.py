@@ -803,6 +803,15 @@ def _async_remove_replaced_generic_entities(
                         registry.async_remove(entity_id)
 
 
+def _lan_ready_devices(entry: ConfigEntry, cache: DeviceCache) -> list[dict]:
+    """Cached devices that can run without the cloud: LAN control on, and a local
+    key kept for them (see tuya_cache)."""
+    if not entry.options.get(CONF_LOCAL, True):
+        return []
+    return [device for device in cache.devices()
+            if cache.get(device["id"]).get("local_key")]
+
+
 async def _async_setup_ilife_clean_entry(hass: HomeAssistant, entry: ConfigEntry) -> None:
     client = TuyaClient(
         entry.data[CONF_ACCESS_ID], entry.data[CONF_ACCESS_SECRET],
@@ -816,7 +825,19 @@ async def _async_setup_ilife_clean_entry(hass: HomeAssistant, entry: ConfigEntry
     try:
         devices = await hass.async_add_executor_job(client.list_devices)
     except TuyaAuthError as err:
-        raise ConfigEntryAuthFailed(str(err)) from err
+        # Most often an expired Cloud Project trial (28841002), which lapses every
+        # few months. The robot does not need the cloud to be driven over the LAN,
+        # so a device the cache can bring up locally keeps working; the user is
+        # asked to re-authenticate (after renewing the trial) instead of losing
+        # the robot until then. Without such a device, failing setup is all
+        # that is left.
+        devices = _lan_ready_devices(entry, cache)
+        if not devices:
+            raise ConfigEntryAuthFailed(str(err)) from err
+        _LOGGER.warning("ILIFE Clean: the Tuya cloud refused this setup (%s); running "
+                        "%d cached device(s) over the local network until it is fixed",
+                        err, len(devices))
+        entry.async_start_reauth(hass)
     except TuyaNoDevicesError as err:
         # The cloud answered: nothing is bound. Not an outage, so no cached devices.
         raise ConfigEntryNotReady(str(err)) from err

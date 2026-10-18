@@ -321,6 +321,12 @@ map is kept** (a PNG in `.storage` plus its calibration) and the map camera keep
 showing it, also right after a restart, until the cloud is back. One line in the log,
 "cloud unreachable, showing last map", marks the outage.
 
+The same goes for a cloud that refuses the integration at startup, typically an
+**expired Tuya trial**: if the robot was already set up with local control, it is
+started from the cache and keeps running over the LAN, and Home Assistant asks you
+to re-authenticate. Renew the trial (see above), then confirm the
+re-authentication with the same Access ID and Secret.
+
 **Privacy.** The robot's local key is stored in Home Assistant's `.storage` (the
 device cache) and is redacted in the diagnostics file. Removing the integration
 deletes the cache and the saved map.
