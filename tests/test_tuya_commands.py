@@ -168,6 +168,19 @@ def test_stop_does_not_clear_the_pause_flag():
         assert {"code": "pause", "value": False} in commands(functions)["stop_paused"], model
 
 
+def test_suction_detour_is_a_real_change_that_keeps_the_fan_on():
+    """The A30 Pro started a clean on its weakest fan while reporting "strong";
+    re-writing "strong" did nothing, a change away and back did (seen live)."""
+    detour = tuya_dynamic.suction_detour
+    levels = ["closed", "gentle", "normal", "strong", "max"]
+    assert detour(levels, "strong") == "gentle"
+    assert detour(levels, "gentle") == "normal"
+    assert detour(["strong", "closed"], "strong") is None
+    assert detour(levels, "closed") is None
+    assert detour(levels, "turbo") is None
+    assert detour([], "strong") is None
+
+
 def test_suction_and_cistern_are_dedicated_not_generic():
     """Suction becomes the vacuum's fan_speed and cistern the water-level select, so
     neither may still show up as a nameless generic entity."""

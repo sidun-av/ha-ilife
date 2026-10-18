@@ -1,6 +1,7 @@
 """ILIFE vacuum entity (ILIFEHOME) and ILIFE Clean (Tuya) vacuum entity."""
 from __future__ import annotations
 
+import asyncio
 import logging
 
 import voluptuous as vol
@@ -55,6 +56,7 @@ from .tuya_dynamic import (
     merge_commands,
     return_commands,
     run_flag,
+    suction_detour,
     unpause_flag,
 )
 from .tuya_entity import TuyaEntity
@@ -75,6 +77,10 @@ from .tuya_schedule import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+
+# Seconds after a start before the suction is re-applied: the robot is off the dock
+# and running by then.
+SUCTION_NUDGE_DELAY = 10
 
 SERVICE_CLEAN_ROOMS = "clean_rooms"
 CLEAN_ROOMS_SCHEMA = {
@@ -413,6 +419,34 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
             await self._send_many(self._cmd_resume)
             return
         await self._run(self._cmd_start, "start")
+        self._reassert_suction()
+
+    def _reassert_suction(self) -> None:
+        """Make the fan really run at the level the robot reports, once it is off.
+
+        An A30 Pro started cleans with its fan at the lowest level while reporting
+        "strong", and writing "strong" again was a no-op; changing the level away and
+        back fixed it at once. So after a start, step through another level and back.
+        It runs in the background: the start itself has already gone through."""
+        wanted = self.fan_speed
+        detour = suction_detour(self._suction_range, wanted)
+        if detour is None:
+            return
+
+        async def nudge():
+            try:
+                await asyncio.sleep(SUCTION_NUDGE_DELAY)
+                # The user may have changed it meanwhile: theirs wins.
+                if self.fan_speed != wanted:
+                    return
+                await self.coordinator.async_write(TUYA_DP_SUCTION, detour)
+                await asyncio.sleep(1)
+                await self.coordinator.async_write(TUYA_DP_SUCTION, wanted)
+            except TuyaError as err:
+                _LOGGER.warning("ILIFE Clean %s: could not re-apply suction %s: %s",
+                                self.api.device_id, wanted, err)
+
+        self.hass.async_create_background_task(nudge(), "ilife suction nudge")
 
     async def async_pause(self):
         await self._run(self._cmd_pause, "pause", pause=True)
@@ -486,6 +520,7 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
             raise HomeAssistantError(str(err)) from err
         await self._write(CLEAN_ROOMS_CODE, value)
         self._pause.on_command_sent()
+        self._reassert_suction()
 
     async def async_clean_zone(self, zone, repeats=1):
         """Clean rectangles [x1, y1, x2, y2] in map cells (robot frame, y up)."""
@@ -503,6 +538,7 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
             raise HomeAssistantError(str(err)) from err
         await self._write(CLEAN_ZONE_CODE, value)
         self._pause.on_command_sent()
+        self._reassert_suction()
 
     async def async_get_segments(self):
         """The rooms of the vacuum's map, for Home Assistant's area cleaning.

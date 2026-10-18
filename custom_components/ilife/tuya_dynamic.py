@@ -154,6 +154,24 @@ def unpause_flag(functions: dict):
     return command_for(functions, TUYA_DP_PAUSE, "resume", "continue", boolean=False)
 
 
+def suction_detour(levels, wanted):
+    """Another suction level to pass through on the way to `wanted`, or None.
+
+    An A30 Pro can start a clean with its fan at the lowest level while it still
+    reports the level it was set to, and writing that same level again changes
+    nothing — the robot answers with no change. Only a real change reaches the fan.
+    "closed" (mopping only) is never the detour, it would switch the fan off, and a
+    fan that is meant to be off needs none.
+    """
+    levels = [str(v) for v in levels or ()]
+    if str(wanted) not in levels or str(wanted) == "closed":
+        return None
+    for level in levels:
+        if level != str(wanted) and level != "closed":
+            return level
+    return None
+
+
 def return_commands(functions: dict) -> list[dict]:
     """Send the robot to its dock: the dedicated DP if it has one, else the mode."""
     return merge_commands(
