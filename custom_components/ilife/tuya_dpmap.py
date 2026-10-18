@@ -99,3 +99,26 @@ def apply_local_dps(
         else:
             new_props[code] = value
     return new_status, new_props
+
+
+def merge_cloud_status(cloud: dict | None, local: dict | None) -> dict:
+    """A cloud status read that the LAN link overtook: the local codes win, the
+    cloud keeps the rest.
+
+    The robot leaves some datapoints out of its answer to a LAN query (the A30 Pro:
+    do-not-disturb, auto-empty, the reset and joystick DPs) and only pushes them
+    when they change, so a status built from the LAN alone lacks them. Dropping the
+    cloud read because the link came up during it left those entities `unknown`
+    until the next restart that happened to go the other way.
+    """
+    return {**(cloud or {}), **(local or {})}
+
+
+def setting_value(status: dict | None, properties: dict | None, code: str) -> Any:
+    """A setting DP's value: the status first (LAN pushes, cloud detail), else the
+    product properties, which the cloud reads out of the thing model and which do
+    carry the DPs the robot leaves out of its LAN answer. None when neither has it."""
+    value = (status or {}).get(code)
+    if value is None:
+        value = (properties or {}).get(code)
+    return value

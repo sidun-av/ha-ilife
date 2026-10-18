@@ -61,3 +61,23 @@ def test_apply_tolerates_none_inputs():
     new_status, new_props = dpmap.apply_local_dps(None, None, {"status": "smart"},
                                                   STANDARD)
     assert new_status == {"status": "smart"} and new_props == {}
+
+
+def test_cloud_status_overtaken_by_the_link_keeps_cloud_only_codes():
+    # The A30 Pro leaves dp 25/38 out of its LAN query answer: a cloud read that
+    # the link overtook must not lose them, while the LAN values stay fresher.
+    cloud = {"status": "standby", "switch_disturb": False, "dust_collection_switch": False}
+    local = {"status": "base_charging", "break_clean": True}
+    assert dpmap.merge_cloud_status(cloud, local) == {
+        "status": "base_charging", "break_clean": True,
+        "switch_disturb": False, "dust_collection_switch": False}
+    assert dpmap.merge_cloud_status(None, local) == local
+    assert dpmap.merge_cloud_status(cloud, None) == cloud
+
+
+def test_setting_value_falls_back_to_properties():
+    assert dpmap.setting_value({"switch_disturb": True}, {"switch_disturb": False},
+                               "switch_disturb") is True
+    assert dpmap.setting_value({}, {"switch_disturb": False}, "switch_disturb") is False
+    assert dpmap.setting_value(None, None, "switch_disturb") is None
+    assert dpmap.setting_value({"other": 1}, {}, "switch_disturb") is None

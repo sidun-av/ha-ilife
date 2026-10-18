@@ -66,7 +66,7 @@ from .tuya_cache import (
     seed_status,
     status_save_due,
 )
-from .tuya_dpmap import DpMap, apply_local_dps, split_local_dps
+from .tuya_dpmap import DpMap, apply_local_dps, merge_cloud_status, split_local_dps
 from .tuya_dynamic import parse_functions, range_values
 from .tuya_local import (
     TuyaLocalError,
@@ -439,6 +439,10 @@ class ILifeTuyaCoordinator(DataUpdateCoordinator):
         if not self._is_standard_command(code, value):
             self.properties[code] = value
             self._properties_next = 0.0
+        elif code in self.properties:
+            # A setting the status lacks reads from the properties (see
+            # tuya_dpmap.setting_value): keep them in step with what was written.
+            self.properties[code] = value
         if via_cloud:
             await self.async_request_refresh()
 
@@ -734,10 +738,11 @@ class ILifeTuyaCoordinator(DataUpdateCoordinator):
                 await self.async_stop_local()
                 self._background(self.async_start_local(), "local restart")
         self._cloud_online = detail.get("online")
-        if self.local_connected:
-            # The link came up during the call: its pushes are fresher.
-            return dict(self.data or {})
         status = {s["code"]: s.get("value") for s in detail.get("status") or [] if s.get("code")}
+        if self.local_connected:
+            # The link came up during the call: its pushes are fresher, but the
+            # cloud has the codes the robot leaves out of its LAN answer.
+            return merge_cloud_status(status, self.data)
         self._watch_run_end(status)
         self._maybe_save_status(status)
         try:
@@ -747,7 +752,7 @@ class ILifeTuyaCoordinator(DataUpdateCoordinator):
         if self.local_connected:
             # The history awaits downloads: a link that came up meanwhile delivered
             # its query answer then, which is fresher than this cloud status.
-            return dict(self.data or {})
+            return merge_cloud_status(status, self.data)
         return status
 
 

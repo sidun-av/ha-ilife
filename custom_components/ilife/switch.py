@@ -19,6 +19,7 @@ from .const import (
 )
 from .entity import ILifeEntity
 from .tuya_api import TuyaError, TuyaOfflineError
+from .tuya_dpmap import setting_value
 from .tuya_dynamic import unknown_functions
 from .tuya_entity import TuyaEntity
 
@@ -148,9 +149,19 @@ class TuyaSettingSwitch(TuyaModelSwitch):
 
     _attr_entity_category = EntityCategory.CONFIG
 
+    def _value(self):
+        return setting_value(self.coordinator.data, self.coordinator.properties,
+                             self._code)
+
+    @property
+    def available(self):
+        # A DP neither the status nor the properties carry has no state to show:
+        # unavailable, not an `unknown` switch that looks like it could be flipped.
+        return super().available and self._value() is not None
+
     @property
     def is_on(self):
-        value = (self.coordinator.data or {}).get(self._code)
+        value = self._value()
         return None if value is None else bool(value)
 
 
