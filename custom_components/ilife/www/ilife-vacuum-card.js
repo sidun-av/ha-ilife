@@ -37,8 +37,13 @@ const T = {
     dshort: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
     whole_home: "Whole home", add: "Add", save: "Save", delete: "Delete", edit_schedule: "Schedule",
     new_schedule: "New schedule", time: "Time", cycles_label: "Cycles", every_day: "Every day",
+    dmini: ["M", "T", "W", "T", "F", "S", "S"], h: "h", min: "min",
     st: { cleaning: "Cleaning", docked: "Docked", returning: "Returning to dock", paused: "Paused",
           idle: "Idle", error: "Error", unavailable: "Unavailable" },
+    editor_entity: "ILIFE vacuum", editor_show: "Blocks to show",
+    blocks: { header: "Header", map: "Map", controls: "Start / stop buttons", rooms: "Rooms",
+              overview: "Overview", consumables: "Consumables", settings: "Settings",
+              schedules: "Schedules", history: "History" },
     locale: "en-US",
   },
   pl: {
@@ -67,8 +72,13 @@ const T = {
     dshort: ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"],
     whole_home: "Całe mieszkanie", add: "Dodaj", save: "Zapisz", delete: "Usuń", edit_schedule: "Harmonogram",
     new_schedule: "Nowy harmonogram", time: "Godzina", cycles_label: "Cykle", every_day: "Codziennie",
+    dmini: ["P", "W", "Ś", "C", "P", "S", "N"], h: "h", min: "min",
     st: { cleaning: "Sprząta", docked: "W stacji", returning: "Wraca do stacji", paused: "Wstrzymany",
           idle: "Bezczynny", error: "Błąd", unavailable: "Niedostępny" },
+    editor_entity: "Odkurzacz ILIFE", editor_show: "Widoczne sekcje",
+    blocks: { header: "Nagłówek", map: "Mapa", controls: "Przyciski start / stop", rooms: "Pokoje",
+              overview: "Przegląd", consumables: "Materiały eksploatacyjne", settings: "Ustawienia",
+              schedules: "Harmonogramy", history: "Historia" },
     locale: "pl-PL",
   },
   fr: {
@@ -87,11 +97,61 @@ const T = {
     dshort: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
     whole_home: "Toute la maison", add: "Ajouter", save: "Enregistrer", delete: "Supprimer", edit_schedule: "Programmation",
     new_schedule: "Nouvelle programmation", time: "Heure", cycles_label: "Cycles", every_day: "Tous les jours",
+    dmini: ["L", "M", "M", "J", "V", "S", "D"], h: "h", min: "min",
     st: { cleaning: "Nettoyage en cours", docked: "À la base", returning: "Retour à la base", paused: "En pause",
           idle: "Inactif", error: "Erreur", unavailable: "Indisponible" },
+    editor_entity: "Aspirateur ILIFE", editor_show: "Blocs affichés",
+    blocks: { header: "En-tête", map: "Carte", controls: "Boutons marche / arrêt", rooms: "Pièces",
+              overview: "Aperçu", consumables: "Consommables", settings: "Réglages",
+              schedules: "Programmations", history: "Historique" },
     locale: "fr-FR",
   },
+  ru: {
+    start: "Старт", pause: "Пауза", resume: "Продолжить", stop: "Стоп", dock: "На базу", locate: "Найти",
+    overview: "Обзор", settings: "Настройки", suction: "Всасывание", water: "Вода", mode: "Режим",
+    carpet: "Распознавание ковров", manual: "Ручное управление", schedules: "Расписания", history: "История",
+    empty_bin: "Очистить пылесборник", live: "Сейчас", offline: "Не в сети", battery: "батареи", last_run: "Последняя уборка", floor_plan: "План", no_map: "Карты пока нет",
+    rooms: "Комнаты", clean_rooms: "Убрать выбранные", program: "Программа", efficiency: "Тщательность уборки", y_mop: "Y-образная влажная уборка", carpet_boost: "Усиление на коврах",
+    volume: "Громкость", dnd: "Не беспокоить", resume_after_charge: "Продолжить после зарядки", auto_empty: "Автоочистка на базе",
+    faults: {
+      bumper_fault: "Застрял бампер", obs_fault: "Датчик препятствий", wall_fault: "Датчик стены", cliff_fault: "Датчик перепада",
+      land_fault: "Поднят с пола", nosewheel_fault: "Переднее колесо", l_brush_fault: "Левая боковая щётка",
+      r_brush_fault: "Правая боковая щётка", brush_fault: "Боковая щётка", l_wheel_fault: "Левое колесо", r_wheel_fault: "Правое колесо",
+      m_brush_fault: "Основная щётка", fan_fault: "Вентилятор", waterpump_fault: "Водяной насос", air_pump_fault: "Воздушный насос",
+      garbage_fault: "Нет пылесборника", water_box_fault: "Нет бака для воды", filter_fault: "Фильтр",
+      battery_fault: "Батарея", gyro_fault: "Гироскоп", radar_fault: "Лазерный датчик", camera_fault: "Камера",
+      stuck_fault: "Робот застрял", flow_fault: "Подача воды", other_fault: "Другая ошибка", low_light_fault: "Слишком темно",
+      water1_fault: "Бак чистой воды", water2_fault: "Бак грязной воды", explore_fault: "Ошибка построения карты",
+    },
+    cycles: "Уборки", area: "Площадь", total_time: "Общее время", brush: "Основная щётка", filter: "Фильтр",
+    side_brush: "Боковая щётка", reset: "Сбросить", cancel: "Отмена", reset_confirm: "Сбросить ресурс «{part}» до 100%?",
+    keep_case: true,
+    m2_cleaned: "м² убрано", minutes: "минут", no_history: "Недавних уборок нет.",
+    not_found: "Пылесос ILIFE не найден.", today: "Сегодня", yesterday: "Вчера",
+    active: "вкл.", session: "уборка", sessions: "уборок", sleeping: "спит",
+    session_forms: { one: "уборка", few: "уборки", many: "уборок", other: "уборки" },
+    days: ["Понедельник", "Вторник", "Среда", "Четверг", "Пятница", "Суббота", "Воскресенье"],
+    dshort: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"],
+    whole_home: "Весь дом", add: "Добавить", save: "Сохранить", delete: "Удалить", edit_schedule: "Расписание",
+    new_schedule: "Новое расписание", time: "Время", cycles_label: "Циклы", every_day: "Каждый день",
+    dmini: ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"], h: " ч ", min: " мин",
+    st: { cleaning: "Уборка", docked: "На базе", returning: "Едет на базу", paused: "Пауза",
+          idle: "Ожидание", error: "Ошибка", unavailable: "Недоступен" },
+    editor_entity: "Пылесос ILIFE", editor_show: "Показывать блоки",
+    blocks: { header: "Заголовок", map: "Карта", controls: "Кнопки старт / стоп", rooms: "Комнаты",
+              overview: "Обзор", consumables: "Расходники", settings: "Настройки",
+              schedules: "Расписания", history: "История" },
+    locale: "ru-RU",
+  },
 };
+
+// Blocks the `show` option can list, in card order; leaving it out shows them all.
+const BLOCKS = ["header", "map", "controls", "rooms", "overview", "consumables", "settings", "schedules", "history"];
+
+function cardLang(hass) {
+  const lang = ((hass && (hass.language || hass.locale?.language)) || "en").toLowerCase();
+  return Object.keys(T).find((l) => l !== "en" && lang.startsWith(l)) || "en";
+}
 
 function decodeCleanMap(b64) {
   if (!b64) return null;
@@ -158,6 +218,13 @@ function drawMapCells(canvas, cells, maxW, maxH, path) {
 class IlifeVacuumCard extends HTMLElement {
   setConfig(config) {
     if (!config) throw new Error("Invalid configuration");
+    // `show`: the blocks to render, as a list (or "a, b"); absent = all of them.
+    let show = config.show;
+    if (typeof show === "string") show = show.split(",").map((x) => x.trim()).filter(Boolean);
+    if (show !== undefined && !Array.isArray(show)) throw new Error("show: expected a list of blocks");
+    const bad = (show || []).filter((b) => !BLOCKS.includes(b));
+    if (bad.length) throw new Error(`show: unknown block ${bad.join(", ")} (use ${BLOCKS.join(", ")})`);
+    this._show = new Set(show || BLOCKS);
     this._config = config;
     this._built = false;
     this._padOpen = false;
@@ -165,8 +232,7 @@ class IlifeVacuumCard extends HTMLElement {
   }
   set hass(hass) {
     this._hass = hass;
-    const lang = (hass.language || hass.locale?.language || "en").toLowerCase();
-    this._lang = lang.startsWith("fr") ? "fr" : lang.startsWith("pl") ? "pl" : "en";
+    this._lang = cardLang(hass);
     // The room list is part of the layout: rebuild when the app's rooms change.
     const vac = this._ent?.vacuum || this._config.entity;
     const roomSig = JSON.stringify(hass.states[vac]?.attributes.rooms || {});
@@ -176,6 +242,23 @@ class IlifeVacuumCard extends HTMLElement {
     this._update();
   }
   get _t() { return T[this._lang] || T.en; }
+  _has(block) { return !this._show || this._show.has(block); }
+  // Dates in the user's HA language; the clock as their profile says (12/24 h).
+  _locale() { return this._hass?.locale?.language || this._hass?.language || this._t.locale; }
+  _timeOpts() {
+    const tf = this._hass?.locale?.time_format, o = { hour: "2-digit", minute: "2-digit" };
+    if (tf === "12") o.hour12 = true;
+    else if (tf === "24") o.hour12 = false;
+    return o;
+  }
+  _timeLocale() { return this._hass?.locale?.time_format === "system" ? undefined : this._locale(); }
+  _plural(n) {
+    const t = this._t, forms = t.session_forms;
+    if (!forms) return n > 1 ? t.sessions : t.session;
+    let cat = "other";
+    try { cat = new Intl.PluralRules(t.locale).select(n); } catch (err) { /* old browser */ }
+    return forms[cat] || forms.other;
+  }
   getCardSize() { return 14; }
   static getStubConfig(hass) {
     const vac = Object.keys(hass.states).find(
@@ -244,11 +327,15 @@ class IlifeVacuumCard extends HTMLElement {
     return e;
   }
 
-  _seg(label, key, opts, stateObj) {
+  _seg(label, key, opts, stateObj, attr) {
     if (!opts || !opts.length) return "";
-    // Show an option the way Home Assistant translates it ("plan_1" -> "Plan 1")
-    // when the entity has state translations; the raw value stays the data-val.
-    const fmt = (o) => (stateObj && this._hass.formatEntityState) ? this._hass.formatEntityState(stateObj, o) : o;
+    // Show an option the way Home Assistant translates it ("plan_1" -> "Plan 1",
+    // "strong" -> "Сильная") from the integration's state translations; the raw
+    // value stays the data-val. `attr`: the option is that attribute's value.
+    const hass = this._hass;
+    const fmt = (o) => !stateObj ? o
+      : attr ? (hass.formatEntityAttributeValue ? hass.formatEntityAttributeValue(stateObj, attr, o) : o)
+      : (hass.formatEntityState ? hass.formatEntityState(stateObj, o) : o);
     return `<div class="vc-field"><div class="vc-mlabel">${label}</div>
       <div class="vc-seg" data-seg="${key}" style="--n:${opts.length}">
         <div class="vc-thumb"></div>
@@ -275,7 +362,7 @@ class IlifeVacuumCard extends HTMLElement {
         ${s.enable ? `<label class="vc-switch"><input type="checkbox" class="vc-sen" data-ent="${s.enable}"><span class="vc-slider"></span></label>` : ""}
       </div>`;
     }
-    const strip = t.days.map((d, i) => `<span class="vc-daypill" data-day="${i + 1}">${d[0]}</span>`).join("");
+    const strip = t.days.map((d, i) => `<span class="vc-daypill" data-day="${i + 1}">${(t.dmini || [])[i] || d[0]}</span>`).join("");
     const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     // ILIFE Clean laser models: {room id: name as in the app} (vacuum attribute).
     const rooms = vs.attributes.rooms || {};
@@ -284,6 +371,8 @@ class IlifeVacuumCard extends HTMLElement {
       [e.ymop, "mdi:alpha-y-circle-outline", t.y_mop], [e.autoempty, "mdi:delete-restore", t.auto_empty],
       [e.resume, "mdi:battery-sync", t.resume_after_charge], [e.dnd, "mdi:bell-sleep", t.dnd]].filter(([id]) => id);
     const vol = e.volume && hass.states[e.volume];
+    const has = (b) => this._has(b);
+    const showMap = has("map") && e.map, showRooms = has("rooms") && roomIds.length;
 
     this.innerHTML = `
       <ha-card class="ilife-card">
@@ -456,11 +545,17 @@ class IlifeVacuumCard extends HTMLElement {
           .vc-gauge>i{display:block;height:100%;background:var(--primary-color);border-radius:3px;}
           .vc-field{margin:12px 0;}
           .vc-field .vc-mlabel{margin-bottom:6px;}
-          .vc-seg{position:relative;display:grid;grid-template-columns:repeat(var(--n),1fr);background:var(--secondary-background-color);border-radius:999px;padding:3px;height:38px;}
+          .vc-seg{position:relative;display:grid;grid-template-columns:repeat(var(--n),minmax(0,1fr));background:var(--secondary-background-color);border-radius:999px;padding:3px;height:38px;}
           .vc-thumb{position:absolute;top:3px;bottom:3px;left:3px;width:calc((100% - 6px)/var(--n));border-radius:999px;background:var(--card-background-color);box-shadow:var(--e1);transition:transform .2s cubic-bezier(.2,.8,.2,1);}
           .vc-thumb.hidden{opacity:0;}
-          .vc-pill{position:relative;z-index:1;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:500;color:var(--secondary-text-color);transition:color .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+          .vc-pill{position:relative;z-index:1;min-width:0;padding:0 4px;border:none;background:transparent;cursor:pointer;font-size:13px;font-weight:500;color:var(--secondary-text-color);transition:color .15s;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
           .vc-pill.active{color:var(--primary-text-color);font-weight:600;}
+          /* Labels too long for equal segments (a narrow column, long translations):
+             the control wraps into a row of pills instead of cutting them to "str…". */
+          .vc-seg.wrap,.vc.full .blk-settings .vc-seg.wrap{display:flex;flex-wrap:wrap;gap:3px;height:auto;border-radius:19px;}
+          .vc-seg.wrap .vc-thumb{display:none;}
+          .vc-seg.wrap .vc-pill{flex:1 1 auto;padding:7px 12px;border-radius:999px;white-space:normal;}
+          .vc-seg.wrap .vc-pill.active{background:var(--card-background-color);box-shadow:var(--e1);}
           .vc-list{border-radius:14px;overflow:hidden;}
           .vc-lrow{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:12px;padding:12px 4px;}
           .vc-lrow + .vc-lrow{border-top:1px solid color-mix(in srgb,var(--divider-color) 60%,transparent);}
@@ -533,15 +628,15 @@ class IlifeVacuumCard extends HTMLElement {
           @media(prefers-reduced-motion:reduce){.vc *{animation:none!important;transition:none!important;}}
         </style>
         <div class="vc" data-el="root">
-          <div class="vc-head">
+          ${has("header") ? `<div class="vc-head">
             <div class="vc-ava"><ha-icon icon="mdi:robot-vacuum"></ha-icon><span class="vc-dot"></span></div>
             <div class="vc-id"><div class="vc-name" data-el="name"></div><div class="vc-state"><span data-el="state"></span></div>
               <div class="vc-problem" data-el="problem" hidden><ha-icon icon="mdi:alert-circle"></ha-icon><span data-el="problemtxt"></span></div></div>
             <div class="vc-batt vc-num" data-el="batt"><ha-icon data-el="batticon" icon="mdi:battery"></ha-icon><span data-el="battval"></span><i class="vc-battbar" data-el="battbar"></i></div>
-          </div>
+          </div>` : ""}
           <div class="vc-cols">
-          <div class="vc-block blk-map">
-          ${e.map ? `<div class="vc-map">
+          ${showMap || has("controls") || showRooms ? `<div class="vc-block blk-map">
+          ${showMap ? `<div class="vc-map">
             <div class="glow"></div><div class="grid"></div>
             <img class="vc-mapimg" data-el="map" alt="map">
             <canvas class="vc-mapimg" data-el="heromap" hidden></canvas>
@@ -550,30 +645,30 @@ class IlifeVacuumCard extends HTMLElement {
             <span class="vc-badge"><span class="bd"></span><span data-el="badgetxt">${t.live}</span></span>
             <div class="vc-scrim vc-num" data-el="scrim" hidden></div>
           </div>` : ""}
-          <button class="vc-cta" data-el="cta"><ha-icon data-el="ctaicon" icon="mdi:play"></ha-icon><span data-el="ctatxt">${t.start}</span></button>
+          ${has("controls") ? `<button class="vc-cta" data-el="cta"><ha-icon data-el="ctaicon" icon="mdi:play"></ha-icon><span data-el="ctatxt">${t.start}</span></button>
           <div class="vc-secs">
             <button class="vc-sbtn stop" data-act="stop"><ha-icon icon="mdi:stop"></ha-icon><span>${t.stop}</span></button>
             <button class="vc-sbtn" data-act="dock"><ha-icon icon="mdi:home-import-outline"></ha-icon><span>${t.dock}</span></button>
             <button class="vc-sbtn" data-act="locate"><ha-icon icon="mdi:map-marker"></ha-icon><span>${t.locate}</span></button>
-          </div>
-          ${roomIds.length ? `<div class="vc-rooms">
+          </div>` : ""}
+          ${showRooms ? `<div class="vc-rooms">
             <div class="vc-sec"><span class="vc-mlabel">${t.rooms}</span>
               <div class="vc-passes">${[1, 2].map((n) => `<button class="vc-pass" data-pass="${n}">${n}×</button>`).join("")}</div></div>
             <div class="vc-chips">${roomIds.map((id) => `<button class="vc-chip" data-room="${id}">${esc(rooms[id])}</button>`).join("")}</div>
             <button class="vc-rgo" data-el="roomgo" disabled><ha-icon icon="mdi:broom"></ha-icon><span data-el="roomgotxt">${t.clean_rooms}</span></button>
           </div>` : ""}
-          </div>
-          <div class="vc-block blk-stats">
-          <div class="vc-sec"><span class="vc-mlabel">${t.overview}</span></div>
+          </div>` : ""}
+          ${has("overview") || has("consumables") ? `<div class="vc-block blk-stats">
+          <div class="vc-sec"><span class="vc-mlabel">${has("overview") ? t.overview : t.blocks.consumables}</span></div>
           <div class="vc-kpis" data-el="kpis"></div>
-          </div>
-          <div class="vc-block blk-settings">
+          </div>` : ""}
+          ${has("settings") ? `<div class="vc-block blk-settings">
           <div class="vc-sec"><span class="vc-mlabel">${t.settings}</span></div>
-          ${this._seg(t.suction, "fan", (vs.attributes.fan_speed_list) || [])}
-          ${this._seg(t.water, "water", (e.water && hass.states[e.water]?.attributes.options) || [])}
-          ${this._seg(t.mode, "mode", (e.mode && hass.states[e.mode]?.attributes.options) || [])}
+          ${this._seg(t.suction, "fan", (vs.attributes.fan_speed_list) || [], hass.states[e.vacuum], "fan_speed")}
+          ${this._seg(t.water, "water", (e.water && hass.states[e.water]?.attributes.options) || [], e.water && hass.states[e.water])}
+          ${this._seg(t.mode, "mode", (e.mode && hass.states[e.mode]?.attributes.options) || [], e.mode && hass.states[e.mode])}
           ${this._seg(t.program, "prog", (e.program && hass.states[e.program]?.attributes.options) || [], e.program && hass.states[e.program])}
-          ${this._seg(t.efficiency, "eff", (e.efficiency && hass.states[e.efficiency]?.attributes.options) || [])}
+          ${this._seg(t.efficiency, "eff", (e.efficiency && hass.states[e.efficiency]?.attributes.options) || [], e.efficiency && hass.states[e.efficiency])}
           ${toggles.length ? `<div class="vc-list">${toggles.map(([id, icon, label]) => `<div class="vc-lrow"><span class="lbl"><ha-icon icon="${icon}"></ha-icon>${label}</span><span></span>
             <label class="vc-switch"><input type="checkbox" class="vc-tog" data-ent="${id}"><span class="vc-slider"></span></label></div>`).join("")}</div>` : ""}
           ${vol ? `<div class="vc-lrow vc-volrow"><span class="lbl"><ha-icon icon="mdi:volume-high"></ha-icon>${t.volume}</span>
@@ -589,16 +684,16 @@ class IlifeVacuumCard extends HTMLElement {
             </div>
             ${e.buttons.dust ? `<button class="vc-dust" data-act="dust"><ha-icon icon="mdi:delete-empty"></ha-icon>${t.empty_bin}</button>` : ""}
           </div>` : ""}
-          </div>
-          ${sched ? `<div class="vc-block blk-sched"><div class="vc-sec"><span class="vc-mlabel">${t.schedules}</span><span class="r" data-el="schedcount"></span></div>
+          </div>` : ""}
+          ${sched && has("schedules") ? `<div class="vc-block blk-sched"><div class="vc-sec"><span class="vc-mlabel">${t.schedules}</span><span class="r" data-el="schedcount"></span></div>
             <div class="vc-strip">${strip}</div><div class="vc-list">${sched}</div></div>` : ""}
-          ${e.tsched ? `<div class="vc-block blk-sched"><div class="vc-sec"><span class="vc-mlabel">${t.schedules}</span>
+          ${e.tsched && has("schedules") ? `<div class="vc-block blk-sched"><div class="vc-sec"><span class="vc-mlabel">${t.schedules}</span>
             <span class="r vc-sechead"><span data-el="tschedcount"></span><button class="vc-sadd" data-el="tschedadd"><ha-icon icon="mdi:plus"></ha-icon>${t.add}</button></span></div>
             <div class="vc-strip">${strip}</div><div class="vc-list" data-el="tschedlist"></div></div>` : ""}
-          <div class="vc-block blk-history">
+          ${has("history") ? `<div class="vc-block blk-history">
           <div class="vc-sec"><span class="vc-mlabel">${t.history}</span><span class="r" data-el="histcount"></span></div>
           <div class="vc-hist" data-el="hist"></div>
-          </div>
+          </div>` : ""}
           </div>
           <div class="vc-modal" data-el="modal" hidden>
             <div class="vc-modal-bg" data-el="modalbg"></div>
@@ -618,7 +713,7 @@ class IlifeVacuumCard extends HTMLElement {
               </div>
             </div>
           </div>
-          ${e.tsched ? `<div class="vc-modal" data-el="sedit" hidden>
+          ${e.tsched && has("schedules") ? `<div class="vc-modal" data-el="sedit" hidden>
             <div class="vc-modal-bg" data-el="seditbg"></div>
             <div class="vc-modal-panel vc-sedit">
               <div class="vc-modal-head"><span class="t" data-el="sedittitle"></span><button data-el="seditclose">✕</button></div>
@@ -650,16 +745,20 @@ class IlifeVacuumCard extends HTMLElement {
     if (this._ro) this._ro.disconnect();
     this._ro = new ResizeObserver((ents) => {
       const w = ents[0].contentRect.width;
-      // One column per ~360px, capped at the number of sections (6): the card
+      // One column per ~360px, capped at the number of sections shown: the card
       // fills a wide/panel placement, yet stays narrow inside a grid column.
-      const cols = Math.max(1, Math.min(6, Math.round(w / 360)));
+      const blocks = this.querySelectorAll(".vc-block").length || 1;
+      const cols = Math.max(1, Math.min(blocks, Math.round(w / 360)));
       root.style.setProperty("--cols", cols);
       root.classList.toggle("wide", cols >= 2);
       // full-page bento: auto when the card takes ~all the width (single-card /
       // panel view); off in a normal grid column. `full_height` config overrides.
       const near = w / (window.innerWidth || w) >= 0.78;
       const cfg = this._config || {};
-      const wantFull = cfg.full_height !== undefined ? !!cfg.full_height : near;
+      // The bento grid places all five tiles: only with the map tile, and only by
+      // itself when nothing is hidden.
+      const wantFull = cfg.full_height !== undefined ? !!cfg.full_height && !!this.querySelector(".blk-map")
+        : near && this._show.size === BLOCKS.length;
       root.classList.toggle("full", wantFull && w >= 900);
       this._scheduleFit();
     });
@@ -678,7 +777,16 @@ class IlifeVacuumCard extends HTMLElement {
   _scheduleFit() {
     if (this._fitRaf) return;
     const raf = (typeof requestAnimationFrame === "function") ? requestAnimationFrame : (cb) => cb();
-    this._fitRaf = raf(() => { this._fitRaf = 0; this._fitHero(); });
+    this._fitRaf = raf(() => { this._fitRaf = 0; this._fitHero(); this._fitSegs(); });
+  }
+
+  // A segmented control whose labels don't fit its equal segments wraps (see .wrap).
+  _fitSegs() {
+    this.querySelectorAll(".blk-settings .vc-seg").forEach((seg) => {
+      seg.classList.remove("wrap");
+      const cut = [...seg.querySelectorAll(".vc-pill")].some((p) => p.scrollWidth > p.clientWidth + 1);
+      seg.classList.toggle("wrap", cut);
+    });
   }
 
   _fitHero() {
@@ -755,7 +863,8 @@ class IlifeVacuumCard extends HTMLElement {
       const btn = ev.target.closest(".vc-kpi-reset"); if (!btn) return;
       const key = btn.dataset.reset, id = e.buttons[key]; if (!id) return;
       const tt = this._t, labels = { resetmain: tt.brush, resetside: tt.side_brush, resetfilter: tt.filter };
-      this._confirm(tt.reset_confirm.replace("{part}", (labels[key] || "").toLowerCase()),
+      const part = labels[key] || "";
+      this._confirm(tt.reset_confirm.replace("{part}", tt.keep_case ? part : part.toLowerCase()),
         () => call("button", "press", { entity_id: id }));
     });
   }
@@ -935,10 +1044,17 @@ class IlifeVacuumCard extends HTMLElement {
     if (!sec) return "—";
     const t = this._t, d = new Date(sec * 1000), now = new Date();
     const yest = new Date(now); yest.setDate(now.getDate() - 1);
-    const hm = d.toLocaleTimeString(t.locale, { hour: "2-digit", minute: "2-digit" });
+    let hm, day;
+    try {
+      hm = d.toLocaleTimeString(this._timeLocale(), this._timeOpts());
+      day = d.toLocaleDateString(this._locale(), { weekday: "short", day: "numeric", month: "short" });
+    } catch (err) {  // a language tag the browser rejects
+      hm = d.toLocaleTimeString(t.locale, this._timeOpts());
+      day = d.toLocaleDateString(t.locale, { weekday: "short", day: "numeric", month: "short" });
+    }
     if (d.toDateString() === now.toDateString()) return `${t.today} ${hm}`;
     if (d.toDateString() === yest.toDateString()) return `${t.yesterday} ${hm}`;
-    return d.toLocaleDateString(t.locale, { weekday: "short", day: "numeric", month: "short" }) + (withDate ? " " + hm : "");
+    return day + (withDate ? " " + hm : "");
   }
 
   _kpi(icon, val, label, gauge, resetKey) {
@@ -960,11 +1076,13 @@ class IlifeVacuumCard extends HTMLElement {
     root.classList.toggle("offline", e.online && !online);
     root.classList.toggle("cleaning", vs.state === "cleaning");
 
-    q("name").textContent = vs.attributes.friendly_name || "ILIFE";
-    const stTxt = t.st[vs.state] || vs.state;
-    q("state").textContent = (!online && e.online)
-      ? (["docked", "idle", "paused"].includes(vs.state) ? `${stTxt} · ${t.sleeping}` : t.offline)
-      : stTxt;
+    if (q("name")) {
+      q("name").textContent = vs.attributes.friendly_name || "ILIFE";
+      const stTxt = t.st[vs.state] || vs.state;
+      q("state").textContent = (!online && e.online)
+        ? (["docked", "idle", "paused"].includes(vs.state) ? `${stTxt} · ${t.sleeping}` : t.offline)
+        : stTxt;
+    }
 
     const bv = e.battery ? num(e.battery) : null;
     if (q("batt")) {
@@ -994,10 +1112,11 @@ class IlifeVacuumCard extends HTMLElement {
 
     if (q("scrim")) {
       if (vs.state === "cleaning") {
-        const fs = vs.attributes.fan_speed || "";
+        const fs = vs.attributes.fan_speed
+          ? (hass.formatEntityAttributeValue ? hass.formatEntityAttributeValue(vs, "fan_speed") : vs.attributes.fan_speed) : "";
         const ct = e.curtime ? num(e.curtime) : null, ca = e.curarea ? num(e.curarea) : null;
         const parts = [];
-        if (ct != null) parts.push(`<b>${ct}</b> min`);
+        if (ct != null) parts.push(`<b>${ct}</b> ${t.min.trim()}`);
         if (ca != null) parts.push(`<b>${ca}</b> m²`);
         if (bv != null) parts.push(`<b>${Math.round(bv)}</b>% ${t.battery}`);
         if (fs) parts.push(fs);
@@ -1080,18 +1199,21 @@ class IlifeVacuumCard extends HTMLElement {
       : (directMinutes != null
         ? directMinutes
         : cleans.reduce((s, c) => s + (Number(c.duration) || 0), 0));
-    const fmtDur = (m) => m >= 60 ? Math.floor(m / 60) + "h" + (m % 60 ? String(m % 60).padStart(2, "0") : "") : m + "min";
+    const fmtDur = (m) => m >= 60 ? Math.floor(m / 60) + t.h.trimEnd() + (m % 60 ? (t.h.endsWith(" ") ? " " : "") + String(m % 60).padStart(2, "0") : "") : m + t.min;
     const brush = e.brush ? num(e.brush) : null, side = e.side ? num(e.side) : null, filt = e.filter ? num(e.filter) : null;
     if (q("kpis")) {
-      let k = this._kpi("mdi:counter", cycles, t.cycles) +
+      let k = "";
+      if (this._has("overview")) k += this._kpi("mdi:counter", cycles, t.cycles) +
         this._kpi("mdi:ruler-square", totArea.toFixed(1) + " m²", t.area) +
         this._kpi("mdi:timer-outline", fmtDur(totMin), t.total_time);
-      if (brush != null) k += this._kpi("mdi:brush", Math.round(brush) + "%", t.brush, brush, e.buttons.resetmain ? "resetmain" : null);
-      if (side != null) k += this._kpi("mdi:brush-variant", Math.round(side) + "%", t.side_brush, side, e.buttons.resetside ? "resetside" : null);
-      if (filt != null) k += this._kpi("mdi:air-filter", Math.round(filt) + "%", t.filter, filt, e.buttons.resetfilter ? "resetfilter" : null);
+      if (this._has("consumables")) {
+        if (brush != null) k += this._kpi("mdi:brush", Math.round(brush) + "%", t.brush, brush, e.buttons.resetmain ? "resetmain" : null);
+        if (side != null) k += this._kpi("mdi:brush-variant", Math.round(side) + "%", t.side_brush, side, e.buttons.resetside ? "resetside" : null);
+        if (filt != null) k += this._kpi("mdi:air-filter", Math.round(filt) + "%", t.filter, filt, e.buttons.resetfilter ? "resetfilter" : null);
+      }
       q("kpis").innerHTML = k;
     }
-    if (q("histcount")) q("histcount").textContent = cycles ? `${cycles} ${cycles > 1 ? t.sessions : t.session}` : "";
+    if (q("histcount")) q("histcount").textContent = cycles ? `${cycles} ${this._plural(cycles)}` : "";
     if (q("hist")) {
       const maxA = Math.max(1, ...cleans.map((c) => Number(c.area) || 0));
       q("hist").innerHTML = cleans.length
@@ -1099,7 +1221,7 @@ class IlifeVacuumCard extends HTMLElement {
             <span class="vc-hthumb"></span>
             <span class="vc-hmeta"><div class="vc-hwhen">${this._fmtWhen(c.start)}</div>
               <div class="vc-hsub"><span style="display:inline-block;width:${Math.round((Number(c.area) || 0) / maxA * 100)}%;max-width:60px;height:3px;border-radius:2px;background:color-mix(in srgb,var(--primary-color) 60%,transparent);vertical-align:middle"></span></div></span>
-            <span class="vc-harea vc-num">${c.area ?? "?"} m² · ${c.duration ?? "?"} min</span>
+            <span class="vc-harea vc-num">${c.area ?? "?"} m² · ${c.duration ?? "?"} ${t.min.trim()}</span>
             <ha-icon class="vc-hchev" icon="mdi:chevron-right"></ha-icon></div>`).join("")
         : `<div class="vc-empty">${t.no_history}</div>`;
       q("hist").querySelectorAll(".vc-hrow").forEach((row) => {
@@ -1137,30 +1259,43 @@ class IlifeVacuumCard extends HTMLElement {
 if (!customElements.get("ilife-vacuum-card")) customElements.define("ilife-vacuum-card", IlifeVacuumCard);
 
 // Visual editor built on the native <ha-form> selector, so adding the card is a
-// modern point-and-click flow (pick the vacuum; everything else is auto-detected).
-const EDITOR_SCHEMA = [{ name: "entity", selector: { entity: { domain: "vacuum" } } }];
+// modern point-and-click flow (pick the vacuum and the blocks; the rest is auto-detected).
+const editorSchema = (t) => [
+  { name: "entity", selector: { entity: { domain: "vacuum" } } },
+  { name: "show", selector: { select: { multiple: true, mode: "list",
+    options: BLOCKS.map((b) => ({ value: b, label: (t.blocks || T.en.blocks)[b] })) } } },
+];
 class IlifeVacuumCardEditor extends HTMLElement {
   setConfig(config) { this._config = Object.assign({}, config); this._render(); }
   set hass(hass) { this._hass = hass; this._render(); }
   _render() {
     if (!this._hass) return;
+    const t = T[cardLang(this._hass)] || T.en;
     if (!this._form) {
       this._form = document.createElement("ha-form");
-      this._form.computeLabel = (s) => (s.name === "entity" ? "ILIFE vacuum" : s.name);
       this._form.addEventListener("value-changed", (ev) => {
-        this._config = ev.detail.value;
-        this.dispatchEvent(new CustomEvent("config-changed", { detail: { config: this._config }, bubbles: true, composed: true }));
+        const config = Object.assign({}, ev.detail.value);
+        // Every block ticked is the default: keep `show` out of the YAML then.
+        const show = config.show;
+        if (Array.isArray(show) && BLOCKS.every((b) => show.includes(b))) delete config.show;
+        else if (Array.isArray(show)) config.show = BLOCKS.filter((b) => show.includes(b));
+        this._config = config;
+        this.dispatchEvent(new CustomEvent("config-changed", { detail: { config }, bubbles: true, composed: true }));
       });
       this.appendChild(this._form);
     }
+    this._form.computeLabel = (s) => (s.name === "entity" ? t.editor_entity : s.name === "show" ? t.editor_show : s.name);
     this._form.hass = this._hass;
-    this._form.schema = EDITOR_SCHEMA;
-    this._form.data = this._config;
+    this._form.schema = editorSchema(t);
+    // No `show` means everything, so the editor ticks every block for it.
+    const show = this._config.show;
+    this._form.data = Object.assign({}, this._config,
+      { show: typeof show === "string" ? show.split(",").map((x) => x.trim()) : (show || BLOCKS) });
   }
 }
 if (!customElements.get("ilife-vacuum-card-editor")) customElements.define("ilife-vacuum-card-editor", IlifeVacuumCardEditor);
 
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ilife-vacuum-card", name: "ILIFE Vacuum Card",
-  description: "All-in-one card for the ILIFE vacuum (map, controls, schedules, clickable history).", preview: true });
-console.info("%c ILIFE-VACUUM-CARD %c 0.7.0 loaded ", "color:#fff;background:#7cadff;border-radius:3px 0 0 3px;padding:2px", "background:#333;color:#fff;border-radius:0 3px 3px 0;padding:2px");
+  description: "All-in-one card for the ILIFE vacuum (map, controls, schedules, clickable history); `show` picks the blocks.", preview: true });
+console.info("%c ILIFE-VACUUM-CARD %c 0.8.0 loaded ", "color:#fff;background:#7cadff;border-radius:3px 0 0 3px;padding:2px", "background:#333;color:#fff;border-radius:0 3px 3px 0;padding:2px");
