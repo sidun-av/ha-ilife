@@ -11,6 +11,8 @@ import pytest
 _PKG = pathlib.Path(__file__).resolve().parents[1] / "custom_components" / "ilife"
 _FIXTURES = pathlib.Path(__file__).resolve().parent / "fixtures"
 FILES = [_PKG / "strings.json", *sorted((_PKG / "translations").glob("*.json"))]
+# hassfest's translation key pattern (script/hassfest/translations.py).
+_TRANSLATION_KEY = re.compile(r"^(?!.+[_-]{2})(?![_-])[a-z0-9-_]+(?<![_-])$")
 
 
 def _load(path):
@@ -50,10 +52,18 @@ def test_no_empty_values(path):
 
 
 def test_state_keys_are_valid_translation_keys():
-    # hassfest only accepts lowercase keys: an option like "S-shape" can't have one.
+    # hassfest's own rule: lowercase, digits, "-" and "_", neither at either end nor
+    # doubled. An option like "S-shape" can't have a key.
     for key in _keys(_load(FILES[0])):
         if "/state/" in key:
-            assert re.fullmatch(r"[a-z0-9_-]+", key.rsplit("/", 1)[1]), key
+            assert _TRANSLATION_KEY.fullmatch(key.rsplit("/", 1)[1]), key
+
+
+def test_translation_key_rule_matches_hassfest():
+    for good in ("strong", "goto_pos", "s-shape", "a1"):
+        assert _TRANSLATION_KEY.fullmatch(good), good
+    for bad in ("_x", "x_", "a__b", "a-_b", "-x", "Strong", "a b"):
+        assert not _TRANSLATION_KEY.fullmatch(bad), bad
 
 
 def _model_range(code):

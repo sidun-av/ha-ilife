@@ -123,8 +123,8 @@ and the map tile says *No map yet* until the camera has one — see
 [The map on ILIFE Clean](#the-map-on-ilife-clean).
 
 To show only some of the blocks — say, schedules and history next to another map
-card — tick them in the editor, or list them under `show` (leaving it out shows
-everything): `header`, `map`, `controls`, `rooms`, `overview`, `consumables`,
+card — tick them in the editor, or list them under `show` (leaving it out, or
+leaving it empty, shows everything): `header`, `map`, `controls`, `rooms`, `overview`, `consumables`,
 `settings`, `schedules`, `history`.
 
 ```yaml
@@ -133,7 +133,8 @@ entity: vacuum.my_vacuum
 show: [schedules, history, consumables]
 ```
 
-Times follow your profile's 12/24‑hour setting.
+Times follow your profile's 12/24‑hour setting, and the totals your sensors'
+display units (a total time switched to hours still reads right).
 
 The card is registered automatically for storage‑mode dashboards. For
 **YAML‑mode** dashboards, add the resource manually:
@@ -493,6 +494,11 @@ removed this way (they would just come back on the next refresh).
 - Translations: English, French and Russian (entity names, select values, fan
   speeds, setup and options flow). The ILIFEHOME selects keep their app labels
   (Gentle / Standard / S‑shape…), which Home Assistant can't key a translation on.
+- Since 0.8.0 the two technical ILIFE Clean selects (disabled by default) take
+  their names from the translations: "Direction control" and "Map request"
+  (before: "Direction Control" and "Request"). Existing entities keep their
+  entity ids; a new install gets `select.<device>_map_request` in place of
+  `select.<device>_request`.
 
 ## Contributing
 

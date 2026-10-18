@@ -65,7 +65,7 @@ const T = {
     },
     cycles: "Cykle", area: "Powierzchnia", total_time: "Łączny czas", brush: "Szczotka", filter: "Filtr",
     side_brush: "Szczotka boczna", reset: "Resetuj", cancel: "Anuluj", reset_confirm: "Zresetować {part} do 100%?",
-    m2_cleaned: "m² posprzątane", minutes: "minut", no_history: "Brak ostatnich sprzątań.",
+    m2_cleaned: "m² posprzątane", minutes: "min", no_history: "Brak ostatnich sprzątań.",
     not_found: "Nie znaleziono odkurzacza ILIFE.", today: "Dziś", yesterday: "Wczoraj",
     active: "aktywne", session: "sprzątanie", sessions: "sprzątań", sleeping: "uśpiony",
     days: ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"],
@@ -126,7 +126,7 @@ const T = {
     cycles: "Уборки", area: "Площадь", total_time: "Общее время", brush: "Основная щётка", filter: "Фильтр",
     side_brush: "Боковая щётка", reset: "Сбросить", cancel: "Отмена", reset_confirm: "Сбросить ресурс «{part}» до 100%?",
     keep_case: true,
-    m2_cleaned: "м² убрано", minutes: "минут", no_history: "Недавних уборок нет.",
+    m2_cleaned: "м² убрано", minutes: "мин", no_history: "Недавних уборок нет.",
     not_found: "Пылесос ILIFE не найден.", today: "Сегодня", yesterday: "Вчера",
     active: "вкл.", session: "уборка", sessions: "уборок", sleeping: "спит",
     session_forms: { one: "уборка", few: "уборки", many: "уборок", other: "уборки" },
@@ -144,6 +144,11 @@ const T = {
     locale: "ru-RU",
   },
 };
+
+// Display units of the area and duration sensors, in m² and minutes.
+const M2_PER = { "m²": 1, "cm²": 1e-4, "mm²": 1e-6, "km²": 1e6, ha: 1e4, "in²": 6.4516e-4,
+                 "ft²": 0.09290304, "yd²": 0.83612736, ac: 4046.8564224, "mi²": 2589988.110336 };
+const MIN_PER = { "μs": 1 / 6e7, ms: 1 / 60000, s: 1 / 60, min: 1, h: 60, d: 1440, w: 10080 };
 
 // Blocks the `show` option can list, in card order; leaving it out shows them all.
 const BLOCKS = ["header", "map", "controls", "rooms", "overview", "consumables", "settings", "schedules", "history"];
@@ -218,13 +223,13 @@ function drawMapCells(canvas, cells, maxW, maxH, path) {
 class IlifeVacuumCard extends HTMLElement {
   setConfig(config) {
     if (!config) throw new Error("Invalid configuration");
-    // `show`: the blocks to render, as a list (or "a, b"); absent = all of them.
+    // `show`: the blocks to render, as a list (or "a, b"); absent or empty = all of them.
     let show = config.show;
     if (typeof show === "string") show = show.split(",").map((x) => x.trim()).filter(Boolean);
     if (show !== undefined && !Array.isArray(show)) throw new Error("show: expected a list of blocks");
     const bad = (show || []).filter((b) => !BLOCKS.includes(b));
     if (bad.length) throw new Error(`show: unknown block ${bad.join(", ")} (use ${BLOCKS.join(", ")})`);
-    this._show = new Set(show || BLOCKS);
+    this._show = new Set(show && show.length ? show : BLOCKS);
     this._config = config;
     this._built = false;
     this._padOpen = false;
@@ -1070,6 +1075,12 @@ class IlifeVacuumCard extends HTMLElement {
     const q = (s) => this.querySelector(`[data-el="${s}"]`);
     const root = q("root");
     const num = (id) => { const s = hass.states[id]; const v = s ? Number(s.state) : NaN; return isFinite(v) ? v : null; };
+    // A sensor's value in the card's unit; one it does not know is taken as is.
+    const inUnit = (id, per) => {
+      const v = num(id);
+      const factor = per[hass.states[id]?.attributes.unit_of_measurement];
+      return v == null || factor == null ? v : v * factor;
+    };
 
     const online = e.online ? hass.states[e.online]?.state === "on" : true;
     root.classList.toggle("online", online);
@@ -1155,8 +1166,10 @@ class IlifeVacuumCard extends HTMLElement {
 
     const cleans = (e.history && hass.states[e.history]?.attributes.cleans) || [];
     const sensorCycles = e.totalcount ? num(e.totalcount) : null;
-    const sensorArea = e.totalarea ? num(e.totalarea) : null;
-    const sensorMinutes = e.totaltime ? num(e.totaltime) : null;
+    // The area and duration sensors have device classes, so their display unit can
+    // be changed (hours, ft²...): convert back to the m² and minutes shown here.
+    const sensorArea = e.totalarea ? inUnit(e.totalarea, M2_PER) : null;
+    const sensorMinutes = e.totaltime ? inUnit(e.totaltime, MIN_PER) : null;
     const attrNum = (key) => {
       const value = Number(vs.attributes[key]);
       return Number.isFinite(value) ? value : null;
@@ -1199,7 +1212,7 @@ class IlifeVacuumCard extends HTMLElement {
       : (directMinutes != null
         ? directMinutes
         : cleans.reduce((s, c) => s + (Number(c.duration) || 0), 0));
-    const fmtDur = (m) => m >= 60 ? Math.floor(m / 60) + t.h.trimEnd() + (m % 60 ? (t.h.endsWith(" ") ? " " : "") + String(m % 60).padStart(2, "0") : "") : m + t.min;
+    const fmtDur = (minutes) => { const m = Math.round(minutes); return m >= 60 ? Math.floor(m / 60) + t.h.trimEnd() + (m % 60 ? (t.h.endsWith(" ") ? " " : "") + String(m % 60).padStart(2, "0") : "") : m + t.min; };
     const brush = e.brush ? num(e.brush) : null, side = e.side ? num(e.side) : null, filt = e.filter ? num(e.filter) : null;
     if (q("kpis")) {
       let k = "";
@@ -1275,9 +1288,10 @@ class IlifeVacuumCardEditor extends HTMLElement {
       this._form = document.createElement("ha-form");
       this._form.addEventListener("value-changed", (ev) => {
         const config = Object.assign({}, ev.detail.value);
-        // Every block ticked is the default: keep `show` out of the YAML then.
+        // Every block ticked is the default: keep `show` out of the YAML then. None
+        // ticked would be an empty card, so it means every block too.
         const show = config.show;
-        if (Array.isArray(show) && BLOCKS.every((b) => show.includes(b))) delete config.show;
+        if (Array.isArray(show) && (!show.length || BLOCKS.every((b) => show.includes(b)))) delete config.show;
         else if (Array.isArray(show)) config.show = BLOCKS.filter((b) => show.includes(b));
         this._config = config;
         this.dispatchEvent(new CustomEvent("config-changed", { detail: { config }, bubbles: true, composed: true }));
