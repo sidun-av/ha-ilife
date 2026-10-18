@@ -80,15 +80,18 @@ SENSORS = [
     ("filter", "mdi:air-filter", PERCENTAGE, SensorStateClass.MEASUREMENT,
      lambda s: _parts(s, "FilterLife"), None),
     ("current_area", "mdi:vector-square", UnitOfArea.SQUARE_METERS, SensorStateClass.MEASUREMENT,
-     lambda s: round((_rtm(s, "CleanArea") or 0) / 100, 1) if _cleaning(s) else None, None),
+     lambda s: round((_rtm(s, "CleanArea") or 0) / 100, 1) if _cleaning(s) else None,
+     SensorDeviceClass.AREA),
     ("current_time", "mdi:timer-play-outline", UnitOfTime.MINUTES, SensorStateClass.MEASUREMENT,
-     lambda s: round((_rtm(s, "CleanTime") or 0) / 60) if _cleaning(s) else None, None),
+     lambda s: round((_rtm(s, "CleanTime") or 0) / 60) if _cleaning(s) else None,
+     SensorDeviceClass.DURATION),
     # CleanTotalArea unit is model-dependent (m² on some models, 0.01 m² on others);
     # clean_area_m2() disambiguates by magnitude.
     ("last_area", "mdi:ruler-square", UnitOfArea.SQUARE_METERS, None,
-     lambda s: clean_area_m2(_hist(s, "CleanTotalArea")) or None, None),
+     lambda s: clean_area_m2(_hist(s, "CleanTotalArea")) or None, SensorDeviceClass.AREA),
     ("last_duration", "mdi:timer-outline", UnitOfTime.MINUTES, None,
-     lambda s: round((_hist(s, "CleanTotalTime") or 0) / 60) or None, None),
+     lambda s: round((_hist(s, "CleanTotalTime") or 0) / 60) or None,
+     SensorDeviceClass.DURATION),
     ("last_clean", "mdi:calendar-check", None, None,
      _last_clean, SensorDeviceClass.TIMESTAMP),
 ]
@@ -108,29 +111,31 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 entities.append(TuyaSensor(coordinator, "current_area", "mdi:vector-square",
                                            UnitOfArea.SQUARE_METERS,
                                            SensorStateClass.MEASUREMENT, TUYA_DP_CLEAN_AREA,
-                                           None))
+                                           SensorDeviceClass.AREA))
             if TUYA_DP_CLEAN_TIME in status:
                 entities.append(TuyaSensor(coordinator, "current_time",
                                            "mdi:timer-play-outline", UnitOfTime.MINUTES,
                                            SensorStateClass.MEASUREMENT, TUYA_DP_CLEAN_TIME,
-                                           None))
+                                           SensorDeviceClass.DURATION))
             if TUYA_DP_TOTAL_CLEAN_AREA in status:
                 entities.append(TuyaSensor(coordinator, "total_area", "mdi:ruler-square",
                                            UnitOfArea.SQUARE_METERS,
                                            SensorStateClass.TOTAL_INCREASING,
-                                           TUYA_DP_TOTAL_CLEAN_AREA, None))
+                                           TUYA_DP_TOTAL_CLEAN_AREA, SensorDeviceClass.AREA))
             if TUYA_DP_TOTAL_CLEAN_TIME in status:
                 entities.append(TuyaSensor(coordinator, "total_time", "mdi:timer-outline",
                                            UnitOfTime.MINUTES,
                                            SensorStateClass.TOTAL_INCREASING,
-                                           TUYA_DP_TOTAL_CLEAN_TIME, None))
+                                           TUYA_DP_TOTAL_CLEAN_TIME,
+                                           SensorDeviceClass.DURATION))
             if TUYA_DP_TOTAL_CLEAN_COUNT in status:
                 entities.append(TuyaSensor(coordinator, "total_count", "mdi:counter",
                                            None, SensorStateClass.TOTAL_INCREASING,
                                            TUYA_DP_TOTAL_CLEAN_COUNT, None))
             if TUYA_DP_FAULT in status:
                 entities.append(TuyaSensor(coordinator, "fault", "mdi:alert-circle-outline",
-                                           None, None, TUYA_DP_FAULT, None))
+                                           None, None, TUYA_DP_FAULT, None,
+                                           EntityCategory.DIAGNOSTIC))
             for code, (key, _, _, icon) in TUYA_CONSUMABLES.items():
                 if code in status:
                     entities.append(TuyaConsumableSensor(coordinator, code, key, icon))
@@ -172,6 +177,7 @@ class ILifeHistorySensor(ILifeEntity, SensorEntity):
 
     _attr_translation_key = "history"
     _attr_icon = "mdi:history"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
     # do NOT store the map blobs in the recorder (~28 KB otherwise)
     _unrecorded_attributes = frozenset({"cleans"})
 
@@ -191,9 +197,11 @@ class ILifeHistorySensor(ILifeEntity, SensorEntity):
 class TuyaSensor(TuyaEntity, SensorEntity):
     """A curated ILIFE Clean (Tuya) DP with a known meaning and unit."""
 
-    def __init__(self, coordinator, key, icon, unit, state_class, code, device_class):
+    def __init__(self, coordinator, key, icon, unit, state_class, code, device_class,
+                 entity_category=None):
         super().__init__(coordinator)
         self._code = code
+        self._attr_entity_category = entity_category
         self._attr_translation_key = key
         self._attr_unique_id = f"{self.api.device_id}_{key}"
         self._attr_icon = icon
@@ -243,6 +251,7 @@ class TuyaScheduleSensor(TuyaEntity, SensorEntity):
 
     _attr_translation_key = "schedules"
     _attr_icon = "mdi:calendar-clock"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
 
     def __init__(self, coordinator):
         super().__init__(coordinator)
@@ -268,6 +277,7 @@ class TuyaHistorySensor(TuyaEntity, SensorEntity):
 
     _attr_translation_key = "history"
     _attr_icon = "mdi:history"
+    _attr_entity_category = EntityCategory.DIAGNOSTIC
     # thumbnails are a few KB each: keep them out of the recorder
     _unrecorded_attributes = frozenset({"cleans"})
 
