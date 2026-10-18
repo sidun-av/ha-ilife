@@ -220,6 +220,11 @@ class TuyaLocalError(Exception):
     """Local command could not be delivered or acknowledged."""
 
 
+class TuyaLocalTimeout(TuyaLocalError):
+    """The command went out but no acknowledgement came back in time: the device
+    may well have carried it out."""
+
+
 class TuyaLocalRefused(TuyaLocalError):
     """The device answered the command with a non-zero return code."""
 
@@ -292,7 +297,7 @@ class TuyaLocalLink:
             await self._send(seq, CMD_CONTROL, payload)
             await asyncio.wait_for(fut, self.ACK_TIMEOUT)
         except asyncio.TimeoutError as err:
-            raise TuyaLocalError("no acknowledgement from device") from err
+            raise TuyaLocalTimeout("no acknowledgement from device") from err
         except OSError as err:
             raise TuyaLocalError(f"send failed: {err.__class__.__name__}") from err
         finally:

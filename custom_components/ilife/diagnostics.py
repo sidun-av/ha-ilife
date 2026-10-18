@@ -28,7 +28,14 @@ from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntry
 
-from .const import CONF_ACCESS_ID, CONF_ACCESS_SECRET, CONF_LOCAL, CONF_UID, DOMAIN
+from .const import (
+    CONF_ACCESS_ID,
+    CONF_ACCESS_SECRET,
+    CONF_LOCAL,
+    CONF_UID,
+    DOMAIN,
+    LOCAL_PROTOCOL,
+)
 from .tuya_api import TuyaError
 from .tuya_map import decode_tuya_map
 
@@ -115,7 +122,7 @@ def _device_diag(coordinator: Any) -> dict[str, Any]:
             "enabled": bool(coordinator.config_entry.options.get(CONF_LOCAL, True)),
             "connected": bool(coordinator.local_connected),
             "host": "**REDACTED**" if getattr(link, "host", None) else None,
-            "protocol": "3.3",
+            "protocol": LOCAL_PROTOCOL,
             "last_push_age_s": (
                 round(time.monotonic() - last_push, 1) if last_push is not None else None
             ),

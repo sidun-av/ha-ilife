@@ -162,3 +162,5 @@ TUYA_KNOWN_DP_CODES = {
 
 # ILIFE Clean options (LAN control)
 CONF_LOCAL = "local"
+# ILIFE Clean local (LAN) control: Tuya protocol 3.3 only.
+LOCAL_PROTOCOL = "3.3"

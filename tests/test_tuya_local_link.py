@@ -152,8 +152,10 @@ async def test_set_dps_without_ack_raises(rig):
     dev.ack_control = False
     await link.start()
     await until(lambda: link.connected)
-    with pytest.raises(tl.TuyaLocalError):
+    # Its own type: the coordinator must not re-send a frame that may have run.
+    with pytest.raises(tl.TuyaLocalTimeout):
         await link.set_dps({"2": True})
+    assert link.connected
 
 
 @pytest.mark.asyncio
