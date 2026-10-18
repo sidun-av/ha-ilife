@@ -11,8 +11,8 @@ from homeassistant.exceptions import HomeAssistantError
 from .api import ILifeError, ILifeOfflineError
 from .const import BACKEND_ILIFE_CLEAN, DOMAIN, TUYA_CONSUMABLES, TUYA_DP_RESET_MAP
 from .entity import ILifeEntity
-from .tuya_api import TuyaError, TuyaOfflineError
-from .tuya_entity import TuyaEntity
+from .tuya_api import TuyaError
+from .tuya_entity import TuyaEntity, tuya_command_error
 
 # (translation_key, icon, CleanDirection)
 DIRECTION_BUTTONS = [
@@ -97,12 +97,8 @@ class TuyaResetButton(TuyaEntity, ButtonEntity):
     async def async_press(self):
         try:
             await self.coordinator.async_write(self._code, True)
-        except TuyaOfflineError as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN, translation_key="device_offline"
-            ) from err
         except TuyaError as err:
-            raise HomeAssistantError(str(err)) from err
+            raise tuya_command_error(err) from err
 
 
 class ILifeResetButton(_Base):

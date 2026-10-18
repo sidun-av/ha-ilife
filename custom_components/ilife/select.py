@@ -23,9 +23,9 @@ from .const import (
     water_label,
 )
 from .entity import ILifeEntity
-from .tuya_api import TuyaError, TuyaOfflineError
+from .tuya_api import TuyaError
 from .tuya_dynamic import mode_commands, range_values, unknown_functions
-from .tuya_entity import TuyaEntity
+from .tuya_entity import TuyaEntity, tuya_command_error
 from .tuya_rooms import CLEAN_SETTINGS_CODE, PROGRAMS, active_program, with_program
 
 # Generic Enum DPs whose name and values are translated (translation key = code);
@@ -120,24 +120,16 @@ class _TuyaSelectBase(TuyaEntity, SelectEntity):
     async def _send(self, code, value):
         try:
             await self.coordinator.async_write(code, value)
-        except TuyaOfflineError as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN, translation_key="device_offline"
-            ) from err
         except TuyaError as err:
-            raise HomeAssistantError(str(err)) from err
+            raise tuya_command_error(err) from err
 
     async def _send_many(self, commands):
         """Several DPs as one instruction, the way the vacuum's actions are sent:
         through the coordinator, so over the LAN (one frame) while the link is up."""
         try:
             await self.coordinator.async_send(commands)
-        except TuyaOfflineError as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN, translation_key="device_offline"
-            ) from err
         except TuyaError as err:
-            raise HomeAssistantError(str(err)) from err
+            raise tuya_command_error(err) from err
 
 
 class TuyaModeSelect(_TuyaSelectBase):

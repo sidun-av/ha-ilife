@@ -66,6 +66,12 @@
     },
     "ilife_clean_only": {
       "message": "« {action} » n'est disponible que sur les aspirateurs ILIFE Clean (Tuya) ; ILIFEHOME n'a pas de commande équivalente."
+    },
+    "local_refused": {
+      "message": "L'aspirateur a refusé la commande sur le réseau local : elle n'a pas été exécutée."
+    },
+    "local_unconfirmed": {
+      "message": "L'aspirateur n'a pas confirmé la commande sur le réseau local. Il l'a très probablement exécutée : vérifiez avant de la renvoyer."
     }
   },
   "entity": {

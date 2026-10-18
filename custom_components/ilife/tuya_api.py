@@ -93,6 +93,18 @@ class TuyaNetworkError(TuyaError):
     routine, so it is retried soon and logged quietly, unlike a refusal."""
 
 
+class TuyaCommandRefused(TuyaError):
+    """The robot answered a LAN command with a refusal: it was not carried out, and
+    the cloud would only relay the same command to the same robot."""
+
+
+class TuyaCommandUnconfirmed(TuyaError):
+    """A LAN command went out but its acknowledgement never came back while the link
+    stayed up: the robot has most likely carried it out. Not re-sent; callers treat
+    it as sent (a pause stays a pause, a detour suction level is set back) and still
+    tell the user it was not confirmed."""
+
+
 # Tuya OpenAPI codes that mean "the Cloud Project/UID setup is wrong", not "try again
 # later" — these must surface as an authentication problem so the user fixes the setup
 # instead of waiting for a retry that can never succeed.

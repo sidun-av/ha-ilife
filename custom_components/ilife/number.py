@@ -3,11 +3,10 @@ from __future__ import annotations
 
 from homeassistant.components.number import NumberEntity, NumberMode
 from homeassistant.const import PERCENTAGE, EntityCategory
-from homeassistant.exceptions import HomeAssistantError
 
 from .const import BACKEND_ILIFE_CLEAN, DOMAIN, TUYA_DP_DUST_FREQUENCY, TUYA_DP_VOLUME
-from .tuya_api import TuyaError, TuyaOfflineError
-from .tuya_entity import TuyaEntity
+from .tuya_api import TuyaError
+from .tuya_entity import TuyaEntity, tuya_command_error
 
 
 async def async_setup_entry(hass, entry, async_add_entities):
@@ -41,12 +40,8 @@ class _TuyaNumber(TuyaEntity, NumberEntity):
     async def async_set_native_value(self, value: float) -> None:
         try:
             await self.coordinator.async_write(self._code, round(value / self._scale))
-        except TuyaOfflineError as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN, translation_key="device_offline"
-            ) from err
         except TuyaError as err:
-            raise HomeAssistantError(str(err)) from err
+            raise tuya_command_error(err) from err
 
 
 class TuyaVolume(_TuyaNumber):

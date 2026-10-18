@@ -52,6 +52,8 @@ from .const import (
 from .tuya_api import (
     TuyaAuthError,
     TuyaClient,
+    TuyaCommandRefused,
+    TuyaCommandUnconfirmed,
     TuyaError,
     TuyaNoDevicesError,
     TuyaVacuum,
@@ -408,16 +410,18 @@ class ILifeTuyaCoordinator(DataUpdateCoordinator):
                 except TuyaLocalRefused as err:
                     # The robot itself said no: the cloud would only relay the same
                     # command to the same robot.
-                    raise TuyaError(f"local command refused: {err}") from err
+                    raise TuyaCommandRefused(f"local command refused: {err}") from err
                 except TuyaLocalTimeout as err:
                     # The frame went out and only its acknowledgement was lost: the
                     # robot has most likely run it. Sending it again through the
                     # cloud an ACK_TIMEOUT later would restart a room or zone job
-                    # (and keep the user waiting twice), so while the
-                    # link still stands this is reported as a failure instead. A
-                    # link that dropped meanwhile falls back like any lost link.
+                    # (and keep the user waiting twice), so while the link still
+                    # stands it is reported as unconfirmed instead, which callers
+                    # treat as sent. A link that dropped meanwhile falls back like
+                    # any lost link.
                     if self.local_connected:
-                        raise TuyaError(f"local command not acknowledged: {err}") from err
+                        raise TuyaCommandUnconfirmed(
+                            f"local command not acknowledged: {err}") from err
                     _LOGGER.debug("ILIFE Clean local link lost during a send (%s); "
                                   "using the cloud", err)
                 except TuyaLocalError as err:

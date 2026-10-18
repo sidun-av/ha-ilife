@@ -50,7 +50,7 @@ from .const import (
     suction_label,
 )
 from .entity import ILifeEntity
-from .tuya_api import TuyaError, TuyaOfflineError
+from .tuya_api import TuyaCommandUnconfirmed, TuyaError
 from .tuya_dynamic import (
     command_for,
     enum_command,
@@ -60,7 +60,7 @@ from .tuya_dynamic import (
     suction_detour,
     unpause_flag,
 )
-from .tuya_entity import TuyaEntity
+from .tuya_entity import TuyaEntity, tuya_command_error
 from .tuya_pause import PauseTracker
 from .tuya_rooms import (
     CLEAN_ROOMS_CODE,
@@ -217,6 +217,11 @@ class ILifeVacuum(ILifeEntity, StateVacuumEntity):
 
     async def async_delete_schedule(self, slot):
         self._unsupported("delete schedule")
+
+
+def _unconfirmed(err: HomeAssistantError) -> bool:
+    """The error stands for a command that most likely ran (its ack was lost)."""
+    return isinstance(err.__cause__, TuyaCommandUnconfirmed)
 
 
 class TuyaVacuum(TuyaEntity, StateVacuumEntity):
@@ -385,7 +390,9 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
         Only a LAN pause of a running clean is tracked (the cloud path keeps the
         v0.7.1 behaviour). It is armed before the send, because the robot's
         answering push can beat the acknowledgement; any other command ends a
-        tracked pause only once it went through."""
+        tracked pause only once it went through. A command whose acknowledgement
+        was lost (TuyaCommandUnconfirmed) has most likely run, so it counts as
+        sent here: the user is still told it was not confirmed."""
         before = self._pause.snapshot()
         if pause and self.activity == VacuumActivity.CLEANING \
                 and self.coordinator.local_connected:
@@ -394,14 +401,16 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
                       "local" if self.coordinator.local_connected else "cloud")
         try:
             await self.coordinator.async_send(commands)
-        except TuyaOfflineError as err:
-            self._after_failed_send(before, pause)
-            raise HomeAssistantError(
-                translation_domain=DOMAIN, translation_key="device_offline"
-            ) from err
+        except TuyaCommandUnconfirmed as err:
+            self._after_send(pause)
+            raise tuya_command_error(err) from err
         except TuyaError as err:
             self._after_failed_send(before, pause)
-            raise HomeAssistantError(str(err)) from err
+            raise tuya_command_error(err) from err
+        self._after_send(pause)
+
+    def _after_send(self, pause) -> None:
+        """A pause stays armed (see _send_many); any other command ends a pause."""
         if not pause:
             self._pause.on_command_sent()
 
@@ -437,7 +446,13 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
         if self._is_paused and self._cmd_resume:
             await self._send_many(self._cmd_resume)
             return
-        await self._run(self._cmd_start, "start")
+        try:
+            await self._run(self._cmd_start, "start")
+        except HomeAssistantError as err:
+            if _unconfirmed(err):
+                # Most likely started: the nudge itself checks that it runs.
+                self._reassert_suction()
+            raise
         self._reassert_suction()
 
     def _reassert_suction(self) -> None:
@@ -483,10 +498,18 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
             if self.fan_speed != wanted:
                 return
             self._nudge_writing = True
-            await self.coordinator.async_write(TUYA_DP_SUCTION, detour)
+            try:
+                await self.coordinator.async_write(TUYA_DP_SUCTION, detour)
+            except TuyaCommandUnconfirmed as err:
+                # Most likely on the detour level now: set it back all the same.
+                _LOGGER.debug("ILIFE Clean %s: suction detour %s unconfirmed (%s)",
+                              self.api.device_id, detour, err)
             await asyncio.sleep(SUCTION_NUDGE_GAP)
             try:
                 await self.coordinator.async_write(TUYA_DP_SUCTION, wanted)
+            except TuyaCommandUnconfirmed:
+                # Most likely set back; writing it again could only repeat that.
+                pass
             except TuyaError as err:
                 # Left as it is, the fan would run on the detour level: once more.
                 _LOGGER.debug("ILIFE Clean %s: suction %s not set back (%s), retrying",
@@ -523,14 +546,7 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
                     "options": ", ".join(self._suction_range) or "none",
                 },
             )
-        try:
-            await self.coordinator.async_write(TUYA_DP_SUCTION, fan_speed)
-        except TuyaOfflineError as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN, translation_key="device_offline"
-            ) from err
-        except TuyaError as err:
-            raise HomeAssistantError(str(err)) from err
+        await self._write(TUYA_DP_SUCTION, fan_speed)
 
     @property
     def extra_state_attributes(self):
@@ -571,9 +587,7 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
             value = clean_rooms_value([self._room_id(room) for room in rooms], passes)
         except ValueError as err:
             raise HomeAssistantError(str(err)) from err
-        await self._write(CLEAN_ROOMS_CODE, value)
-        self._pause.on_command_sent()
-        self._reassert_suction()
+        await self._write_run(CLEAN_ROOMS_CODE, value)
 
     async def async_clean_zone(self, zone, repeats=1):
         """Clean rectangles [x1, y1, x2, y2] in map cells (robot frame, y up)."""
@@ -589,9 +603,7 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
             value = clean_zone_value([tuple(z) for z in zone], repeats)
         except ValueError as err:
             raise HomeAssistantError(str(err)) from err
-        await self._write(CLEAN_ZONE_CODE, value)
-        self._pause.on_command_sent()
-        self._reassert_suction()
+        await self._write_run(CLEAN_ZONE_CODE, value)
 
     async def async_get_segments(self):
         """The rooms of the vacuum's map, for Home Assistant's area cleaning.
@@ -612,12 +624,21 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
     async def _write(self, code, value):
         try:
             await self.coordinator.async_write(code, value)
-        except TuyaOfflineError as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN, translation_key="device_offline"
-            ) from err
         except TuyaError as err:
-            raise HomeAssistantError(str(err)) from err
+            raise tuya_command_error(err) from err
+
+    async def _write_run(self, code, value):
+        """A room or zone clean: a new run, so it ends a pause and gets the suction
+        nudge, also when its acknowledgement was lost (it most likely started)."""
+        try:
+            await self._write(code, value)
+        except HomeAssistantError as err:
+            if _unconfirmed(err):
+                self._pause.on_command_sent()
+                self._reassert_suction()
+            raise
+        self._pause.on_command_sent()
+        self._reassert_suction()
 
     async def async_set_schedule(self, slot=None, time=None, days=None, enabled=None,
                                  rooms=None, cycles=None):

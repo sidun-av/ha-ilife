@@ -66,6 +66,12 @@
     },
     "ilife_clean_only": {
       "message": "\"{action}\" is only available on ILIFE Clean (Tuya) vacuums; ILIFEHOME has no equivalent command."
+    },
+    "local_refused": {
+      "message": "The vacuum refused the command over the local network, so it was not carried out."
+    },
+    "local_unconfirmed": {
+      "message": "The vacuum did not confirm the command over the local network. It has most likely carried it out: check it before sending it again."
     }
   },
   "entity": {

@@ -8,7 +8,6 @@ from __future__ import annotations
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import EntityCategory
-from homeassistant.exceptions import HomeAssistantError
 
 from .const import (
     BACKEND_ILIFE_CLEAN,
@@ -18,10 +17,10 @@ from .const import (
     modify_schedule,
 )
 from .entity import ILifeEntity
-from .tuya_api import TuyaError, TuyaOfflineError
+from .tuya_api import TuyaError
 from .tuya_dpmap import setting_value
 from .tuya_dynamic import unknown_functions
-from .tuya_entity import TuyaEntity
+from .tuya_entity import TuyaEntity, tuya_command_error
 
 # Thing-model Boolean DPs worth a switch: {code: (translation key, icon)}.
 MODEL_SWITCHES = {
@@ -96,12 +95,8 @@ class TuyaGenericSwitch(TuyaEntity, SwitchEntity):
         # (it re-reads the status itself then).
         try:
             await self.coordinator.async_write(self._code, value)
-        except TuyaOfflineError as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN, translation_key="device_offline"
-            ) from err
         except TuyaError as err:
-            raise HomeAssistantError(str(err)) from err
+            raise tuya_command_error(err) from err
 
     async def async_turn_on(self, **kwargs):
         await self._set(True)
@@ -128,12 +123,8 @@ class TuyaModelSwitch(TuyaEntity, SwitchEntity):
     async def _set(self, value):
         try:
             await self.coordinator.async_write(self._code, value)
-        except TuyaOfflineError as err:
-            raise HomeAssistantError(
-                translation_domain=DOMAIN, translation_key="device_offline"
-            ) from err
         except TuyaError as err:
-            raise HomeAssistantError(str(err)) from err
+            raise tuya_command_error(err) from err
 
     async def async_turn_on(self, **kwargs):
         await self._set(True)
