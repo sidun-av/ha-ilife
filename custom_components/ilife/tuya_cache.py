@@ -115,6 +115,29 @@ def map_persist_due(cached: Any, png: bytes | None) -> bool:
     return cached.get("png_sha256") != hashlib.sha256(png).hexdigest()
 
 
+class MapPersistThrottle:
+    """When the map camera may write its PNG and calibration: at most every `every`
+    seconds unless forced. A save the throttle turns down is owed, not dropped:
+    `request` says how long until it may run, so the camera can flush it then.
+    Without that, the map of a run that just ended (rendered shortly after the
+    forced save at the run's end) was never kept while the robot sat idle."""
+
+    def __init__(self, every: float) -> None:
+        self._every = every
+        self._saved_at: float | None = None
+        self.pending = False
+
+    def request(self, now: float, *, force: bool = False) -> float:
+        """0.0: save now (counted as saved at `now`); else the seconds left until
+        the owed save may run."""
+        if force or self._saved_at is None or now - self._saved_at >= self._every:
+            self._saved_at = now
+            self.pending = False
+            return 0.0
+        self.pending = True
+        return self._saved_at + self._every - now
+
+
 class DeviceCache:
     """Per-entry persistent cache (`.storage/ilife.<entry_id>`); saves only on change."""
 

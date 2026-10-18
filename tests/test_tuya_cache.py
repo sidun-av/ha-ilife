@@ -94,6 +94,34 @@ def test_map_meta_roundtrip_and_persist_due():
     assert not cache.map_persist_due(None, None)
 
 
+def test_a_png_not_matching_its_saved_calibration_is_detected():
+    # The PNG is written before its metadata: after a failure in between the load
+    # must see that the image on disk is not the one the calibration describes.
+    saved = cache.map_meta_to_cache({"calibration_points": [1]}, b"old png")
+    assert not cache.map_persist_due(saved, b"old png")
+    assert cache.map_persist_due(saved, b"new png")
+
+
+def test_map_save_turned_down_by_the_throttle_is_flushed_later():
+    """The run ends: forced save. The robot stores the new map a minute later and
+    it is rendered: throttled. Then nothing renders again while it sits idle, so
+    the owed save must run when the throttle allows, or the old map is kept."""
+    throttle = cache.MapPersistThrottle(300)
+    assert throttle.request(1000.0, force=True) == 0.0      # run ended
+    assert throttle.request(1060.0) == 240.0                # new map, throttled
+    assert throttle.pending
+    assert throttle.request(1300.0) == 0.0                  # the flush, idle
+    assert not throttle.pending
+    assert throttle.request(1301.0) == 299.0                # and the clock restarts
+
+
+def test_map_save_first_one_and_forced_ones_are_never_throttled():
+    throttle = cache.MapPersistThrottle(300)
+    assert throttle.request(0.0) == 0.0
+    assert throttle.request(10.0, force=True) == 0.0
+    assert throttle.request(20.0) == 290.0
+
+
 def test_map_meta_from_cache_rejects_junk():
     assert cache.map_meta_from_cache(None) is None
     assert cache.map_meta_from_cache({"rooms": {}}) is None

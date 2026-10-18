@@ -9,6 +9,7 @@ import time
 from functools import partial
 
 from homeassistant.components.camera import Camera
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import (
@@ -24,6 +25,7 @@ from .entity import device_info
 from .map import render_png
 from .tuya_api import TuyaError, TuyaNetworkError
 from .tuya_cache import (
+    MapPersistThrottle,
     map_file_name,
     map_meta_from_cache,
     map_meta_to_cache,
@@ -43,7 +45,8 @@ TUYA_REALTIME_RETRY_SECONDS = 3600
 # ...but a plain network error is routine and short-lived.
 TUYA_REALTIME_NETWORK_RETRY_SECONDS = 60
 # While a run redraws the path every few seconds, the PNG and the Store are written
-# at most this often (plus once when the run ends).
+# at most this often (plus once when the run ends); a save turned down meanwhile is
+# made once this much time has passed.
 TUYA_MAP_PERSIST_SECONDS = 300
 ISSUES_URL = "https://github.com/maximedeprince/ha-ilife/issues"
 # Not every setup gets a map: a Cloud Project without the Sweeping Robot service
@@ -162,9 +165,9 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
         self._was_cleaning = self._is_cleaning()
         self._post_clean_until = 0.0
         self._offline_logged = False
-        self._persisted_at = None
         self._run_ended = False
-        self._persist_pending = False
+        self._persist = MapPersistThrottle(TUYA_MAP_PERSIST_SECONDS)
+        self._persist_unsub = None
 
     def _map_path(self) -> str:
         return self.hass.config.path(".storage", map_file_name(self.api.device_id))
@@ -174,11 +177,19 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
         cache = getattr(self.coordinator, "cache", None)
         if cache is None:
             return
-        meta = map_meta_from_cache(cache.get(self.api.device_id).get("last_map_meta"))
+        saved = cache.get(self.api.device_id).get("last_map_meta")
+        meta = map_meta_from_cache(saved)
         if meta is None:
             return
         png = await self.hass.async_add_executor_job(_read_file, self._map_path())
         if not png or self._cache_png is not None:
+            return
+        if map_persist_due(saved, png):
+            # The PNG is written before its metadata: a failure in between leaves a
+            # new image next to the old calibration, and zones drawn on it would be
+            # sent to the wrong place. No offline map is better than that one.
+            _LOGGER.debug("ILIFE Clean saved map of %s does not match its "
+                          "calibration; not using it", self.api.device_id)
             return
         self._cache_png = png
         self._render_metadata = dict(meta)
@@ -186,18 +197,17 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
 
     async def _async_persist_map(self, *, force: bool = False) -> None:
         """Keep the PNG just rendered for the next start; only when it changed,
-        and at most every TUYA_MAP_PERSIST_SECONDS unless `force`."""
+        and at most every TUYA_MAP_PERSIST_SECONDS unless `force`. One turned down
+        by that limit is flushed once it allows, with whatever is newest then."""
         cache = getattr(self.coordinator, "cache", None)
         png = self._cache_png
         if cache is None or not png:
             return
-        now = time.monotonic()
-        if not force and self._persisted_at is not None \
-                and now - self._persisted_at < TUYA_MAP_PERSIST_SECONDS:
-            self._persist_pending = True
+        delay = self._persist.request(time.monotonic(), force=force)
+        if delay:
+            self._schedule_persist_flush(delay)
             return
-        self._persist_pending = False
-        self._persisted_at = now
+        self._cancel_persist_flush()
         saved = cache.get(self.api.device_id).get("last_map_meta")
         if not map_persist_due(saved, png):
             return
@@ -210,6 +220,22 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
         except Exception:  # noqa: BLE001 — losing the offline copy is not fatal
             _LOGGER.debug("ILIFE Clean map not persisted", exc_info=True)
 
+    def _schedule_persist_flush(self, delay: float) -> None:
+        if self._persist_unsub is not None:
+            return  # already due; it saves the newest render when it runs
+
+        async def _flush(_now) -> None:
+            self._persist_unsub = None
+            async with self._refresh_lock:
+                await self._async_persist_map()
+
+        self._persist_unsub = async_call_later(self.hass, delay, _flush)
+
+    def _cancel_persist_flush(self) -> None:
+        unsub, self._persist_unsub = self._persist_unsub, None
+        if unsub is not None:
+            unsub()
+
     async def async_added_to_hass(self) -> None:
         await super().async_added_to_hass()
         await self._async_load_last_map()
@@ -218,6 +244,7 @@ class TuyaMapCamera(CoordinatorEntity, Camera):
     async def async_will_remove_from_hass(self) -> None:
         if self._refresh_task and not self._refresh_task.done():
             self._refresh_task.cancel()
+        self._cancel_persist_flush()
         await super().async_will_remove_from_hass()
 
     def _is_cleaning(self) -> bool:
