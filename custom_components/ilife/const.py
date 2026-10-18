@@ -160,6 +160,14 @@ TUYA_KNOWN_DP_CODES = {
     *TUYA_SETTING_SWITCHES,
 }
 
+# Tuya product ids whose firmware can start a clean with the fan at its lowest
+# level while reporting the level it was set to, so vacuum.py steps the suction
+# away and back after a start (see tuya_dynamic.suction_detour). Only models seen
+# doing it: on any other this would be two needless writes per start.
+TUYA_SUCTION_NUDGE_PRODUCTS = frozenset({
+    "5309qt4sjd4uz4qz",  # ILIFE A30 Pro
+})
+
 # ILIFE Clean options (LAN control)
 CONF_LOCAL = "local"
 # ILIFE Clean local (LAN) control: Tuya protocol 3.3 only.

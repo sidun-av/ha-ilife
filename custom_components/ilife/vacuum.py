@@ -45,6 +45,7 @@ from .const import (
     TUYA_STATUS_IDLE,
     TUYA_STATUS_PAUSED,
     TUYA_STATUS_RETURNING,
+    TUYA_SUCTION_NUDGE_PRODUCTS,
     pack_vws,
     suction_label,
 )
@@ -81,6 +82,11 @@ _LOGGER = logging.getLogger(__name__)
 # Seconds after a start before the suction is re-applied: the robot is off the dock
 # and running by then.
 SUCTION_NUDGE_DELAY = 10
+# Seconds between the detour write and the write back. Each write is answered by a
+# status push; back to back, the second could reach the firmware before the first
+# took effect, which is the no-op change the nudge exists to avoid. One second is
+# a margin over the LAN round trip, not a measured minimum.
+SUCTION_NUDGE_GAP = 1
 
 SERVICE_CLEAN_ROOMS = "clean_rooms"
 CLEAN_ROOMS_SCHEMA = {
@@ -259,12 +265,13 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
                            if (full_clean or run) else [])
         self._cmd_resume = merge_commands(unhold, run) if (run or unhold) else []
         self._cmd_pause = merge_commands(hold, halt) if hold else []
-        # STOP is the halt alone. On the A30 Pro `pause: false` means "carry on", so a
-        # stop that also cleared the pause flag stopped the robot once and resumed the
-        # clean on the second press. A robot that really holds its pause flag (it says
-        # so in `pause`) still gets it cleared, or it would stay paused.
+        # STOP is the halt alone, always. On the A30 Pro `pause: false` means "carry
+        # on", so a stop that also cleared the pause flag stopped the robot once and
+        # resumed the clean on the second press. Clearing it only when `pause` reads
+        # True would bring that back on any A30 that does report True, and no model
+        # is known to stay paused after a halt: a later Start clears the flag anyway,
+        # it is part of the start command.
         self._cmd_stop = merge_commands(halt) if halt else []
-        self._cmd_stop_paused = merge_commands(halt, unhold) if halt else []
         self._cmd_return = return_commands(functions)
         self._cmd_locate = merge_commands(
             command_for(functions, TUYA_DP_LOCATE, "seek", boolean=True))
@@ -291,6 +298,12 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
             self._attr_fan_speed_list = self._suction_range
         self._attr_supported_features = features
         self._pause = PauseTracker(TUYA_STATUS_CLEANING)
+        # The suction nudge (see _reassert_suction): only on the models known to
+        # need it, one at a time, cancelled by any later run command.
+        self._suction_nudge = (str(self.api.device.get("product_id") or "")
+                               in TUYA_SUCTION_NUDGE_PRODUCTS)
+        self._nudge_task = None
+        self._nudge_writing = False
 
     @property
     def supported_features(self):
@@ -301,6 +314,10 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
                 and self.coordinator.supports_room_clean:
             features |= clean_area
         return features
+
+    async def async_will_remove_from_hass(self) -> None:
+        self._cancel_nudge(force=True)
+        await super().async_will_remove_from_hass()
 
     def _handle_coordinator_update(self) -> None:
         data = self.coordinator.data or {}
@@ -426,36 +443,70 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
 
         An A30 Pro started cleans with its fan at the lowest level while reporting
         "strong", and writing "strong" again was a no-op; changing the level away and
-        back fixed it at once. So after a start, step through another level and back.
-        It runs in the background: the start itself has already gone through."""
+        back fixed it at once. So after a start, step through another level and back,
+        on the models in TUYA_SUCTION_NUDGE_PRODUCTS only. It runs in the background,
+        tied to the config entry so an unload cancels it: the start itself has
+        already gone through."""
+        if not self._suction_nudge:
+            return
+        if self._nudge_writing:
+            # The previous one is between its two writes: let it set the level back.
+            return
+        self._cancel_nudge()
         wanted = self.fan_speed
         detour = suction_detour(self._suction_range, wanted)
         if detour is None:
             return
+        self._nudge_task = self.coordinator.config_entry.async_create_background_task(
+            self.hass, self._async_nudge_suction(wanted, detour),
+            f"{DOMAIN} {self.api.device_id} suction nudge")
 
-        async def nudge():
+    def _cancel_nudge(self, *, force: bool = False) -> None:
+        """Drop a pending nudge. One already between its two writes is left to
+        finish unless `force` (removal), or the fan would stay on the detour."""
+        task = self._nudge_task
+        if task is None or task.done() or (self._nudge_writing and not force):
+            return
+        self._nudge_task = None
+        task.cancel()
+
+    async def _async_nudge_suction(self, wanted, detour) -> None:
+        try:
+            await asyncio.sleep(SUCTION_NUDGE_DELAY)
+            # Stopped, paused, docked, or the start was refused (a fault, a full
+            # bin): there is no running fan to fix.
+            if self.activity != VacuumActivity.CLEANING:
+                return
+            # The user may have changed it meanwhile: theirs wins.
+            if self.fan_speed != wanted:
+                return
+            self._nudge_writing = True
+            await self.coordinator.async_write(TUYA_DP_SUCTION, detour)
+            await asyncio.sleep(SUCTION_NUDGE_GAP)
             try:
-                await asyncio.sleep(SUCTION_NUDGE_DELAY)
-                # The user may have changed it meanwhile: theirs wins.
-                if self.fan_speed != wanted:
-                    return
-                await self.coordinator.async_write(TUYA_DP_SUCTION, detour)
-                await asyncio.sleep(1)
                 await self.coordinator.async_write(TUYA_DP_SUCTION, wanted)
             except TuyaError as err:
-                _LOGGER.warning("ILIFE Clean %s: could not re-apply suction %s: %s",
-                                self.api.device_id, wanted, err)
-
-        self.hass.async_create_background_task(nudge(), "ilife suction nudge")
+                # Left as it is, the fan would run on the detour level: once more.
+                _LOGGER.debug("ILIFE Clean %s: suction %s not set back (%s), retrying",
+                              self.api.device_id, wanted, err)
+                await asyncio.sleep(SUCTION_NUDGE_GAP)
+                await self.coordinator.async_write(TUYA_DP_SUCTION, wanted)
+        except TuyaError as err:
+            _LOGGER.warning("ILIFE Clean %s: could not re-apply suction %s: %s",
+                            self.api.device_id, wanted, err)
+        finally:
+            self._nudge_writing = False
 
     async def async_pause(self):
+        self._cancel_nudge()
         await self._run(self._cmd_pause, "pause", pause=True)
 
     async def async_stop(self, **kwargs):
-        held = (self.coordinator.data or {}).get(TUYA_DP_PAUSE) is True
-        await self._run(self._cmd_stop_paused if held else self._cmd_stop, "stop")
+        self._cancel_nudge()
+        await self._run(self._cmd_stop, "stop")
 
     async def async_return_to_base(self, **kwargs):
+        self._cancel_nudge()
         await self._run(self._cmd_return, "return to base")
 
     async def async_locate(self, **kwargs):

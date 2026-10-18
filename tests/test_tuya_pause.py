@@ -86,3 +86,55 @@ def test_snapshot_of_idle_tracker_restores_idle():
     t.restore(before)
     t.on_status("standby", False)
     assert not t.paused_by_us()
+
+
+def test_returning_or_docking_ends_a_pause():
+    for status in ("goto_charge", "charging", "charge_done", "fault"):
+        t = _tracker()
+        t.on_pause_sent()
+        t.on_status("standby", False)
+        assert t.paused_by_us()
+        t.on_status(status, False)
+        assert not t.paused_by_us(), status
+
+
+def test_a_pause_ended_elsewhere_is_forgotten_after_the_hold():
+    """Paused here, then ended from the app: the robot stays in plain `standby`,
+    so only time can tell. After the hold, Start must not send "resume"."""
+    now = [1000.0]
+    t = tuya_pause.PauseTracker(CLEANING, hold_seconds=600, clock=lambda: now[0])
+    t.on_pause_sent()
+    t.on_status("standby", False)
+    now[0] += 599
+    assert t.paused_by_us()
+    now[0] += 1
+    assert not t.paused_by_us()
+    t.on_status("standby", False)  # still standby: not a pause any more
+    assert not t.paused_by_us()
+
+
+def test_the_hold_counts_from_the_last_pause_sent():
+    now = [0.0]
+    t = tuya_pause.PauseTracker(CLEANING, hold_seconds=600, clock=lambda: now[0])
+    t.on_pause_sent()
+    t.on_status("standby", False)
+    now[0] = 500
+    t.on_command_sent()             # resumed from here...
+    t.on_status("smart", True)
+    t.on_pause_sent()               # ...and paused again
+    t.on_status("standby", False)
+    now[0] = 1000
+    assert t.paused_by_us()
+
+
+def test_restore_keeps_the_hold_running():
+    now = [0.0]
+    t = tuya_pause.PauseTracker(CLEANING, hold_seconds=600, clock=lambda: now[0])
+    t.on_pause_sent()
+    t.on_status("standby", False)
+    now[0] = 300
+    before = t.snapshot()
+    t.on_command_sent()
+    t.restore(before)               # a resume that failed to send
+    now[0] = 600
+    assert not t.paused_by_us()

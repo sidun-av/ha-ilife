@@ -96,6 +96,12 @@ Two things worth knowing about how these robots take orders:
   than a full clean. It is sent the way Start is, with the run and pause flags, since
   some models (A30 Pro) ignore a mode written on its own; choosing the dock value
   sends the robot home, like Return to base.
+- **A30 Pro: the suction is re-applied after a start.** Its firmware can start a
+  clean with the fan at the lowest level while reporting the one it was set to, and
+  writing that same level again does nothing. So 10 s after a start, a room clean
+  or a zone clean, the integration steps the suction to another level and back,
+  provided the robot is cleaning and the level was not changed meanwhile. Other
+  models are left alone.
 
 ## Installation (HACS)
 
