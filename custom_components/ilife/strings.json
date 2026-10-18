@@ -268,6 +268,20 @@
         }
       }
     },
+    "clean_zone": {
+      "name": "Clean zone",
+      "description": "Cleans the given rectangles (ILIFE Clean laser models; the map camera's calibration_points convert image pixels to these coordinates).",
+      "fields": {
+        "zone": {
+          "name": "Zones",
+          "description": "Up to 5 rectangles [x1, y1, x2, y2] in map cells from the map origin, y up (5 cm cells on the A30 Pro)."
+        },
+        "repeats": {
+          "name": "Passes",
+          "description": "1, or 2 to clean each zone twice."
+        }
+      }
+    },
     "set_schedule": {
       "name": "Set schedule",
       "description": "Creates a cleaning schedule, or changes the given fields of an existing one (ILIFE Clean laser models).",
@@ -307,6 +321,21 @@
           "description": "Schedule 1-7 to remove."
         }
       }
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Local control",
+        "description": "ILIFE Clean can talk to the vacuum directly over your network (faster, works without the cloud). The cloud stays as a fallback.",
+        "data": {
+          "local": "Control over the local network",
+          "host": "Vacuum IP address (leave empty to find it automatically)"
+        }
+      }
+    },
+    "abort": {
+      "no_options": "This account type has no options."
     }
   }
 }

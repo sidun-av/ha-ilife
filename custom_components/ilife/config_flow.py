@@ -7,8 +7,9 @@ from typing import Any
 
 import voluptuous as vol
 
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
-from homeassistant.const import CONF_EMAIL, CONF_PASSWORD, CONF_REGION
+from homeassistant.config_entries import ConfigEntry, ConfigFlow, ConfigFlowResult, OptionsFlow
+from homeassistant.const import CONF_EMAIL, CONF_HOST, CONF_PASSWORD, CONF_REGION
+from homeassistant.core import callback
 
 from .api import REGIONS, ILifeAccount, ILifeAuthError, ILifeError
 from .brands import BRANDS, DEFAULT_BRAND
@@ -19,6 +20,7 @@ from .const import (
     CONF_ACCESS_SECRET,
     CONF_BACKEND,
     CONF_BRAND,
+    CONF_LOCAL,
     CONF_UID,
     DOMAIN,
 )
@@ -48,8 +50,40 @@ async def _validate_ilife_clean(hass, access_id: str, access_secret: str, uid: s
     await hass.async_add_executor_job(client.list_devices)
 
 
+class ILifeOptionsFlow(OptionsFlow):
+    """ILIFE Clean: LAN control on/off and an optional fixed robot address."""
+
+    async def async_step_init(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
+        if self.config_entry.data.get(CONF_BACKEND) != BACKEND_ILIFE_CLEAN:
+            return self.async_abort(reason="no_options")
+        if user_input is not None:
+            return self.async_create_entry(data={
+                CONF_LOCAL: bool(user_input.get(CONF_LOCAL, True)),
+                CONF_HOST: (user_input.get(CONF_HOST) or "").strip(),
+            })
+        opts = self.config_entry.options
+        return self.async_show_form(
+            step_id="init",
+            data_schema=vol.Schema({
+                vol.Required(CONF_LOCAL, default=opts.get(CONF_LOCAL, True)): bool,
+                vol.Optional(CONF_HOST, description={"suggested_value": opts.get(CONF_HOST, "")}): str,
+            }),
+        )
+
+
 class ILifeConfigFlow(ConfigFlow, domain=DOMAIN):
     VERSION = 1
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(config_entry: ConfigEntry) -> OptionsFlow:
+        return ILifeOptionsFlow()
+
+    @classmethod
+    @callback
+    def async_supports_options(cls, config_entry: ConfigEntry) -> bool:
+        """Only ILIFE Clean has options (LAN control); no Configure button otherwise."""
+        return config_entry.data.get(CONF_BACKEND) == BACKEND_ILIFE_CLEAN
 
     def __init__(self) -> None:
         self._reauth_email: str | None = None

@@ -19,6 +19,7 @@ the home's floor plan, and this file is routinely attached to public issues.
 from __future__ import annotations
 
 import hashlib
+import time
 from typing import Any
 
 from homeassistant.components.diagnostics import async_redact_data
@@ -27,7 +28,7 @@ from homeassistant.const import CONF_EMAIL, CONF_PASSWORD
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceEntry
 
-from .const import CONF_ACCESS_ID, CONF_ACCESS_SECRET, CONF_UID, DOMAIN
+from .const import CONF_ACCESS_ID, CONF_ACCESS_SECRET, CONF_LOCAL, CONF_UID, DOMAIN
 from .tuya_api import TuyaError
 from .tuya_map import decode_tuya_map
 
@@ -55,6 +56,8 @@ TO_REDACT = {
     CONF_ACCESS_SECRET,
     CONF_UID,
     "local_key",
+    # The robot's LAN address (options flow / link).
+    "host",
     "owner_id",
     "id",
     "uuid",
@@ -103,6 +106,19 @@ def _device_diag(coordinator: Any) -> dict[str, Any]:
                 "length": len(value) if isinstance(value, (str, bytes, list)) else None,
             }
             for code, value in properties.items()
+        }
+    # ILIFE Clean only: state of the LAN link. Never the local key.
+    if hasattr(coordinator, "local_connected"):
+        link = getattr(coordinator, "local", None)
+        last_push = getattr(link, "last_push", None)
+        diag["local"] = {
+            "enabled": bool(coordinator.config_entry.options.get(CONF_LOCAL, True)),
+            "connected": bool(coordinator.local_connected),
+            "host": "**REDACTED**" if getattr(link, "host", None) else None,
+            "protocol": "3.3",
+            "last_push_age_s": (
+                round(time.monotonic() - last_push, 1) if last_push is not None else None
+            ),
         }
     return diag
 
