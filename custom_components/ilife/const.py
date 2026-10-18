@@ -167,6 +167,13 @@ TUYA_KNOWN_DP_CODES = {
 TUYA_SUCTION_NUDGE_PRODUCTS = frozenset({
     "5309qt4sjd4uz4qz",  # ILIFE A30 Pro
 })
+# Tuya product ids on which `pause: false` means "carry on", so Stop sends the halt
+# alone: with the pause flag cleared too it stopped the robot once and resumed the
+# clean on the second press (seen live). Every other model gets the halt with the
+# pause flag cleared, as upstream always sent it, so none is left paused.
+TUYA_STOP_HALT_ONLY_PRODUCTS = frozenset({
+    "5309qt4sjd4uz4qz",  # ILIFE A30 Pro
+})
 
 # ILIFE Clean options (LAN control)
 CONF_LOCAL = "local"

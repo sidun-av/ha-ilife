@@ -36,7 +36,7 @@ def _load(name):
     return module
 
 
-_load("const")
+const = _load("const")
 tuya_dynamic = _load("tuya_dynamic")
 
 command_for = tuya_dynamic.command_for
@@ -61,7 +61,10 @@ def load(name):
 FULL_CLEAN = ("smart", "auto", "clean", "smart_clean", "autoclean")
 
 
-def commands(functions):
+A30_PRO = "5309qt4sjd4uz4qz"
+
+
+def commands(functions, product_id=""):
     """Exactly what TuyaVacuum.__init__ derives, kept in step with vacuum.py."""
     run, unhold = run_flag(functions), unpause_flag(functions)
     halt = (command_for(functions, "power_go", "stop", "standby", "idle", boolean=False)
@@ -73,7 +76,8 @@ def commands(functions):
         "start": merge_commands(full_clean, run, unhold) if (full_clean or run) else [],
         "resume": merge_commands(unhold, run) if (run or unhold) else [],
         "pause": merge_commands(hold, halt) if hold else [],
-        "stop": merge_commands(halt) if halt else [],
+        "stop": (merge_commands(halt) if product_id in const.TUYA_STOP_HALT_ONLY_PRODUCTS
+                 else merge_commands(halt, unhold)) if halt else [],
         "return_to_base": return_commands(functions),
         "locate": merge_commands(command_for(functions, "seek", "seek", boolean=True)),
     }
@@ -156,16 +160,27 @@ def test_resume_does_not_restart_the_clean():
         assert {"code": "pause", "value": False} in commands(functions)["resume"], model
 
 
-def test_stop_never_clears_the_pause_flag():
+def test_a30_pro_stop_never_clears_the_pause_flag():
     """On the A30 Pro `pause: false` is "carry on": a stop that also sent it left the
     robot halted once and resumed the clean on the second press (verified live). The
     halt alone ends the run, whatever `pause` reads: sending `pause: false` only when
     it reads True would resume any A30 that does report it."""
+    assert A30_PRO in const.TUYA_STOP_HALT_ONLY_PRODUCTS
     for model in REPORTED:
         functions, _ = load(model)
-        stop = commands(functions)["stop"]
+        stop = commands(functions, A30_PRO)["stop"]
         assert stop == [{"code": "power_go", "value": False}], model
-        assert "pause" not in {c["code"] for c in stop}, model
+
+
+def test_other_models_stop_with_the_pause_flag_cleared():
+    """No other model is known to treat `pause: false` as "carry on", so they keep
+    upstream's stop: the halt with the pause flag cleared, never left paused."""
+    for model in REPORTED:
+        functions, _ = load(model)
+        for product_id in ("", "someotherproduct"):
+            stop = commands(functions, product_id)["stop"]
+            assert stop == [{"code": "power_go", "value": False},
+                            {"code": "pause", "value": False}], (model, product_id)
 
 
 def test_suction_detour_is_a_real_change_that_keeps_the_fan_on():

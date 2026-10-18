@@ -45,6 +45,7 @@ from .const import (
     TUYA_STATUS_IDLE,
     TUYA_STATUS_PAUSED,
     TUYA_STATUS_RETURNING,
+    TUYA_STOP_HALT_ONLY_PRODUCTS,
     TUYA_SUCTION_NUDGE_PRODUCTS,
     pack_vws,
     suction_label,
@@ -272,13 +273,15 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
                            if (full_clean or run) else [])
         self._cmd_resume = merge_commands(unhold, run) if (run or unhold) else []
         self._cmd_pause = merge_commands(hold, halt) if hold else []
-        # STOP is the halt alone, always. On the A30 Pro `pause: false` means "carry
-        # on", so a stop that also cleared the pause flag stopped the robot once and
-        # resumed the clean on the second press. Clearing it only when `pause` reads
-        # True would bring that back on any A30 that does report True, and no model
-        # is known to stay paused after a halt: a later Start clears the flag anyway,
-        # it is part of the start command.
-        self._cmd_stop = merge_commands(halt) if halt else []
+        # STOP is the halt, with the pause flag cleared so the robot is not left
+        # paused; on the models in TUYA_STOP_HALT_ONLY_PRODUCTS it is the halt alone,
+        # whatever `pause` reads: there `pause: false` means "carry on", and a stop
+        # that sent it resumed the clean on the second press.
+        product_id = str(self.api.device.get("product_id") or "")
+        if product_id in TUYA_STOP_HALT_ONLY_PRODUCTS:
+            self._cmd_stop = merge_commands(halt) if halt else []
+        else:
+            self._cmd_stop = merge_commands(halt, unhold) if halt else []
         self._cmd_return = return_commands(functions)
         self._cmd_locate = merge_commands(
             command_for(functions, TUYA_DP_LOCATE, "seek", boolean=True))
@@ -307,8 +310,7 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
         self._pause = PauseTracker(TUYA_STATUS_CLEANING)
         # The suction nudge (see _reassert_suction): only on the models known to
         # need it, one at a time, cancelled by any later run command.
-        self._suction_nudge = (str(self.api.device.get("product_id") or "")
-                               in TUYA_SUCTION_NUDGE_PRODUCTS)
+        self._suction_nudge = product_id in TUYA_SUCTION_NUDGE_PRODUCTS
         self._nudge_task = None
         self._nudge_writing = False
 
