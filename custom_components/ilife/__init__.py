@@ -430,7 +430,7 @@ class ILifeTuyaCoordinator(DataUpdateCoordinator):
         if not update:
             return
         status, properties = apply_local_dps(
-            self.data, self.properties, update, self._model_codes, self._standard_codes)
+            self.data, self.properties, update, self._standard_codes)
         self.properties = properties
         if any(code in ROOM_INFO_CODES for code in update):
             self._set_room_names()

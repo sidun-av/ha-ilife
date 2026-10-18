@@ -78,7 +78,6 @@ def apply_local_dps(
     status: dict | None,
     properties: dict | None,
     update: dict[str, Any],
-    model_codes: set[str],
     standard_codes: set[str] = frozenset(),
 ) -> tuple[dict, dict]:
     """Route one local push into (status, product properties); new dicts, inputs intact.
@@ -86,9 +85,10 @@ def apply_local_dps(
     Status is what the cloud's device detail reports (standard codes, the ones
     `const.TUYA_DP_*` name); product properties are the thing-model-only DPs
     (Schedule1, CleanPartitionData, MapRoomInfo1, ...). A code counts as status when
-    the spec lists it, it is a standard alias target, or status already holds it; as
-    a product property when only the thing model knows it; unsure codes go to both.
-    Product codes stay out of status so they never turn into generic sensors.
+    the spec lists it, it is a standard alias target, or status already holds it;
+    else it is a product property: `split_local_dps` only yields thing-model codes
+    and standard aliases, so a code that is not status is one only the thing model
+    knows. Product codes stay out of status so they never turn into generic sensors.
     """
     new_status, new_props = dict(status or {}), dict(properties or {})
     aliases = set(MODEL_TO_STANDARD.values())
@@ -96,9 +96,6 @@ def apply_local_dps(
         is_status = code in standard_codes or code in aliases or code in new_status
         if is_status:
             new_status[code] = value
-        elif code in model_codes:
-            new_props[code] = value
         else:
-            new_status[code] = value
             new_props[code] = value
     return new_status, new_props
