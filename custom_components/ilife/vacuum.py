@@ -253,7 +253,12 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
                            if (full_clean or run) else [])
         self._cmd_resume = merge_commands(unhold, run) if (run or unhold) else []
         self._cmd_pause = merge_commands(hold, halt) if hold else []
-        self._cmd_stop = merge_commands(halt, unhold) if halt else []
+        # STOP is the halt alone. On the A30 Pro `pause: false` means "carry on", so a
+        # stop that also cleared the pause flag stopped the robot once and resumed the
+        # clean on the second press. A robot that really holds its pause flag (it says
+        # so in `pause`) still gets it cleared, or it would stay paused.
+        self._cmd_stop = merge_commands(halt) if halt else []
+        self._cmd_stop_paused = merge_commands(halt, unhold) if halt else []
         self._cmd_return = return_commands(functions)
         self._cmd_locate = merge_commands(
             command_for(functions, TUYA_DP_LOCATE, "seek", boolean=True))
@@ -413,7 +418,8 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
         await self._run(self._cmd_pause, "pause", pause=True)
 
     async def async_stop(self, **kwargs):
-        await self._run(self._cmd_stop, "stop")
+        held = (self.coordinator.data or {}).get(TUYA_DP_PAUSE) is True
+        await self._run(self._cmd_stop_paused if held else self._cmd_stop, "stop")
 
     async def async_return_to_base(self, **kwargs):
         await self._run(self._cmd_return, "return to base")

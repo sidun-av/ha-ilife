@@ -73,7 +73,8 @@ def commands(functions):
         "start": merge_commands(full_clean, run, unhold) if (full_clean or run) else [],
         "resume": merge_commands(unhold, run) if (run or unhold) else [],
         "pause": merge_commands(hold, halt) if hold else [],
-        "stop": merge_commands(halt, unhold) if halt else [],
+        "stop": merge_commands(halt) if halt else [],
+        "stop_paused": merge_commands(halt, unhold) if halt else [],
         "return_to_base": return_commands(functions),
         "locate": merge_commands(command_for(functions, "seek", "seek", boolean=True)),
     }
@@ -154,6 +155,17 @@ def test_resume_does_not_restart_the_clean():
         functions, _ = load(model)
         assert "mode" not in {c["code"] for c in commands(functions)["resume"]}, model
         assert {"code": "pause", "value": False} in commands(functions)["resume"], model
+
+
+def test_stop_does_not_clear_the_pause_flag():
+    """On the A30 Pro `pause: false` is "carry on": a stop that also sent it left the
+    robot halted once and resumed the clean on the second press (verified live). The
+    halt alone ends the run; only a robot really holding its pause flag gets both."""
+    for model in REPORTED:
+        functions, _ = load(model)
+        stop = commands(functions)["stop"]
+        assert stop == [{"code": "power_go", "value": False}], model
+        assert {"code": "pause", "value": False} in commands(functions)["stop_paused"], model
 
 
 def test_suction_and_cistern_are_dedicated_not_generic():
