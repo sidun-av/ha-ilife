@@ -91,15 +91,16 @@ class TuyaGenericSwitch(TuyaEntity, SwitchEntity):
         return bool((self.coordinator.data or {}).get(self._code))
 
     async def _set(self, value):
+        # Through the coordinator, LAN first: the cloud only when the link is down
+        # (it re-reads the status itself then).
         try:
-            await self.hass.async_add_executor_job(self.api.send, self._code, value)
+            await self.coordinator.async_write(self._code, value)
         except TuyaOfflineError as err:
             raise HomeAssistantError(
                 translation_domain=DOMAIN, translation_key="device_offline"
             ) from err
         except TuyaError as err:
             raise HomeAssistantError(str(err)) from err
-        await self.coordinator.async_request_refresh()
 
     async def async_turn_on(self, **kwargs):
         await self._set(True)

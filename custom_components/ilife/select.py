@@ -124,16 +124,16 @@ class _TuyaSelectBase(TuyaEntity, SelectEntity):
             raise HomeAssistantError(str(err)) from err
 
     async def _send_many(self, commands):
-        """Several DPs as one instruction, the way the vacuum's actions are sent."""
+        """Several DPs as one instruction, the way the vacuum's actions are sent:
+        through the coordinator, so over the LAN (one frame) while the link is up."""
         try:
-            await self.hass.async_add_executor_job(self.api.send_many, commands)
+            await self.coordinator.async_send(commands)
         except TuyaOfflineError as err:
             raise HomeAssistantError(
                 translation_domain=DOMAIN, translation_key="device_offline"
             ) from err
         except TuyaError as err:
             raise HomeAssistantError(str(err)) from err
-        await self.coordinator.async_request_refresh()
 
 
 class TuyaModeSelect(_TuyaSelectBase):
