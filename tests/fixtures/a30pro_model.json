@@ -1,0 +1,1040 @@
+{
+ "modelId": "e1ktzze0",
+ "services": [
+  {
+   "actions": [],
+   "code": "",
+   "description": "",
+   "events": [],
+   "name": "",
+   "properties": [
+    {
+     "abilityId": 1,
+     "accessMode": "rw",
+     "code": "switch_go",
+     "description": "清扫启动、清扫停止",
+     "extensions": {
+      "iconName": "icon-dp_power3",
+      "attribute": "672"
+     },
+     "name": "清洁开关",
+     "typeSpec": {
+      "type": "bool"
+     }
+    },
+    {
+     "abilityId": 2,
+     "accessMode": "rw",
+     "code": "pause",
+     "description": "暂停有效、暂停无效\n",
+     "extensions": {
+      "iconName": "icon-dp_pause",
+      "attribute": "672"
+     },
+     "name": "暂停/继续",
+     "typeSpec": {
+      "type": "bool"
+     }
+    },
+    {
+     "abilityId": 3,
+     "accessMode": "rw",
+     "code": "switch_charge",
+     "description": "回充启动、回充停止\n",
+     "extensions": {
+      "iconName": "icon-dp_home2",
+      "attribute": "672"
+     },
+     "name": "回充开关",
+     "typeSpec": {
+      "type": "bool"
+     }
+    },
+    {
+     "abilityId": 4,
+     "accessMode": "rw",
+     "code": "mode",
+     "description": "smart - 自动清扫模式/全屋清扫模式 \nchargego - 自动回充模式\nzone - 划区清扫模式/矩形清扫模式\npose - 指哪扫哪模式/定点清扫模式\npart - 局部清扫模式\nedge - 沿墙模式\nexplore - 探索模式\nexploreclean - 先探索后清扫",
+     "extensions": {
+      "iconName": "icon-dp_mode",
+      "attribute": "704"
+     },
+     "name": "工作模式",
+     "typeSpec": {
+      "type": "enum",
+      "range": [
+       "smart",
+       "chargego",
+       "zone",
+       "pose",
+       "part",
+       "edge",
+       "explore",
+       "exploreclean"
+      ]
+     }
+    },
+    {
+     "abilityId": 5,
+     "accessMode": "ro",
+     "code": "status",
+     "description": "默认值（不可修改删除，否则影响控制面板逻辑）：\nstandby - 待机中\nsmart - 自动清扫中 \nzone_clean - 划区清扫中\npart_clean - 局部清扫中\ncleaning - 清扫中(备选) \npaused - 已暂停\ngoto_pos - 前往目标点中\npos_arrived - 目标点已到达 \npos_unarrive - 目标点不可达 \ngoto_charge - 寻找充电座中 \ncharging - 充电中\ncharge_done - 充电完成 \nsleep - 休眠\nexplore - 探索模式\nexplore_clean - 先探索后清扫\n\n可在后面增加其他状态值，状态值尽量是状态的英文小写单词，如需要增加故障中状态，则为in_trouble",
+     "extensions": {
+      "attribute": "706"
+     },
+     "name": "当前状态",
+     "typeSpec": {
+      "type": "enum",
+      "range": [
+       "standby",
+       "smart",
+       "zone_clean",
+       "part_clean",
+       "cleaning",
+       "paused",
+       "goto_pos",
+       "pos_arrived",
+       "pos_unarrive",
+       "goto_charge",
+       "charging",
+       "charge_done",
+       "sleep",
+       "edge",
+       "explore",
+       "explore_clean",
+       "base_charging",
+       "adapter_charging",
+       "base_sleeping",
+       "adapter_sleeping",
+       "continuation_charging"
+      ]
+     }
+    },
+    {
+     "abilityId": 6,
+     "accessMode": "ro",
+     "code": "clean_time",
+     "description": "默认区间为0min—9999分钟（没有小数点），如果需要显示为小数点，可以修改倍数参数，例如需要支持一位小数点，则倍数参数为1，上报的数值会经过计算，保留一位小数，例如上报589，经过换算后为58.9min",
+     "extensions": {
+      "attribute": "192"
+     },
+     "name": "清洁时间",
+     "typeSpec": {
+      "type": "value",
+      "max": 9999,
+      "min": 0,
+      "scale": 0,
+      "step": 1,
+      "unit": "min"
+     }
+    },
+    {
+     "abilityId": 7,
+     "accessMode": "ro",
+     "code": "clean_area",
+     "description": "默认区间为0㎡—9999㎡（没有小数点），如果需要显示为小数点，可以修改倍数参数，例如需要支持一位小数点，则倍数参数为1，上报的数值会经过计算，保留一位小数，例如上报589，经过换算后为58.9㎡\n",
+     "extensions": {
+      "attribute": "192"
+     },
+     "name": "清洁面积",
+     "typeSpec": {
+      "type": "value",
+      "max": 9999,
+      "min": 0,
+      "scale": 0,
+      "step": 1,
+      "unit": "㎡"
+     }
+    },
+    {
+     "abilityId": 8,
+     "accessMode": "ro",
+     "code": "residual_electricity",
+     "description": "默认区间为0%—100%（没有小数点），如果需要显示为小数点，可以修改倍数参数，例如需要支持一位小数点，则倍数参数为1，上报的数值会经过计算，保留一位小数，例如上报589，经过换算后为58.9%\n",
+     "extensions": {
+      "attribute": "194"
+     },
+     "name": "剩余电量",
+     "typeSpec": {
+      "type": "value",
+      "max": 100,
+      "min": 0,
+      "scale": 0,
+      "step": 1,
+      "unit": "%"
+     }
+    },
+    {
+     "abilityId": 9,
+     "accessMode": "rw",
+     "code": "suction",
+     "description": "默认值（可修改、删除、增加）：\nstrong - 强劲\nnormal - 正常\ngentle - 安静\nclosed-关闭\n\n选项排列与此处值的排列顺序一致，可调整排列顺序，可删减值，可增加其他状态值，状态值尽量是状态的英文小写单词，如需要增加自动状态，则为auto",
+     "extensions": {
+      "attribute": "128"
+     },
+     "name": "吸力选择",
+     "typeSpec": {
+      "type": "enum",
+      "range": [
+       "strong",
+       "normal",
+       "gentle",
+       "max",
+       "closed"
+      ]
+     }
+    },
+    {
+     "abilityId": 10,
+     "accessMode": "rw",
+     "code": "cistern",
+     "description": "默认值（可修改、删除、增加）：\nlow - 低\nmiddle - 中\nhigh - 高\nclosed-关闭\n\n选项排列与此处值的排列顺序一致，可调整排列顺序，可删减值，可增加其他状态值，状态值尽量是状态的英文小写单词，如需要增加自动状态，则为auto",
+     "extensions": {
+      "attribute": "128"
+     },
+     "name": "水量选择",
+     "typeSpec": {
+      "type": "enum",
+      "range": [
+       "low",
+       "middle",
+       "high",
+       "closed"
+      ]
+     }
+    },
+    {
+     "abilityId": 11,
+     "accessMode": "rw",
+     "code": "seek",
+     "description": "",
+     "extensions": {
+      "attribute": "128"
+     },
+     "name": "寻找机器",
+     "typeSpec": {
+      "type": "bool"
+     }
+    },
+    {
+     "abilityId": 12,
+     "accessMode": "rw",
+     "code": "direction_control",
+     "description": "按键按下下发对应的方向值，松手下发停\n",
+     "extensions": {
+      "attribute": "224"
+     },
+     "name": "清洁方向",
+     "typeSpec": {
+      "type": "enum",
+      "range": [
+       "foward",
+       "backward",
+       "turn_left",
+       "turn_right",
+       "stop"
+      ]
+     }
+    },
+    {
+     "abilityId": 13,
+     "accessMode": "rw",
+     "code": "reset_map",
+     "description": "",
+     "extensions": {
+      "attribute": "128"
+     },
+     "name": "重置地图",
+     "typeSpec": {
+      "type": "bool"
+     }
+    },
+    {
+     "abilityId": 14,
+     "accessMode": "rw",
+     "code": "path_data",
+     "description": "相关数据协议及逻辑可参看协议文件\n",
+     "extensions": {
+      "attribute": "736"
+     },
+     "name": "路径传输",
+     "typeSpec": {
+      "type": "raw",
+      "maxlen": 128
+     }
+    },
+    {
+     "abilityId": 15,
+     "accessMode": "rw",
+     "code": "command_trans",
+     "description": "相关数据协议及逻辑可参看协议文件\n",
+     "extensions": {
+      "attribute": "736"
+     },
+     "name": "指令传输",
+     "typeSpec": {
+      "type": "raw",
+      "maxlen": 128
+     }
+    },
+    {
+     "abilityId": 16,
+     "accessMode": "rw",
+     "code": "request",
+     "description": "相关数据协议及逻辑可参看协议文件\n",
+     "extensions": {
+      "attribute": "736"
+     },
+     "name": "请求数据",
+     "typeSpec": {
+      "type": "enum",
+      "range": [
+       "get_map",
+       "get_path",
+       "get_both"
+      ]
+     }
+    },
+    {
+     "abilityId": 17,
+     "accessMode": "ro",
+     "code": "edge_brush",
+     "description": "默认区间为0min—900min（没有小数点），如果需要显示为小数点，可以修改倍数参数，例如需要支持一位小数点，则倍数参数为1，上报的数值会经过计算，保留一位小数，例如上报589，经过换算后为58.9min.\n注意：\n1、控制面板中的剩余时间取值改区间的最大值减上报值而来；\n2、选择了该DP点，必须选择对应的重置DP点",
+     "extensions": {
+      "attribute": "192"
+     },
+     "name": "边刷剩余寿命",
+     "typeSpec": {
+      "type": "value",
+      "max": 900,
+      "min": 0,
+      "scale": 0,
+      "step": 1,
+      "unit": "min"
+     }
+    },
+    {
+     "abilityId": 18,
+     "accessMode": "rw",
+     "code": "reset_edge_brush",
+     "description": "",
+     "extensions": {
+      "attribute": "160"
+     },
+     "name": "边刷重置",
+     "typeSpec": {
+      "type": "bool"
+     }
+    },
+    {
+     "abilityId": 19,
+     "accessMode": "ro",
+     "code": "roll_brush",
+     "description": "默认区间为0min—1800min（没有小数点），如果需要显示为小数点，可以修改倍数参数，例如需要支持一位小数点，则倍数参数为1，上报的数值会经过计算，保留一位小数，例如上报589，经过换算后为58.9min.\n注意：\n1、控制面板中的剩余时间取值改区间的最大值减上报值而来；\n2、选择了该DP点，必须选择对应的重置DP点",
+     "extensions": {
+      "attribute": "192"
+     },
+     "name": "滚刷剩余寿命",
+     "typeSpec": {
+      "type": "value",
+      "max": 1800,
+      "min": 0,
+      "scale": 0,
+      "step": 1,
+      "unit": "min"
+     }
+    },
+    {
+     "abilityId": 20,
+     "accessMode": "rw",
+     "code": "reset_roll_brush",
+     "description": "",
+     "extensions": {
+      "attribute": "160"
+     },
+     "name": "滚刷重置",
+     "typeSpec": {
+      "type": "bool"
+     }
+    },
+    {
+     "abilityId": 21,
+     "accessMode": "ro",
+     "code": "filter",
+     "description": "默认区间为0min—900min（没有小数点），如果需要显示为小数点，可以修改倍数参数，例如需要支持一位小数点，则倍数参数为1，上报的数值会经过计算，保留一位小数，例如上报589，经过换算后为58.9min.\n注意：\n1、控制面板中的剩余时间取值改区间的最大值减上报值而来；\n2、选择了该DP点，必须选择对应的重置DP点",
+     "extensions": {
+      "attribute": "192"
+     },
+     "name": "滤芯剩余寿命",
+     "typeSpec": {
+      "type": "value",
+      "max": 900,
+      "min": 0,
+      "scale": 0,
+      "step": 1,
+      "unit": "min"
+     }
+    },
+    {
+     "abilityId": 22,
+     "accessMode": "rw",
+     "code": "reset_filter",
+     "description": "",
+     "extensions": {
+      "attribute": "160"
+     },
+     "name": "滤网重置",
+     "typeSpec": {
+      "type": "bool"
+     }
+    },
+    {
+     "abilityId": 25,
+     "accessMode": "rw",
+     "code": "switch_disturb",
+     "description": "",
+     "extensions": {
+      "attribute": "128"
+     },
+     "name": "勿扰开关",
+     "typeSpec": {
+      "type": "bool"
+     }
+    },
+    {
+     "abilityId": 26,
+     "accessMode": "rw",
+     "code": "volume_set",
+     "description": "默认区间为0—10，可自行修改区间\n",
+     "extensions": {
+      "attribute": "128"
+     },
+     "name": "音量设置",
+     "typeSpec": {
+      "type": "value",
+      "max": 10,
+      "min": 0,
+      "scale": 0,
+      "step": 1,
+      "unit": "%"
+     }
+    },
+    {
+     "abilityId": 27,
+     "accessMode": "rw",
+     "code": "break_clean",
+     "description": "",
+     "extensions": {
+      "attribute": "128"
+     },
+     "name": "断点续扫",
+     "typeSpec": {
+      "type": "bool"
+     }
+    },
+    {
+     "abilityId": 28,
+     "accessMode": "ro",
+     "code": "fault",
+     "description": "可在后面增加其他状态值，状态值尽量是状态的英文小写单词，如需要增加故障中状态，则为in_trouble",
+     "extensions": {
+      "scope": "fault",
+      "attribute": "704"
+     },
+     "name": "故障上报",
+     "typeSpec": {
+      "type": "bitmap",
+      "label": [
+       "bumper_fault",
+       "obs_fault",
+       "wall_fault",
+       "cliff_fault",
+       "land_fault",
+       "nosewheel_fault",
+       "l_brush_fault",
+       "r_brush_fault",
+       "brush_fault",
+       "l_wheel_fault",
+       "r_wheel_fault",
+       "m_brush_fault",
+       "fan_fault",
+       "waterpump_fault",
+       "air_pump_fault",
+       "garbage_fault",
+       "water_box_fault",
+       "filter_fault",
+       "battery_fault",
+       "gyro_fault",
+       "radar_fault",
+       "camera_fault",
+       "stuck_fault",
+       "flow_fault",
+       "other_fault",
+       "low_light_fault",
+       "water1_fault",
+       "water2_fault",
+       "explore_fault"
+      ],
+      "maxlen": 29
+     }
+    },
+    {
+     "abilityId": 29,
+     "accessMode": "ro",
+     "code": "clean_area_total",
+     "description": "默认区间为0㎡—99999㎡（没有小数点），如果需要显示为小数点，可以修改倍数参数，例如需要支持一位小数点，则倍数参数为1，上报的数值会经过计算，保留一位小数，例如上报589，经过换算后为58.9㎡",
+     "extensions": {
+      "iconName": "icon-tongji2",
+      "scope": "",
+      "attribute": "1216"
+     },
+     "name": "总清扫面积",
+     "typeSpec": {
+      "type": "value",
+      "max": 2073741824,
+      "min": 0,
+      "scale": 0,
+      "step": 1,
+      "unit": "㎡"
+     }
+    },
+    {
+     "abilityId": 30,
+     "accessMode": "ro",
+     "code": "clean_count_total",
+     "description": "默认区间为0—99999（没有小数点）",
+     "extensions": {
+      "iconName": "icon-tongji2",
+      "scope": "",
+      "attribute": "1216"
+     },
+     "name": "总清扫次数",
+     "typeSpec": {
+      "type": "value",
+      "max": 2073741824,
+      "min": 0,
+      "scale": 0,
+      "step": 1,
+      "unit": ""
+     }
+    },
+    {
+     "abilityId": 31,
+     "accessMode": "ro",
+     "code": "clean_time_total",
+     "description": "默认区间为0min—99999min（没有小数点），如果需要显示为小数点，可以修改倍数参数，例如需要支持一位小数点，则倍数参数为1，上报的数值会经过计算，保留一位小数，例如上报589，经过换算后为58.9.min",
+     "extensions": {
+      "iconName": "icon-dp_time3",
+      "scope": "",
+      "attribute": "1216"
+     },
+     "name": "总清扫时间",
+     "typeSpec": {
+      "type": "value",
+      "max": 2073741824,
+      "min": 0,
+      "scale": 0,
+      "step": 1,
+      "unit": "min"
+     }
+    },
+    {
+     "abilityId": 35,
+     "accessMode": "rw",
+     "code": "voice_data",
+     "description": "相关数据协议及逻辑可参看开发包中激光扫地机地图协议文件\n",
+     "extensions": {
+      "iconName": "icon-dp_mode",
+      "attribute": "224"
+     },
+     "name": "语音包数据下发",
+     "typeSpec": {
+      "type": "raw",
+      "maxlen": 128
+     }
+    },
+    {
+     "abilityId": 37,
+     "accessMode": "rw",
+     "code": "dust_collection_num",
+     "description": "默认区间为0—99999（没有小数点），该功能不支持小数点",
+     "extensions": {
+      "iconName": "icon-dp_wash",
+      "scope": "",
+      "attribute": "1216"
+     },
+     "name": "集尘频率设置",
+     "typeSpec": {
+      "type": "value",
+      "max": 99999,
+      "min": 0,
+      "scale": 0,
+      "step": 1,
+      "unit": ""
+     }
+    },
+    {
+     "abilityId": 38,
+     "accessMode": "rw",
+     "code": "dust_collection_switch",
+     "description": "点击立即集尘，下发true",
+     "extensions": {
+      "iconName": "icon-dp_power2",
+      "attribute": "160"
+     },
+     "name": "集尘宝",
+     "typeSpec": {
+      "type": "bool"
+     }
+    },
+    {
+     "abilityId": 45,
+     "accessMode": "rw",
+     "code": "auto_boost",
+     "description": "",
+     "extensions": {
+      "iconName": "icon-dp_up"
+     },
+     "name": "地毯增压",
+     "typeSpec": {
+      "type": "bool"
+     }
+    },
+    {
+     "abilityId": 120,
+     "accessMode": "rw",
+     "code": "Schedule1",
+     "description": "",
+     "name": "本地预约1",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 121,
+     "accessMode": "rw",
+     "code": "Schedule2",
+     "description": "",
+     "name": "本地预约2",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 122,
+     "accessMode": "rw",
+     "code": "Schedule3",
+     "description": "",
+     "name": "本地预约3",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 123,
+     "accessMode": "rw",
+     "code": "Schedule4",
+     "description": "",
+     "name": "本地预约4",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 124,
+     "accessMode": "rw",
+     "code": "Schedule5",
+     "description": "",
+     "name": "本地预约5",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 125,
+     "accessMode": "rw",
+     "code": "Schedule6",
+     "description": "",
+     "name": "本地预约6",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 126,
+     "accessMode": "rw",
+     "code": "Schedule7",
+     "description": "",
+     "name": "本地预约7",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 127,
+     "accessMode": "ro",
+     "code": "InitStatus",
+     "description": "0 - 初始化中(只显示实时地图)\n1 - 初始化完成(已选择+实时地图)\n2 - 只显示已选择地图",
+     "name": "初始化状态",
+     "typeSpec": {
+      "type": "value",
+      "max": 255,
+      "min": 0,
+      "scale": 0,
+      "step": 1,
+      "unit": ""
+     }
+    },
+    {
+     "abilityId": 128,
+     "accessMode": "rw",
+     "code": "SaveMap",
+     "description": "",
+     "name": "地图管理数据",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 129,
+     "accessMode": "rw",
+     "code": "CleanPartitionData",
+     "description": "",
+     "name": "选区清洁",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 130,
+     "accessMode": "rw",
+     "code": "AddRoomDoor",
+     "description": "",
+     "name": "房间分割",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 131,
+     "accessMode": "rw",
+     "code": "DeleteRoomDoor",
+     "description": "",
+     "name": "房间合并",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 132,
+     "accessMode": "rw",
+     "code": "AppRemind",
+     "description": "",
+     "name": "主机需App提示信息",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 133,
+     "accessMode": "rw",
+     "code": "MapRoomInfo1",
+     "description": "",
+     "name": "地图房间信息1",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 134,
+     "accessMode": "rw",
+     "code": "MapRoomInfo2",
+     "description": "",
+     "name": "地图房间信息2",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 135,
+     "accessMode": "rw",
+     "code": "MapRoomInfo3",
+     "description": "",
+     "name": "地图房间信息3",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 136,
+     "accessMode": "rw",
+     "code": "CleanSettings",
+     "description": "",
+     "name": "清洁设定",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 137,
+     "accessMode": "rw",
+     "code": "robot_info",
+     "description": "bit0=1 支持语音切换\nbit12=1支持集尘站\nbit13=1支持Y型拖地",
+     "name": "主机信息",
+     "typeSpec": {
+      "type": "value",
+      "max": 1073741824,
+      "min": 0,
+      "scale": 0,
+      "step": 1,
+      "unit": ""
+     }
+    },
+    {
+     "abilityId": 138,
+     "accessMode": "rw",
+     "code": "language_select",
+     "description": "1 - 中文\n2 - 英语(ILIFE)\n39 - 法语",
+     "name": "语音选择",
+     "typeSpec": {
+      "type": "value",
+      "max": 255,
+      "min": 0,
+      "scale": 0,
+      "step": 1,
+      "unit": ""
+     }
+    },
+    {
+     "abilityId": 139,
+     "accessMode": "rw",
+     "code": "CleanAreaData",
+     "description": "",
+     "name": "划区清洁",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 140,
+     "accessMode": "rw",
+     "code": "VirtualWallData",
+     "description": "",
+     "name": "虚拟墙数据",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 141,
+     "accessMode": "rw",
+     "code": "CleanPointData",
+     "description": "",
+     "name": "定点清扫数据",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 142,
+     "accessMode": "rw",
+     "code": "ForbidZoneData",
+     "description": "",
+     "name": "禁区数据",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 143,
+     "accessMode": "rw",
+     "code": "setting_disturb",
+     "description": "",
+     "name": "勿扰时间",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 144,
+     "accessMode": "rw",
+     "code": "user_map_name",
+     "description": "",
+     "name": "地图命名",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 145,
+     "accessMode": "rw",
+     "code": "pending_save_map",
+     "description": "",
+     "name": "待保存地图",
+     "typeSpec": {
+      "type": "value",
+      "max": 2073741824,
+      "min": 0,
+      "scale": 0,
+      "step": 1,
+      "unit": ""
+     }
+    },
+    {
+     "abilityId": 146,
+     "accessMode": "rw",
+     "code": "robot_position",
+     "description": "有效位(1byte) + X坐标(2byte) + Y坐标(2byte)\u000b有效位： 1 - 表示当前坐标有效   0 - 当前坐标无效 。机器当前坐标 (X,Y)，原始值*10上报",
+     "name": "主机当前位置",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 147,
+     "accessMode": "rw",
+     "code": "mop_forbiden_data",
+     "description": "",
+     "name": "拖地禁区",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 148,
+     "accessMode": "ro",
+     "code": "wifi_info",
+     "description": "",
+     "name": "WIFI信息",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 149,
+     "accessMode": "rw",
+     "code": "y_mop",
+     "description": "",
+     "name": "Y字型拖地",
+     "typeSpec": {
+      "type": "bool"
+     }
+    },
+    {
+     "abilityId": 150,
+     "accessMode": "rw",
+     "code": "clean_edge_brush",
+     "description": "",
+     "name": "清理边刷",
+     "typeSpec": {
+      "type": "bool"
+     }
+    },
+    {
+     "abilityId": 151,
+     "accessMode": "rw",
+     "code": "clean_roll_brush",
+     "description": "",
+     "name": "清理滚刷",
+     "typeSpec": {
+      "type": "bool"
+     }
+    },
+    {
+     "abilityId": 152,
+     "accessMode": "rw",
+     "code": "clean_filter",
+     "description": "",
+     "name": "清理滤网",
+     "typeSpec": {
+      "type": "bool"
+     }
+    },
+    {
+     "abilityId": 153,
+     "accessMode": "rw",
+     "code": "map_room_info_4",
+     "description": "",
+     "name": "地图房间信息4",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 154,
+     "accessMode": "rw",
+     "code": "map_room_info_5",
+     "description": "",
+     "name": "地图房间信息5",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 155,
+     "accessMode": "rw",
+     "code": "cleaning_efficiency",
+     "description": "careful-精细 normal-常规 fast-快速",
+     "name": "清洁效率",
+     "typeSpec": {
+      "type": "enum",
+      "range": [
+       "careful",
+       "normal",
+       "fast"
+      ]
+     }
+    },
+    {
+     "abilityId": 156,
+     "accessMode": "ro",
+     "code": "continuation_time",
+     "description": "",
+     "name": "续扫时间",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    },
+    {
+     "abilityId": 157,
+     "accessMode": "rw",
+     "code": "maintenance",
+     "description": "",
+     "name": "保养与维护",
+     "typeSpec": {
+      "type": "string",
+      "maxlen": 255
+     }
+    }
+   ]
+  }
+ ]
+}

@@ -97,3 +97,16 @@ def clean_rooms_value(room_ids: Iterable[int], passes: int = 1) -> str:
     if not mask:
         raise ValueError("no room selected")
     return base64.b64encode(bytes([1, passes]) + mask.to_bytes(4, "big")).decode()
+
+
+def segments_from_rooms(room_names: Mapping[int, str],
+                        map_rooms: Mapping[int, str] | None = None) -> list[tuple[str, str]]:
+    """(segment id, name) pairs for Home Assistant's area cleaning, by room id.
+
+    Rooms are the union of the rooms on the decoded map (`map_rooms`; empty while the
+    camera is disabled or has not rendered yet) and the rooms named in the app
+    (`room_names`), the app's name winning. A room without a name is "Room <id + 1>",
+    as on the map camera and the schedule sensor."""
+    merged = {**(map_rooms or {}), **room_names}
+    return [(str(room_id), name or f"Room {room_id + 1}")
+            for room_id, name in sorted(merged.items())]

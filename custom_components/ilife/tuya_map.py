@@ -341,6 +341,24 @@ def _robot_to_cell(point: list[int], header: dict[str, int]) -> tuple[float, flo
     )
 
 
+def calibration_points(header: dict[str, int], scale: int) -> list[dict[str, dict[str, float]]]:
+    """Three vacuum -> image pairs for map cards (xiaomi-vacuum-map-card).
+
+    Vacuum coordinates are map cells from the header origin, robot frame (y up),
+    the unit zone cleaning takes (`tuya_zones`); image pixels are those of
+    `render_tuya_map_png` at `scale` (the whole grid, not cropped).
+    """
+    units = _units_per_cell(header)
+    points = []
+    for cx, cy in ((0, 0), (10, 0), (0, 10)):
+        # Cell centres, as the renderer draws them.
+        px = (header["origin_x"] / units + cx + 0.5) * scale
+        py = (header["origin_y"] / units - cy + 0.5) * scale
+        points.append({"vacuum": {"x": cx, "y": cy},
+                       "map": {"x": round(px, 2), "y": round(py, 2)}})
+    return points
+
+
 def _dashed_line(draw, start, end, fill, width, dash=18, gap=10) -> None:
     dx, dy = end[0] - start[0], end[1] - start[1]
     length = (dx * dx + dy * dy) ** 0.5
@@ -649,6 +667,8 @@ def render_tuya_map_png(
         "map_width": width,
         "map_height": height,
         "resolution_cm": header["resolution_cm"],
+        "map_scale": scale,
+        "calibration_points": calibration_points(header, scale),
         "rooms": {room["room_id"]: room["name"] for room in decoded["rooms"]},
         "room_areas_m2": decoded["room_areas_m2"],
         "path_points": len(decoded["path_points"]),

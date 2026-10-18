@@ -435,11 +435,16 @@ class TestRendering:
     def test_a_large_grid_is_drawn_at_a_smaller_scale(self):
         pil = pytest.importorskip("PIL.Image", reason="Pillow ships with Home Assistant")
         width, height = 800, 90                         # 72,000 cells
-        png, _ = tuya_map.render_tuya_map_png(_map(
+        png, metadata = tuya_map.render_tuya_map_png(_map(
             grid=bytes([OUT]) * (width * height), width=width, height=height))
         image = pil.open(io.BytesIO(png))
         assert max(image.size) <= tuya_map.MAX_IMAGE_SIDE
         assert image.size == (width * 3, height * 3)
+        # The calibration follows the scale actually drawn, not the one asked for.
+        assert metadata["map_scale"] == 3
+        header = tuya_map.decode_tuya_map(_map(
+            grid=bytes([OUT]) * (width * height), width=width, height=height))["header"]
+        assert metadata["calibration_points"] == tuya_map.calibration_points(header, 3)
 
     def test_labels_fold_what_the_builtin_font_cannot_draw(self):
         assert tuya_map._fold_to_latin1("Łazienka żółta") == "Lazienka zólta"
