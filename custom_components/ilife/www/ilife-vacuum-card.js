@@ -26,7 +26,8 @@ const T = {
     overview: "Overview", settings: "Settings", suction: "Suction", water: "Water", mode: "Mode",
     carpet: "Carpet recognition", manual: "Manual control", schedules: "Schedules", history: "History",
     empty_bin: "Empty bin", live: "Live", offline: "Offline", battery: "battery", last_run: "Last cleaning", floor_plan: "Floor plan", no_map: "No map yet",
-    rooms: "Rooms", clean_rooms: "Clean selected", program: "Program", efficiency: "Cleaning efficiency", y_mop: "Y-shaped mopping", carpet_boost: "Carpet boost",
+    rooms: "Rooms", clean_rooms: "Clean selected",
+    mode_full: "Full", mode_rooms: "Rooms", mode_zones: "Zones", add_zone: "Add zone", clean_zones: "Clean zones", zone_hint: "Add a zone, then drag it and pull its corner", m: "m", program: "Program", efficiency: "Cleaning efficiency", y_mop: "Y-shaped mopping", carpet_boost: "Carpet boost",
     volume: "Volume", dnd: "Do not disturb", resume_after_charge: "Resume after charging", auto_empty: "Auto-empty at dock",
     cycles: "Cycles", area: "Area", total_time: "Total time", brush: "Brush", filter: "Filter",
     side_brush: "Side brush", reset: "Reset", cancel: "Cancel", reset_confirm: "Reset {part} to 100%?",
@@ -51,7 +52,8 @@ const T = {
     overview: "Przegląd", settings: "Ustawienia", suction: "Ssanie", water: "Woda", mode: "Tryb",
     carpet: "Rozpoznawanie dywanów", manual: "Sterowanie ręczne", schedules: "Harmonogramy", history: "Historia",
     empty_bin: "Opróżnij pojemnik", live: "Na żywo", offline: "Offline", battery: "baterii", last_run: "Ostatnie sprzątanie", floor_plan: "Plan mieszkania", no_map: "Brak mapy",
-    rooms: "Pokoje", clean_rooms: "Sprzątaj wybrane", program: "Program", efficiency: "Dokładność", y_mop: "Mopowanie w kształcie Y", carpet_boost: "Wzmocnienie na dywanie",
+    rooms: "Pokoje", clean_rooms: "Sprzątaj wybrane",
+    mode_full: "Całość", mode_rooms: "Pokoje", mode_zones: "Strefy", add_zone: "Dodaj strefę", clean_zones: "Sprzątaj strefy", zone_hint: "Dodaj strefę, przeciągnij ją i rozciągnij za róg", m: "m", program: "Program", efficiency: "Dokładność", y_mop: "Mopowanie w kształcie Y", carpet_boost: "Wzmocnienie na dywanie",
     volume: "Głośność", dnd: "Nie przeszkadzać", resume_after_charge: "Dokończ po naładowaniu", auto_empty: "Auto-opróżnianie w stacji",
     faults: {
       bumper_fault: "Zablokowany zderzak", obs_fault: "Czujnik przeszkód", wall_fault: "Czujnik ściany", cliff_fault: "Czujnik upadku",
@@ -87,7 +89,8 @@ const T = {
     carpet: "Reconnaissance des tapis", manual: "Pilotage manuel", schedules: "Programmations", history: "Historique",
     empty_bin: "Vider le bac", live: "En direct", offline: "Hors ligne", battery: "batterie", last_run: "Dernier passage", floor_plan: "Plan", no_map: "Pas encore de carte",
     volume: "Volume", dnd: "Ne pas déranger", resume_after_charge: "Reprendre après la recharge", auto_empty: "Vidage automatique",
-    rooms: "Pièces", clean_rooms: "Nettoyer la sélection", program: "Programme", efficiency: "Efficacité de nettoyage", y_mop: "Serpillière en Y", carpet_boost: "Boost tapis",
+    rooms: "Pièces", clean_rooms: "Nettoyer la sélection",
+    mode_full: "Tout", mode_rooms: "Pièces", mode_zones: "Zones", add_zone: "Ajouter une zone", clean_zones: "Nettoyer les zones", zone_hint: "Ajoutez une zone, déplacez-la et tirez son coin", m: "m", program: "Programme", efficiency: "Efficacité de nettoyage", y_mop: "Serpillière en Y", carpet_boost: "Boost tapis",
     cycles: "Cycles", area: "Surface", total_time: "Temps cumulé", brush: "Brosse", filter: "Filtre",
     side_brush: "Brosse latérale", reset: "Réinitialiser", cancel: "Annuler", reset_confirm: "Réinitialiser {part} à 100% ?",
     m2_cleaned: "m² nettoyés", minutes: "minutes", no_history: "Aucun nettoyage récent.",
@@ -111,7 +114,8 @@ const T = {
     overview: "Обзор", settings: "Настройки", suction: "Всасывание", water: "Вода", mode: "Режим",
     carpet: "Распознавание ковров", manual: "Ручное управление", schedules: "Расписания", history: "История",
     empty_bin: "Очистить пылесборник", live: "Сейчас", offline: "Не в сети", battery: "батареи", last_run: "Последняя уборка", floor_plan: "План", no_map: "Карты пока нет",
-    rooms: "Комнаты", clean_rooms: "Убрать выбранные", program: "Программа", efficiency: "Тщательность уборки", y_mop: "Y-образная влажная уборка", carpet_boost: "Усиление на коврах",
+    rooms: "Комнаты", clean_rooms: "Убрать выбранные",
+    mode_full: "Полная", mode_rooms: "Комнаты", mode_zones: "Зоны", add_zone: "Добавить зону", clean_zones: "Убрать зоны", zone_hint: "Добавьте зону, перетащите её и потяните за угол", m: "м", program: "Программа", efficiency: "Тщательность уборки", y_mop: "Y-образная влажная уборка", carpet_boost: "Усиление на коврах",
     volume: "Громкость", dnd: "Не беспокоить", resume_after_charge: "Продолжить после зарядки", auto_empty: "Автоочистка на базе",
     faults: {
       bumper_fault: "Застрял бампер", obs_fault: "Датчик препятствий", wall_fault: "Датчик стены", cliff_fault: "Датчик перепада",
@@ -220,6 +224,38 @@ function drawMapCells(canvas, cells, maxW, maxH, path) {
   }
 }
 
+// The map camera's `calibration_points` (three vacuum cell -> image pixel pairs) as
+// an affine map both ways, or null when the camera has none. Cells are the robot's
+// frame (y up) that ilife.clean_zone takes; pixels are the camera image's own.
+function zoneCalibration(attrs) {
+  const pts = attrs && attrs.calibration_points;
+  if (!Array.isArray(pts) || pts.length < 3) return null;
+  const [p0, p1, p2] = pts;
+  const a = p1.vacuum.x - p0.vacuum.x, b = p2.vacuum.x - p0.vacuum.x;
+  const c = p1.vacuum.y - p0.vacuum.y, d = p2.vacuum.y - p0.vacuum.y;
+  const det = a * d - b * c;
+  if (!det) return null;
+  // M maps a vacuum offset to a pixel offset: M = [m1 m2] * [[a b] [c d]]^-1.
+  const m1x = p1.map.x - p0.map.x, m2x = p2.map.x - p0.map.x;
+  const m1y = p1.map.y - p0.map.y, m2y = p2.map.y - p0.map.y;
+  const M = [(m1x * d - m2x * c) / det, (m2x * a - m1x * b) / det,
+    (m1y * d - m2y * c) / det, (m2y * a - m1y * b) / det];
+  const mdet = M[0] * M[3] - M[1] * M[2];
+  if (!mdet) return null;
+  return {
+    toPx: (x, y) => {
+      const dx = x - p0.vacuum.x, dy = y - p0.vacuum.y;
+      return [p0.map.x + M[0] * dx + M[1] * dy, p0.map.y + M[2] * dx + M[3] * dy];
+    },
+    toCell: (px, py) => {
+      const dx = px - p0.map.x, dy = py - p0.map.y;
+      return [p0.vacuum.x + (M[3] * dx - M[1] * dy) / mdet, p0.vacuum.y + (M[0] * dy - M[2] * dx) / mdet];
+    },
+  };
+}
+
+const MAX_ZONES = 5;
+
 class IlifeVacuumCard extends HTMLElement {
   setConfig(config) {
     if (!config) throw new Error("Invalid configuration");
@@ -240,7 +276,10 @@ class IlifeVacuumCard extends HTMLElement {
     this._lang = cardLang(hass);
     // The room list is part of the layout: rebuild when the app's rooms change.
     const vac = this._ent?.vacuum || this._config.entity;
-    const roomSig = JSON.stringify(hass.states[vac]?.attributes.rooms || {});
+    // So is the mode switch: zones need the map camera's calibration.
+    const camId = this._ent?.map;
+    const roomSig = JSON.stringify(hass.states[vac]?.attributes.rooms || {})
+      + (camId && zoneCalibration(hass.states[camId]?.attributes) ? "|zones" : "");
     if (this._built && roomSig !== this._roomSig) this._built = false;
     this._roomSig = roomSig;
     if (!this._built) this._build();
@@ -378,6 +417,12 @@ class IlifeVacuumCard extends HTMLElement {
     const vol = e.volume && hass.states[e.volume];
     const has = (b) => this._has(b);
     const showMap = has("map") && e.map, showRooms = has("rooms") && roomIds.length;
+    // Full / Rooms / Zones, as in the app: with the start button, the mode decides
+    // what it starts. Without it the rooms block keeps its own button.
+    const canZone = showMap && has("controls") && !!zoneCalibration(hass.states[e.map]?.attributes);
+    const modes = has("controls") ? ["full", ...(showRooms ? ["rooms"] : []), ...(canZone ? ["zones"] : [])] : [];
+    this._modes = modes;
+    if (!modes.includes(this._mode)) this._mode = "full";
 
     this.innerHTML = `
       <ha-card class="ilife-card">
@@ -519,6 +564,7 @@ class IlifeVacuumCard extends HTMLElement {
           .vc-cta:hover{background:color-mix(in srgb,var(--primary-color) 88%,white);}
           .vc-cta:active{transform:scale(.985);}
           .vc-cta ha-icon{--mdc-icon-size:20px;}
+          .vc-cta:disabled{opacity:.5;cursor:default;transform:none;}
           .vc-secs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px;}
           .vc-sbtn{height:54px;border:1px solid var(--divider-color);border-radius:12px;background:transparent;cursor:pointer;color:var(--secondary-text-color);
             display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:11px;font-weight:600;transition:.15s;}
@@ -593,6 +639,22 @@ class IlifeVacuumCard extends HTMLElement {
           .vc-rgo{width:100%;height:42px;margin-top:10px;border:none;border-radius:12px;cursor:pointer;background:color-mix(in srgb,var(--primary-color) 14%,transparent);
             color:var(--primary-color);font-size:14px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s;}
           .vc-rgo:disabled{opacity:.45;cursor:default;}
+          .vc-modes{margin-top:14px;}
+          .vc.zoning .vc-map{aspect-ratio:1/1;}
+          .vc.zoning .vc-mapimg{max-width:94%;max-height:94%;}
+          .vc-zones{position:absolute;z-index:2;pointer-events:none;}
+          .vc-zone{position:absolute;pointer-events:auto;touch-action:none;cursor:move;border:2px dashed #fff;
+            background:color-mix(in srgb,var(--primary-color) 32%,transparent);box-shadow:0 0 0 1px rgba(0,0,0,.25);}
+          .vc-zbtn{position:absolute;width:26px;height:26px;border-radius:50%;border:none;padding:0;background:#fff;color:var(--primary-color);
+            display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.35);touch-action:none;}
+          .vc-zbtn ha-icon{--mdc-icon-size:16px;pointer-events:none;}
+          .vc-zdel{top:-13px;right:-13px;cursor:pointer;}
+          .vc-zrs{bottom:-13px;right:-13px;cursor:nwse-resize;}
+          .vc-zsize{position:absolute;left:0;right:0;top:100%;margin-top:4px;text-align:center;font-size:12px;font-weight:600;white-space:nowrap;
+            color:var(--primary-text-color);text-shadow:0 0 3px var(--card-background-color),0 0 3px var(--card-background-color);pointer-events:none;}
+          .vc-zbar{display:flex;align-items:center;gap:10px;margin-top:10px;}
+          .vc-zbar .vc-zhint{flex:1;min-width:0;font-size:12px;color:var(--secondary-text-color);}
+          .vc-sadd:disabled{opacity:.45;cursor:default;}
           .vc-problem{display:flex;align-items:center;gap:5px;margin-top:3px;font-size:12px;font-weight:600;color:var(--error-color,#db4437);}
           .vc-problem ha-icon{--mdc-icon-size:15px;}
           .vc-volrow{grid-template-columns:auto 1fr auto;}
@@ -645,22 +707,30 @@ class IlifeVacuumCard extends HTMLElement {
             <div class="glow"></div><div class="grid"></div>
             <img class="vc-mapimg" data-el="map" alt="map">
             <canvas class="vc-mapimg" data-el="heromap" hidden></canvas>
+            ${canZone ? `<div class="vc-zones" data-el="zones" hidden></div>` : ""}
             <div class="vc-nomap" data-el="nomap" hidden><ha-icon icon="mdi:map-search-outline"></ha-icon><span>${t.no_map}</span></div>
             <div class="vig"></div>
             <span class="vc-badge"><span class="bd"></span><span data-el="badgetxt">${t.live}</span></span>
             <div class="vc-scrim vc-num" data-el="scrim" hidden></div>
+          </div>` : ""}
+          ${modes.length > 1 ? `<div class="vc-seg vc-modes" data-seg="cmode" style="--n:${modes.length}"><div class="vc-thumb"></div>
+            ${modes.map((m) => `<button class="vc-pill" data-val="${m}">${t["mode_" + m]}</button>`).join("")}</div>` : ""}
+          ${canZone ? `<div class="vc-zbar" data-el="zbar" hidden>
+            <button class="vc-sadd" data-el="zadd"><ha-icon icon="mdi:plus"></ha-icon>${t.add_zone}</button>
+            <span class="vc-zhint" data-el="zhint">${t.zone_hint}</span>
+            <div class="vc-passes">${[1, 2].map((n) => `<button class="vc-pass" data-zpass="${n}">${n}×</button>`).join("")}</div>
+          </div>` : ""}
+          ${showRooms ? `<div class="vc-rooms" data-el="rooms">
+            <div class="vc-sec"><span class="vc-mlabel">${t.rooms}</span>
+              <div class="vc-passes">${[1, 2].map((n) => `<button class="vc-pass" data-pass="${n}">${n}×</button>`).join("")}</div></div>
+            <div class="vc-chips">${roomIds.map((id) => `<button class="vc-chip" data-room="${id}">${esc(rooms[id])}</button>`).join("")}</div>
+            <button class="vc-rgo" data-el="roomgo" disabled${has("controls") ? " hidden" : ""}><ha-icon icon="mdi:broom"></ha-icon><span data-el="roomgotxt">${t.clean_rooms}</span></button>
           </div>` : ""}
           ${has("controls") ? `<button class="vc-cta" data-el="cta"><ha-icon data-el="ctaicon" icon="mdi:play"></ha-icon><span data-el="ctatxt">${t.start}</span></button>
           <div class="vc-secs">
             <button class="vc-sbtn stop" data-act="stop"><ha-icon icon="mdi:stop"></ha-icon><span>${t.stop}</span></button>
             <button class="vc-sbtn" data-act="dock"><ha-icon icon="mdi:home-import-outline"></ha-icon><span>${t.dock}</span></button>
             <button class="vc-sbtn" data-act="locate"><ha-icon icon="mdi:map-marker"></ha-icon><span>${t.locate}</span></button>
-          </div>` : ""}
-          ${showRooms ? `<div class="vc-rooms">
-            <div class="vc-sec"><span class="vc-mlabel">${t.rooms}</span>
-              <div class="vc-passes">${[1, 2].map((n) => `<button class="vc-pass" data-pass="${n}">${n}×</button>`).join("")}</div></div>
-            <div class="vc-chips">${roomIds.map((id) => `<button class="vc-chip" data-room="${id}">${esc(rooms[id])}</button>`).join("")}</div>
-            <button class="vc-rgo" data-el="roomgo" disabled><ha-icon icon="mdi:broom"></ha-icon><span data-el="roomgotxt">${t.clean_rooms}</span></button>
           </div>` : ""}
           </div>` : ""}
           ${has("overview") || has("consumables") ? `<div class="vc-block blk-stats">
@@ -782,7 +852,7 @@ class IlifeVacuumCard extends HTMLElement {
   _scheduleFit() {
     if (this._fitRaf) return;
     const raf = (typeof requestAnimationFrame === "function") ? requestAnimationFrame : (cb) => cb();
-    this._fitRaf = raf(() => { this._fitRaf = 0; this._fitHero(); this._fitSegs(); });
+    this._fitRaf = raf(() => { this._fitRaf = 0; this._fitHero(); this._fitSegs(); this._layoutZones(); });
   }
 
   // A segmented control whose labels don't fit its equal segments wraps (see .wrap).
@@ -819,7 +889,13 @@ class IlifeVacuumCard extends HTMLElement {
     q("cta")?.addEventListener("click", () => {
       const st = hass.states[e.vacuum]?.state;
       if (st === "cleaning") call("vacuum", "pause", { entity_id: e.vacuum });
-      else call("vacuum", "start", { entity_id: e.vacuum });
+      // A paused clean resumes whatever it was, whichever mode is shown.
+      else if (st === "paused" || this._mode === "full") call("vacuum", "start", { entity_id: e.vacuum });
+      else if (this._mode === "rooms") this._cleanRooms(call);
+      else if (this._mode === "zones" && this._zones.length) {
+        call("ilife", "clean_zone", { entity_id: e.vacuum, repeats: this._zonePasses,
+          zone: this._zones.map((z) => [Math.round(z[0]), Math.round(z[1]), Math.round(z[2]), Math.round(z[3])]) });
+      }
     });
     this.querySelectorAll(".vc-sbtn").forEach((b) => b.addEventListener("click", () => {
       const a = b.dataset.act;
@@ -833,7 +909,8 @@ class IlifeVacuumCard extends HTMLElement {
     this.querySelectorAll(".vc-seg").forEach((seg) => seg.addEventListener("click", (ev) => {
       const pill = ev.target.closest(".vc-pill"); if (!pill) return;
       const key = seg.dataset.seg, val = pill.dataset.val;
-      if (key === "fan") call("vacuum", "set_fan_speed", { entity_id: e.vacuum, fan_speed: val });
+      if (key === "cmode") { this._mode = val; this._saveZones(); this._update(); }
+      else if (key === "fan") call("vacuum", "set_fan_speed", { entity_id: e.vacuum, fan_speed: val });
       else if (key === "water") call("select", "select_option", { entity_id: e.water, option: val });
       else if (key === "mode") call("select", "select_option", { entity_id: e.mode, option: val });
       else if (key === "eff") call("select", "select_option", { entity_id: e.efficiency, option: val });
@@ -852,13 +929,9 @@ class IlifeVacuumCard extends HTMLElement {
     }));
     this.querySelectorAll(".vc-rooms .vc-pass").forEach((b) => b.addEventListener("click", () => { this._passes = +b.dataset.pass; this._syncRooms(); }));
     this._wireScheduleEditor(call);
-    q("roomgo")?.addEventListener("click", () => {
-      if (!this._roomSel.size) return;
-      call("ilife", "clean_rooms", { entity_id: e.vacuum, rooms: [...this._roomSel].map(Number), passes: this._passes });
-      this._roomSel.clear();
-      this._syncRooms();
-    });
+    q("roomgo")?.addEventListener("click", () => this._cleanRooms(call));
     this._syncRooms();
+    this._wireZones();
     this.querySelectorAll(".vc-sen").forEach((c) => c.addEventListener("change", () => call("switch", c.checked ? "turn_on" : "turn_off", { entity_id: c.dataset.ent })));
     this.querySelectorAll(".vc-stime[data-ent]").forEach((t) => t.addEventListener("change", () => call("time", "set_value", { entity_id: t.dataset.ent, time: t.value + ":00" })));
     q("fold")?.addEventListener("click", () => { this._padOpen = !this._padOpen; q("padbox").hidden = !this._padOpen; q("root").classList.toggle("padopen", this._padOpen); });
@@ -972,6 +1045,164 @@ class IlifeVacuumCard extends HTMLElement {
     this.querySelectorAll(".blk-sched .vc-daypill").forEach((p) => p.classList.toggle("on", onDays.has(+p.dataset.day)));
   }
 
+  _cleanRooms(call) {
+    if (!this._roomSel.size) return;
+    call("ilife", "clean_rooms", { entity_id: this._ent.vacuum, rooms: [...this._roomSel].map(Number), passes: this._passes });
+    this._roomSel.clear();
+    this._syncRooms();
+  }
+
+  // Zones: rectangles in map cells (robot frame, y up), drawn over the camera image,
+  // kept per vacuum in this browser so a usual zone is there next time.
+  _zoneKey() { return "ilife-vacuum-card:zones:" + this._ent.vacuum; }
+  _loadZones() {
+    if (this._zonesFor === this._ent.vacuum) return;
+    this._zonesFor = this._ent.vacuum;
+    this._zones = []; this._zonePasses = 1;
+    try {
+      const saved = JSON.parse(localStorage.getItem(this._zoneKey()) || "null");
+      if (saved) {
+        this._zones = (saved.zones || []).filter((z) => Array.isArray(z) && z.length === 4 && z.every(Number.isFinite)).slice(0, MAX_ZONES);
+        this._zonePasses = saved.passes === 2 ? 2 : 1;
+        if (this._modes.includes(saved.mode)) this._mode = saved.mode;
+      }
+    } catch (err) { /* no storage: start empty */ }
+  }
+  _saveZones() {
+    try {
+      localStorage.setItem(this._zoneKey(), JSON.stringify({ zones: this._zones, passes: this._zonePasses, mode: this._mode }));
+    } catch (err) { /* no storage */ }
+  }
+
+  _wireZones() {
+    this._loadZones();
+    const q = (s) => this.querySelector(`[data-el="${s}"]`);
+    const box = q("zones");
+    this.querySelectorAll(".vc-zbar .vc-pass").forEach((b) => b.addEventListener("click", () => {
+      this._zonePasses = +b.dataset.zpass; this._saveZones(); this._update();
+    }));
+    q("zadd")?.addEventListener("click", () => this._addZone());
+    const img = q("map");
+    if (img) img.addEventListener("load", () => this._layoutZones());
+    if (!box) return;
+    box.addEventListener("pointerdown", (ev) => {
+      const zEl = ev.target.closest(".vc-zone"); if (!zEl) return;
+      const i = +zEl.dataset.i;
+      ev.preventDefault();
+      if (ev.target.closest(".vc-zdel")) {
+        this._zones.splice(i, 1); this._saveZones(); this._update(); return;
+      }
+      const r = this._zoneRect(this._zones[i]); if (!r) return;
+      this._drag = { i, el: zEl, kind: ev.target.closest(".vc-zrs") ? "size" : "move",
+        x: ev.clientX, y: ev.clientY, r };
+      zEl.setPointerCapture(ev.pointerId);
+    });
+    box.addEventListener("pointermove", (ev) => {
+      const d = this._drag; if (!d) return;
+      const W = box.clientWidth, H = box.clientHeight, dx = ev.clientX - d.x, dy = ev.clientY - d.y;
+      const min = this._zoneMinPx();
+      let { l, t, w, h } = d.r;
+      if (d.kind === "move") {
+        l = Math.max(0, Math.min(W - w, l + dx)); t = Math.max(0, Math.min(H - h, t + dy));
+      } else {
+        w = Math.max(min, Math.min(W - l, w + dx)); h = Math.max(min, Math.min(H - t, h + dy));
+      }
+      this._zones[d.i] = this._rectZone({ l, t, w, h });
+      this._placeZone(d.el, this._zones[d.i]);
+    });
+    const end = () => { if (this._drag) { this._drag = null; this._saveZones(); this._update(); } };
+    box.addEventListener("pointerup", end);
+    box.addEventListener("pointercancel", end);
+  }
+
+  // The overlay's geometry: image pixels -> overlay pixels is a plain scale.
+  _zoneGeo() {
+    const img = this.querySelector('[data-el="map"]');
+    const cal = zoneCalibration(this._hass.states[this._ent.map]?.attributes);
+    if (!img || img.hidden || !img.naturalWidth || !img.offsetWidth || !cal) return null;
+    return { img, cal, k: img.offsetWidth / img.naturalWidth };
+  }
+  _zoneMinPx() {
+    const g = this._zoneGeo(); if (!g) return 20;
+    const res = Number(this._hass.states[this._ent.map]?.attributes.resolution_cm) || 5;
+    const a = g.cal.toPx(0, 0), b = g.cal.toPx(50 / res, 0);   // 0.5 m
+    return Math.max(16, Math.abs(b[0] - a[0]) * g.k);
+  }
+  _zoneRect(z) {
+    const g = this._zoneGeo(); if (!g) return null;
+    const a = g.cal.toPx(z[0], z[1]), b = g.cal.toPx(z[2], z[3]);
+    const l = Math.min(a[0], b[0]) * g.k, t = Math.min(a[1], b[1]) * g.k;
+    return { l, t, w: Math.abs(b[0] - a[0]) * g.k, h: Math.abs(b[1] - a[1]) * g.k };
+  }
+  _rectZone(r) {
+    const g = this._zoneGeo();
+    const a = g.cal.toCell(r.l / g.k, r.t / g.k), b = g.cal.toCell((r.l + r.w) / g.k, (r.t + r.h) / g.k);
+    return [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[0], b[0]), Math.max(a[1], b[1])];
+  }
+  _placeZone(el, z) {
+    const r = this._zoneRect(z); if (!r) return;
+    Object.assign(el.style, { left: r.l + "px", top: r.t + "px", width: r.w + "px", height: r.h + "px" });
+    const res = Number(this._hass.states[this._ent.map]?.attributes.resolution_cm) || 5;
+    const m = (v) => (Math.abs(v) * res / 100).toFixed(1);
+    el.querySelector(".vc-zsize").textContent = `${m(z[2] - z[0])} × ${m(z[3] - z[1])} ${this._t.m}`;
+  }
+
+  _addZone() {
+    const g = this._zoneGeo(); if (!g || this._zones.length >= MAX_ZONES) return;
+    const res = Number(this._hass.states[this._ent.map]?.attributes.resolution_cm) || 5;
+    const side = 200 / res, n = this._zones.length;          // 2 m, each next one offset
+    const [cx, cy] = g.cal.toCell(g.img.naturalWidth / 2, g.img.naturalHeight / 2);
+    const x = cx - side / 2 + n * side / 4, y = cy - side / 2 - n * side / 4;
+    this._zones.push([x, y, x + side, y + side]);
+    this._saveZones();
+    this._update();
+  }
+
+  _layoutZones() {
+    const box = this.querySelector('[data-el="zones"]');
+    if (!box || this._drag) return;
+    const g = this._mode === "zones" ? this._zoneGeo() : null;
+    box.hidden = !g;
+    if (!g) return;
+    Object.assign(box.style, { left: g.img.offsetLeft + "px", top: g.img.offsetTop + "px",
+      width: g.img.offsetWidth + "px", height: g.img.offsetHeight + "px" });
+    box.innerHTML = this._zones.map((z, i) => `<div class="vc-zone" data-i="${i}">
+      <button class="vc-zbtn vc-zdel" aria-label="${this._t.delete}"><ha-icon icon="mdi:close"></ha-icon></button>
+      <span class="vc-zbtn vc-zrs"><ha-icon icon="mdi:arrow-top-left-bottom-right"></ha-icon></span>
+      <span class="vc-zsize vc-num"></span></div>`).join("");
+    box.querySelectorAll(".vc-zone").forEach((el) => this._placeZone(el, this._zones[+el.dataset.i]));
+  }
+
+  // The mode switch, the blocks it shows, and what the start button says.
+  _syncModes() {
+    const q = (s) => this.querySelector(`[data-el="${s}"]`), t = this._t;
+    const hasControls = !!q("cta"), mode = this._mode;
+    this._setActive("cmode", mode);
+    q("root")?.classList.toggle("zoning", mode === "zones");
+    if (q("rooms") && hasControls) q("rooms").hidden = mode !== "rooms";
+    if (q("zbar")) {
+      q("zbar").hidden = mode !== "zones";
+      q("zadd").disabled = this._zones.length >= MAX_ZONES;
+      q("zhint").hidden = this._zones.length > 0;
+      this.querySelectorAll(".vc-zbar .vc-pass").forEach((b) => b.classList.toggle("on", +b.dataset.zpass === this._zonePasses));
+    }
+    this._layoutZones();
+    const cta = q("cta"); if (!cta) return;
+    const st = this._hass.states[this._ent.vacuum]?.state;
+    let txt = t.start, ic = "mdi:play", off = false;
+    if (st === "cleaning") { txt = t.pause; ic = "mdi:pause"; }
+    else if (st === "paused") { txt = t.resume; ic = "mdi:play"; }
+    else if (mode === "rooms") {
+      const n = (this._roomSel || new Set()).size;
+      txt = t.clean_rooms + (n ? ` (${n}) · ${this._passes}×` : ""); ic = "mdi:broom"; off = !n;
+    } else if (mode === "zones") {
+      const n = this._zones.length;
+      txt = t.clean_zones + (n ? ` (${n}) · ${this._zonePasses}×` : ""); ic = "mdi:select-drag"; off = !n;
+    }
+    q("ctatxt").textContent = txt; q("ctaicon").setAttribute("icon", ic);
+    cta.disabled = off;
+  }
+
   _syncRooms() {
     const sel = this._roomSel || new Set();
     this.querySelectorAll(".vc-rooms .vc-chip").forEach((c) => c.classList.toggle("on", sel.has(c.dataset.room)));
@@ -982,6 +1213,7 @@ class IlifeVacuumCard extends HTMLElement {
       this.querySelector('[data-el="roomgotxt"]').textContent =
         this._t.clean_rooms + (sel.size ? ` (${sel.size}) · ${this._passes}×` : "");
     }
+    if (this._zones) this._syncModes();
   }
 
   _confirm(msg, onOk) {
@@ -1136,13 +1368,7 @@ class IlifeVacuumCard extends HTMLElement {
       } else q("scrim").hidden = true;
     }
 
-    if (q("cta")) {
-      const st = vs.state;
-      let txt = t.start, ic = "mdi:play";
-      if (st === "cleaning") { txt = t.pause; ic = "mdi:pause"; }
-      else if (st === "paused") { txt = t.resume; ic = "mdi:play"; }
-      q("ctatxt").textContent = txt; q("ctaicon").setAttribute("icon", ic);
-    }
+
 
     this._setActive("fan", vs.attributes.fan_speed);
     if (e.water) this._setActive("water", hass.states[e.water]?.state);
@@ -1202,6 +1428,7 @@ class IlifeVacuumCard extends HTMLElement {
       if (!usedHero) { this._heroCells = null; hero.hidden = true; img.hidden = noMap; }
       if (q("nomap")) q("nomap").hidden = !noMap;
     }
+    if (this._zones) this._syncModes();
     const totArea = sensorArea != null
       ? sensorArea
       : (directArea != null

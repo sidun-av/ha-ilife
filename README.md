@@ -353,6 +353,16 @@ deletes the cache and the saved map.
 
 ### Zone cleaning
 
+**From the bundled card:** on a vacuum whose map camera has `calibration_points`,
+the card switches between **Full**, **Rooms** and **Zones**, like the app. In *Zones*,
+*Add zone* drops a 2 m square on the map; drag it to move it, pull its corner to
+resize it, ✕ removes it (up to 5, size shown in metres). The start button then says
+*Clean zones* and calls `ilife.clean_zone` with 1 or 2 passes. The zones and the mode
+are kept in the browser for next time. In *Rooms* the start button cleans the
+selected rooms.
+
+From a script or another card:
+
 `ilife.clean_zone` cleans one or more rectangles (up to 5), given as
 `[x1, y1, x2, y2]` in map cells of the robot's frame (y up), with `repeats` of 1 or 2.
 The camera exposes the matching `calibration_points` and `rooms` in its attributes,
