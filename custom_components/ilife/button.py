@@ -1,16 +1,21 @@
 """ILIFE buttons: directional remote control, dust-bin emptying, consumable resets.
 
-ILIFE Clean (Tuya): the consumable and map resets only.
+ILIFE Clean (Tuya): the consumable and map resets, the voice shuffle, and one
+button per saved zone (saved_zones.py), added and removed as zones are saved and
+deleted.
 """
 from __future__ import annotations
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.const import EntityCategory
+from homeassistant.core import callback
 from homeassistant.exceptions import HomeAssistantError
+from homeassistant.helpers import entity_registry as er
 
 from .api import ILifeError, ILifeOfflineError
 from .const import BACKEND_ILIFE_CLEAN, DOMAIN, TUYA_CONSUMABLES, TUYA_DP_RESET_MAP
 from .entity import ILifeEntity
+from .saved_zones import saved_zones_manager, zone_key
 from .tuya_api import TuyaError
 from .tuya_entity import TuyaEntity, tuya_command_error
 from .voice import supports_voice, voice_manager
@@ -48,12 +53,35 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 voice = voice_manager(hass, coordinator)
                 await voice.async_prepare()
                 entities.append(TuyaVoiceShuffleButton(coordinator, voice))
+            if coordinator.supports_zone_clean:
+                saved = saved_zones_manager(coordinator)
+                entities += [TuyaSavedZoneButton(coordinator, name) for name in saved.zones]
+                entry.async_on_unload(saved.add_listener(
+                    _saved_zone_sync(hass, coordinator, async_add_entities)))
     else:
         for coordinator in data["coordinators"].values():
             entities += [ILifeDirectionButton(coordinator, *b) for b in DIRECTION_BUTTONS]
             entities.append(ILifeDustButton(coordinator))
             entities += [ILifeResetButton(coordinator, *b) for b in RESET_BUTTONS]
     async_add_entities(entities)
+
+
+def _saved_zone_sync(hass, coordinator, async_add_entities):
+    """A button for a newly saved zone; a deleted zone's button leaves the registry
+    (a re-saved one keeps its button: it reads the zone when pressed)."""
+    @callback
+    def sync(changed: set[str], removed: set[str]) -> None:
+        registry = er.async_get(hass)
+        new = [name for name in changed if registry.async_get_entity_id(
+            "button", DOMAIN, TuyaSavedZoneButton.unique_id_for(coordinator, name)) is None]
+        if new:
+            async_add_entities([TuyaSavedZoneButton(coordinator, name) for name in new])
+        for name in removed:
+            entity_id = registry.async_get_entity_id(
+                "button", DOMAIN, TuyaSavedZoneButton.unique_id_for(coordinator, name))
+            if entity_id:
+                registry.async_remove(entity_id)
+    return sync
 
 
 class _Base(ILifeEntity, ButtonEntity):
@@ -141,3 +169,38 @@ class TuyaVoiceShuffleButton(TuyaEntity, ButtonEntity):
 
     async def async_press(self):
         await self._voice.async_reshuffle()
+
+
+class TuyaSavedZoneButton(TuyaEntity, ButtonEntity):
+    """Clean one saved zone: a shortcut for dashboards, automations and voice
+    assistants. It goes through ilife.clean_zone, so it gets the suction nudge."""
+
+    _attr_translation_key = "clean_saved_zone"
+    _attr_icon = "mdi:select-drag"
+
+    def __init__(self, coordinator, name):
+        super().__init__(coordinator)
+        self._zone_name = name
+        self._attr_translation_placeholders = {"name": name}
+        self._attr_unique_id = self.unique_id_for(coordinator, name)
+
+    @staticmethod
+    def unique_id_for(coordinator, name) -> str:
+        return f"{coordinator.api.device_id}_zone_{zone_key(name)}"
+
+    @property
+    def extra_state_attributes(self):
+        zone = saved_zones_manager(self.coordinator).get(self._zone_name)
+        return {"zone_name": self._zone_name, **(zone or {})}
+
+    async def async_press(self):
+        zone = saved_zones_manager(self.coordinator).get(self._zone_name)
+        if zone is None:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="zone_unknown",
+                translation_placeholders={"zone": self._zone_name, "zones": ", ".join(
+                    sorted(saved_zones_manager(self.coordinator).zones)) or "none"})
+        vacuum = er.async_get(self.hass).async_get_entity_id(
+            "vacuum", DOMAIN, f"{self.api.device_id}_vacuum")
+        await self.hass.services.async_call(
+            DOMAIN, "clean_zone", {"entity_id": vacuum, **zone}, blocking=True)

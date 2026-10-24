@@ -418,6 +418,28 @@ map_modes:
 `ilife.clean_zone` expects a list of `[x1, y1, x2, y2]`; `ilife.clean_rooms` takes
 the room ids (or names) from the card's selection.
 
+### Saved zones
+
+A zone you clean often can be kept under a name. In the card's *Zones* mode,
+*Save* names the zones drawn on the map (and their passes); each saved zone then
+shows as a chip under the map: tap it to load its rectangles, ▶ to clean it at
+once, hold it (or right-click) to delete it. The same from a script:
+
+```yaml
+action: ilife.save_zone
+target: { entity_id: vacuum.robot }
+data: { name: Kitchen corner, zone: [[8, -79, 58, -36]], repeats: 1 }
+```
+
+`ilife.delete_zone` (with `name`) forgets one. Every saved zone gets a button
+entity, *Clean: &lt;name&gt;* (`button.<device>_clean_<name>`), which cleans it
+through `ilife.clean_zone`, suction nudge included: a shortcut for a dashboard
+tile, an automation, or a voice assistant that exposes buttons. Saving under an
+existing name replaces the zone and keeps its button. The zones are kept with the
+integration's data (they survive a restart) and listed in the vacuum's
+`saved_zones` attribute. They are cells of the current map: after the robot
+re-maps, save them again.
+
 ### Cleaning by Home Assistant area
 
 On Home Assistant versions that support it, the vacuum offers native **area

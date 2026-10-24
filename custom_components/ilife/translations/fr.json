@@ -75,6 +75,9 @@
     },
     "voice_not_shuffled": {
       "message": "La voix choisie n’a rien à mélanger : choisissez un pack dont le pack.json indique \"shuffle\": true."
+    },
+    "zone_unknown": {
+      "message": "« {zone} » n’est pas une zone enregistrée. Zones enregistrées : {zones}."
     }
   },
   "entity": {
@@ -304,6 +307,9 @@
       },
       "shuffle_voice_now": {
         "name": "Mélanger la voix"
+      },
+      "clean_saved_zone": {
+        "name": "Nettoyer : {name}"
       }
     },
     "number": {
@@ -397,6 +403,34 @@
         "slot": {
           "name": "Emplacement",
           "description": "Programmation 1 à 7 à supprimer."
+        }
+      }
+    },
+    "save_zone": {
+      "name": "Enregistrer la zone",
+      "description": "Garde des rectangles sous un nom, avec un bouton qui les nettoie (modèles laser ILIFE Clean). Enregistrer sous un nom existant le remplace.",
+      "fields": {
+        "name": {
+          "name": "Nom",
+          "description": "Le nom de la zone ; son bouton s’appelle « Nettoyer : <nom> »."
+        },
+        "zone": {
+          "name": "Zones",
+          "description": "Jusqu’à 5 rectangles [x1, y1, x2, y2] en cellules de carte, comme pour Nettoyer une zone."
+        },
+        "repeats": {
+          "name": "Passages",
+          "description": "1, ou 2 pour nettoyer chaque zone deux fois."
+        }
+      }
+    },
+    "delete_zone": {
+      "name": "Supprimer la zone enregistrée",
+      "description": "Oublie une zone enregistrée et retire son bouton.",
+      "fields": {
+        "name": {
+          "name": "Nom",
+          "description": "La zone enregistrée à supprimer."
         }
       }
     }

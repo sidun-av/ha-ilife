@@ -37,6 +37,42 @@ clean_zone:
           max: 2
           mode: box
 
+save_zone:
+  target:
+    entity:
+      integration: ilife
+      domain: vacuum
+  fields:
+    name:
+      required: true
+      example: "Угол кухни"
+      selector:
+        text:
+    zone:
+      required: true
+      example: "[[8, -79, 58, -36]]"
+      selector:
+        object:
+    repeats:
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 2
+          mode: box
+
+delete_zone:
+  target:
+    entity:
+      integration: ilife
+      domain: vacuum
+  fields:
+    name:
+      required: true
+      example: "Угол кухни"
+      selector:
+        text:
+
 set_schedule:
   target:
     entity:

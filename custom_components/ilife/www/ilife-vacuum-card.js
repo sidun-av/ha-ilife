@@ -28,7 +28,7 @@ const T = {
     empty_bin: "Empty bin", live: "Live", offline: "Offline", battery: "battery", last_run: "Last cleaning", floor_plan: "Floor plan", no_map: "No map yet",
     rooms: "Rooms", clean_rooms: "Clean selected",
     close: "Close", no_map_yet: "Waiting for the map image…", dirs: { forward: "Forward", backward: "Backward", left: "Left", right: "Right", rcstop: "Stop" },
-    voice: "Voice", shuffle_voice: "Shuffle", charging: "Charging", mode_full: "Full", mode_rooms: "Rooms", mode_zones: "Zones", add_zone: "Add zone", clean_zones: "Clean zones", zone_hint: "Drag across the map to draw a zone", m: "m", program: "Program", efficiency: "Cleaning efficiency", y_mop: "Y-shaped mopping", carpet_boost: "Carpet boost",
+    voice: "Voice", shuffle_voice: "Shuffle", charging: "Charging", save_zone_title: "Save zone", zone_name: "Zone name", delete_zone_q: "Delete the zone “{name}”?", clean_named: "Clean “{name}”", hold_to_delete: "Hold to delete", mode_full: "Full", mode_rooms: "Rooms", mode_zones: "Zones", add_zone: "Add zone", clean_zones: "Clean zones", zone_hint: "Drag across the map to draw a zone", m: "m", program: "Program", efficiency: "Cleaning efficiency", y_mop: "Y-shaped mopping", carpet_boost: "Carpet boost",
     volume: "Volume", dnd: "Do not disturb", resume_after_charge: "Resume after charging", auto_empty: "Auto-empty at dock",
     cycles: "Cycles", area: "Area", total_time: "Total time", brush: "Brush", filter: "Filter",
     side_brush: "Side brush", reset: "Reset", cancel: "Cancel", reset_confirm: "Reset {part} to 100%?",
@@ -55,7 +55,7 @@ const T = {
     empty_bin: "Opróżnij pojemnik", live: "Na żywo", offline: "Offline", battery: "baterii", last_run: "Ostatnie sprzątanie", floor_plan: "Plan mieszkania", no_map: "Brak mapy",
     rooms: "Pokoje", clean_rooms: "Sprzątaj wybrane",
     close: "Zamknij", no_map_yet: "Czekam na obraz mapy…", dirs: { forward: "Do przodu", backward: "Do tyłu", left: "W lewo", right: "W prawo", rcstop: "Stop" },
-    voice: "Głos", shuffle_voice: "Wymieszaj", charging: "Ładowanie", mode_full: "Całość", mode_rooms: "Pokoje", mode_zones: "Strefy", add_zone: "Dodaj strefę", clean_zones: "Sprzątaj strefy", zone_hint: "Przeciągnij po mapie, aby narysować strefę", m: "m", program: "Program", efficiency: "Dokładność", y_mop: "Mopowanie w kształcie Y", carpet_boost: "Wzmocnienie na dywanie",
+    voice: "Głos", shuffle_voice: "Wymieszaj", charging: "Ładowanie", save_zone_title: "Zapisz strefę", zone_name: "Nazwa strefy", delete_zone_q: "Usunąć strefę „{name}”?", clean_named: "Sprzątaj „{name}”", hold_to_delete: "Przytrzymaj, aby usunąć", mode_full: "Całość", mode_rooms: "Pokoje", mode_zones: "Strefy", add_zone: "Dodaj strefę", clean_zones: "Sprzątaj strefy", zone_hint: "Przeciągnij po mapie, aby narysować strefę", m: "m", program: "Program", efficiency: "Dokładność", y_mop: "Mopowanie w kształcie Y", carpet_boost: "Wzmocnienie na dywanie",
     volume: "Głośność", dnd: "Nie przeszkadzać", resume_after_charge: "Dokończ po naładowaniu", auto_empty: "Auto-opróżnianie w stacji",
     faults: {
       bumper_fault: "Zablokowany zderzak", obs_fault: "Czujnik przeszkód", wall_fault: "Czujnik ściany", cliff_fault: "Czujnik upadku",
@@ -104,7 +104,7 @@ const T = {
     volume: "Volume", dnd: "Ne pas déranger", resume_after_charge: "Reprendre après la recharge", auto_empty: "Vidage automatique",
     rooms: "Pièces", clean_rooms: "Nettoyer la sélection",
     close: "Fermer", no_map_yet: "En attente de l’image de la carte…", dirs: { forward: "Avancer", backward: "Reculer", left: "Gauche", right: "Droite", rcstop: "Arrêt" },
-    voice: "Voix", shuffle_voice: "Mélanger", charging: "En charge", mode_full: "Tout", mode_rooms: "Pièces", mode_zones: "Zones", add_zone: "Ajouter une zone", clean_zones: "Nettoyer les zones", zone_hint: "Glissez sur la carte pour tracer une zone", m: "m", program: "Programme", efficiency: "Efficacité de nettoyage", y_mop: "Serpillière en Y", carpet_boost: "Boost tapis",
+    voice: "Voix", shuffle_voice: "Mélanger", charging: "En charge", save_zone_title: "Enregistrer la zone", zone_name: "Nom de la zone", delete_zone_q: "Supprimer la zone « {name} » ?", clean_named: "Nettoyer « {name} »", hold_to_delete: "Maintenir pour supprimer", mode_full: "Tout", mode_rooms: "Pièces", mode_zones: "Zones", add_zone: "Ajouter une zone", clean_zones: "Nettoyer les zones", zone_hint: "Glissez sur la carte pour tracer une zone", m: "m", program: "Programme", efficiency: "Efficacité de nettoyage", y_mop: "Serpillière en Y", carpet_boost: "Boost tapis",
     cycles: "Cycles", area: "Surface", total_time: "Temps cumulé", brush: "Brosse", filter: "Filtre",
     side_brush: "Brosse latérale", reset: "Réinitialiser", cancel: "Annuler", reset_confirm: "Réinitialiser {part} à 100% ?",
     m2_cleaned: "m² nettoyés", minutes: "minutes", no_history: "Aucun nettoyage récent.",
@@ -130,7 +130,7 @@ const T = {
     empty_bin: "Очистить пылесборник", live: "Сейчас", offline: "Не в сети", battery: "батареи", last_run: "Последняя уборка", floor_plan: "План", no_map: "Карты пока нет",
     rooms: "Комнаты", clean_rooms: "Убрать выбранные",
     close: "Закрыть", no_map_yet: "Жду изображение карты…", dirs: { forward: "Вперёд", backward: "Назад", left: "Влево", right: "Вправо", rcstop: "Стоп" },
-    voice: "Озвучка", shuffle_voice: "Перемешать", charging: "Заряжается", mode_full: "Полная", mode_rooms: "Комнаты", mode_zones: "Зоны", add_zone: "Добавить зону", clean_zones: "Убрать зоны", zone_hint: "Проведите пальцем по карте, чтобы нарисовать зону", m: "м", program: "Программа", efficiency: "Тщательность уборки", y_mop: "Y-образная влажная уборка", carpet_boost: "Усиление на коврах",
+    voice: "Озвучка", shuffle_voice: "Перемешать", charging: "Заряжается", save_zone_title: "Сохранить зону", zone_name: "Название зоны", delete_zone_q: "Удалить зону «{name}»?", clean_named: "Убрать «{name}»", hold_to_delete: "Удерживайте, чтобы удалить", mode_full: "Полная", mode_rooms: "Комнаты", mode_zones: "Зоны", add_zone: "Добавить зону", clean_zones: "Убрать зоны", zone_hint: "Проведите пальцем по карте, чтобы нарисовать зону", m: "м", program: "Программа", efficiency: "Тщательность уборки", y_mop: "Y-образная влажная уборка", carpet_boost: "Усиление на коврах",
     volume: "Громкость", dnd: "Не беспокоить", resume_after_charge: "Продолжить после зарядки", auto_empty: "Автоочистка на базе",
     faults: {
       bumper_fault: "Застрял бампер", obs_fault: "Датчик препятствий", wall_fault: "Датчик стены", cliff_fault: "Датчик перепада",
@@ -421,6 +421,7 @@ class IlifeVacuumCard extends HTMLElement {
   _build() {
     if (!this._hass) return;
     this._tschedSig = null;  // the schedule list is re-rendered into the new DOM
+    this._zsavedSig = null;  // so are the saved-zone chips
     const hass = this._hass, t = this._t;
     this._ent = this._resolve();
     const e = this._ent;
@@ -704,6 +705,19 @@ class IlifeVacuumCard extends HTMLElement {
             color:var(--primary-text-color);text-shadow:0 0 3px var(--card-background-color),0 0 3px var(--card-background-color);pointer-events:none;}
           .vc-zbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 10px;margin-top:10px;}
           .vc-zbar .vc-zhint{order:3;flex-basis:100%;font-size:12px;color:var(--secondary-text-color);}
+          .vc-zacts{display:flex;flex-wrap:wrap;gap:8px;}
+          .vc-zsaved{order:4;flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px;}
+          .vc-zsaved:empty{display:none;}
+          .vc-zchip{display:inline-flex;align-items:stretch;border:1px solid var(--divider-color);border-radius:999px;overflow:hidden;}
+          .vc-zchip button{border:none;background:transparent;min-height:34px;cursor:pointer;color:var(--primary-text-color);font-size:13px;font-weight:500;
+            -webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+          .vc-zchip .ld{padding:0 12px;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+          .vc-zchip .go{display:flex;align-items:center;padding:0 10px;color:var(--primary-color);border-left:1px solid var(--divider-color);}
+          .vc-zchip .go ha-icon{--mdc-icon-size:18px;}
+          .vc-zchip button:hover{background:var(--hover);}
+          .vc-zchip.holding{background:color-mix(in srgb,var(--error-color,#db4437) 14%,transparent);}
+          .vc-zname{width:100%;font-size:16px;padding:10px 12px;border-radius:10px;border:1px solid var(--divider-color);
+            background:var(--card-background-color);color:var(--primary-text-color);}
           .vc-sadd:disabled{opacity:.45;cursor:default;}
           .vc-problem{display:flex;align-items:center;gap:5px;margin-top:3px;font-size:12px;font-weight:600;color:var(--error-color,#db4437);}
           .vc-problem ha-icon{--mdc-icon-size:15px;}
@@ -766,8 +780,12 @@ class IlifeVacuumCard extends HTMLElement {
           ${modes.length > 1 ? `<div class="vc-seg vc-modes" data-seg="cmode" style="--n:${modes.length}"><div class="vc-thumb"></div>
             ${modes.map((m) => `<button class="vc-pill" data-val="${m}">${t["mode_" + m]}</button>`).join("")}</div>` : ""}
           ${canZone ? `<div class="vc-zbar" data-el="zbar" hidden>
-            <button class="vc-sadd" data-el="zadd"><ha-icon icon="mdi:plus"></ha-icon>${t.add_zone}</button>
+            <div class="vc-zacts">
+              <button class="vc-sadd" data-el="zadd"><ha-icon icon="mdi:plus"></ha-icon>${t.add_zone}</button>
+              <button class="vc-sadd" data-el="zsave" disabled><ha-icon icon="mdi:content-save-outline"></ha-icon>${t.save}</button>
+            </div>
             <span class="vc-zhint" data-el="zhint">${t.zone_hint}</span>
+            <div class="vc-zsaved" data-el="zsaved"></div>
             <div class="vc-passes">${[1, 2].map((n) => `<button class="vc-pass" data-zpass="${n}">${n}×</button>`).join("")}</div>
           </div>` : ""}
           ${showRooms ? `<div class="vc-rooms" data-el="rooms">
@@ -840,6 +858,17 @@ class IlifeVacuumCard extends HTMLElement {
               </div>
             </div>
           </div>
+          ${canZone ? `<div class="vc-modal" data-el="zdlg" hidden>
+            <div class="vc-modal-bg" data-el="zdlgbg"></div>
+            <div class="vc-modal-panel vc-sedit">
+              <div class="vc-modal-head"><span class="t">${t.save_zone_title}</span><button data-el="zdlgclose" aria-label="${t.close}">✕</button></div>
+              <input class="vc-zname" data-el="zname" type="text" maxlength="40" placeholder="${t.zone_name}" aria-label="${t.zone_name}">
+              <div class="vc-confirm-btns">
+                <button class="vc-cbtn cancel" data-el="zdlgno">${t.cancel}</button>
+                <button class="vc-cbtn ok" data-el="zdlgok">${t.save}</button>
+              </div>
+            </div>
+          </div>` : ""}
           ${e.tsched && has("schedules") ? `<div class="vc-modal" data-el="sedit" hidden>
             <div class="vc-modal-bg" data-el="seditbg"></div>
             <div class="vc-modal-panel vc-sedit">
@@ -996,6 +1025,7 @@ class IlifeVacuumCard extends HTMLElement {
       if (q("modal") && !q("modal").hidden) this._showHistView(null);
       if (q("sedit") && !q("sedit").hidden) { q("sedit").hidden = true; this._sedit = null; }
       if (q("confirm") && !q("confirm").hidden) q("confirmno").click();
+      if (q("zdlg") && !q("zdlg").hidden) q("zdlg").hidden = true;
     });
     q("mclose")?.addEventListener("click", () => this._showHistView(null));
     q("modalbg")?.addEventListener("click", () => this._showHistView(null));
@@ -1156,6 +1186,7 @@ class IlifeVacuumCard extends HTMLElement {
       this._zonePasses = +b.dataset.zpass; this._saveZones(); this._update();
     }));
     q("zadd")?.addEventListener("click", () => this._addZone());
+    this._wireSavedZones(q);
     const img = q("map");
     // The calibration that belongs to the image on screen: the attributes can run
     // ahead of the image, which is only fetched every 20 s.
@@ -1316,6 +1347,87 @@ class IlifeVacuumCard extends HTMLElement {
   }
 
   // The mode switch, the blocks it shows, and what the start button says.
+  // Saved zones (the vacuum's `saved_zones`): «Save» names the drawn zones; a chip
+  // loads its zones onto the map, its ▶ cleans them at once (ilife.clean_zone, the
+  // same path as the zone's button), holding it deletes it.
+  _savedZones() {
+    const saved = this._hass.states[this._ent.vacuum]?.attributes.saved_zones;
+    return saved && typeof saved === "object" ? saved : {};
+  }
+  _wireSavedZones(q) {
+    const dlg = q("zdlg"); if (!dlg) return;
+    const call = (srv, data) => this._hass.callService("ilife", srv, { entity_id: this._ent.vacuum, ...data });
+    const close = () => { dlg.hidden = true; };
+    const save = () => {
+      const name = q("zname").value.trim();
+      if (!name || !this._zones.length) return;
+      call("save_zone", { name, repeats: this._zonePasses,
+        zone: this._zones.map((z) => z.map((v) => Math.round(v))) });
+      this._zoneName = name;
+      close();
+    };
+    q("zsave").addEventListener("click", () => {
+      if (!this._zones.length) return;
+      q("zname").value = this._zoneName || "";
+      dlg.hidden = false;
+      q("zname").focus();
+    });
+    q("zdlgok").addEventListener("click", save);
+    q("zname").addEventListener("keydown", (ev) => { if (ev.key === "Enter") save(); else if (ev.key === "Escape") close(); });
+    ["zdlgno", "zdlgbg", "zdlgclose"].forEach((k) => q(k).addEventListener("click", close));
+    const box = q("zsaved");
+    const nameOf = (el) => this._savedNames?.[+el.closest(".vc-zchip").dataset.i];
+    const askDelete = (chip) => {
+      const name = nameOf(chip); if (name === undefined) return;
+      this._confirm(this._t.delete_zone_q.replace("{name}", name), () => call("delete_zone", { name }), this._t.delete);
+    };
+    let hold = null;
+    const cancelHold = () => { if (hold) { clearTimeout(hold.timer); hold.chip.classList.remove("holding"); hold = null; } };
+    box.addEventListener("pointerdown", (ev) => {
+      const ld = ev.target.closest(".ld"); if (!ld || (ev.pointerType === "mouse" && ev.button !== 0)) return;
+      cancelHold();
+      const chip = ld.closest(".vc-zchip");
+      chip.classList.add("holding");
+      hold = { chip, x: ev.clientX, y: ev.clientY, fired: false,
+        timer: setTimeout(() => { hold.fired = true; chip.classList.remove("holding"); askDelete(chip); }, 650) };
+    });
+    box.addEventListener("pointermove", (ev) => {
+      if (hold && !hold.fired && Math.hypot(ev.clientX - hold.x, ev.clientY - hold.y) > 10) cancelHold();
+    });
+    ["pointerup", "pointercancel", "pointerleave"].forEach((type) => box.addEventListener(type, () => {
+      if (hold && !hold.fired) cancelHold();
+    }));
+    box.addEventListener("contextmenu", (ev) => {
+      const ld = ev.target.closest(".ld"); if (!ld) return;
+      ev.preventDefault();
+      if (!hold?.fired) { cancelHold(); askDelete(ld); }
+    });
+    box.addEventListener("click", (ev) => {
+      const btn = ev.target.closest("button"); if (!btn) return;
+      if (hold?.fired) { hold = null; return; }       // the end of a long press
+      const name = nameOf(btn), zone = this._savedZones()[name]; if (!zone) return;
+      if (btn.classList.contains("go")) {
+        call("clean_zone", { zone: zone.zone, repeats: zone.repeats || 1 });
+      } else {
+        this._zones = zone.zone.map((z) => z.slice()).slice(0, MAX_ZONES);
+        this._zonePasses = zone.repeats === 2 ? 2 : 1;
+        this._zoneName = name;
+        this._saveZones(); this._update();
+      }
+    });
+  }
+  _renderSavedZones() {
+    const box = this.querySelector('[data-el="zsaved"]'); if (!box) return;
+    const saved = this._savedZones(), t = this._t;
+    const sig = JSON.stringify(saved) + this._lang;
+    if (sig === this._zsavedSig) return;
+    this._zsavedSig = sig;
+    this._savedNames = Object.keys(saved).sort((a, b) => a.localeCompare(b));
+    box.innerHTML = this._savedNames.map((name, i) => `<span class="vc-zchip" data-i="${i}">
+      <button class="ld" title="${esc(t.hold_to_delete)}">${esc(name)}</button>
+      <button class="go" aria-label="${esc(t.clean_named.replace("{name}", name))}"><ha-icon icon="mdi:play"></ha-icon></button></span>`).join("");
+  }
+
   _syncModes() {
     const q = (s) => this.querySelector(`[data-el="${s}"]`), t = this._t;
     const hasControls = !!q("cta"), mode = this._mode;
@@ -1327,6 +1439,8 @@ class IlifeVacuumCard extends HTMLElement {
       const geo = this._zoneGeo();
       q("zbar").hidden = mode !== "zones";
       q("zadd").disabled = this._zones.length >= MAX_ZONES || !geo;
+      if (q("zsave")) q("zsave").disabled = !this._zones.length;
+      this._renderSavedZones();
       q("zhint").textContent = geo ? t.zone_hint : t.no_map_yet;
       q("zhint").hidden = !!geo && this._zones.length > 0;
       this.querySelectorAll(".vc-zbar .vc-pass").forEach((b) => b.classList.toggle("on", +b.dataset.zpass === this._zonePasses));
@@ -1361,12 +1475,13 @@ class IlifeVacuumCard extends HTMLElement {
     if (this._zones) this._syncModes();
   }
 
-  _confirm(msg, onOk) {
+  _confirm(msg, onOk, okLabel) {
     const modal = this.querySelector('[data-el="confirm"]');
     if (!modal) { if (onOk) onOk(); return; }
     this.querySelector('[data-el="confirmmsg"]').textContent = msg;
     modal.hidden = false;
     const yes = this.querySelector('[data-el="confirmyes"]');
+    yes.textContent = okLabel || this._t.reset;
     const no = this.querySelector('[data-el="confirmno"]');
     const bg = this.querySelector('[data-el="confirmbg"]');
     const cleanup = () => {

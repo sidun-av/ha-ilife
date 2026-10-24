@@ -71,6 +71,7 @@ from .tuya_rooms import (
     clean_rooms_value,
     segments_from_rooms,
 )
+from .saved_zones import saved_zones_manager
 from .tuya_zones import CLEAN_ZONE_CODE, MAX_ZONE_PASSES, MAX_ZONES, clean_zone_value
 from .tuya_schedule import (
     EMPTY_SLOT,
@@ -108,6 +109,11 @@ CLEAN_ZONE_SCHEMA = {
     vol.Required("zone"): vol.All(cv.ensure_list, vol.Length(1, MAX_ZONES), [_ZONE]),
     vol.Optional("repeats", default=1): vol.All(vol.Coerce(int), vol.Range(1, MAX_ZONE_PASSES)),
 }
+# A drawn zone kept under a name, with a button that cleans it (saved_zones.py).
+SERVICE_SAVE_ZONE = "save_zone"
+SAVE_ZONE_SCHEMA = {vol.Required("name"): cv.string, **CLEAN_ZONE_SCHEMA}
+SERVICE_DELETE_ZONE = "delete_zone"
+DELETE_ZONE_SCHEMA = {vol.Required("name"): cv.string}
 SERVICE_SET_SCHEDULE = "set_schedule"
 SERVICE_DELETE_SCHEDULE = "delete_schedule"
 _SLOT = vol.All(vol.Coerce(int), vol.Range(1, len(SCHEDULE_CODES)))
@@ -135,6 +141,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
         SERVICE_CLEAN_ROOMS, CLEAN_ROOMS_SCHEMA, "async_clean_rooms")
     platform.async_register_entity_service(
         SERVICE_CLEAN_ZONE, CLEAN_ZONE_SCHEMA, "async_clean_zone")
+    platform.async_register_entity_service(
+        SERVICE_SAVE_ZONE, SAVE_ZONE_SCHEMA, "async_save_zone")
+    platform.async_register_entity_service(
+        SERVICE_DELETE_ZONE, DELETE_ZONE_SCHEMA, "async_delete_zone")
     platform.async_register_entity_service(
         SERVICE_SET_SCHEDULE, SET_SCHEDULE_SCHEMA, "async_set_schedule")
     platform.async_register_entity_service(
@@ -218,6 +228,12 @@ class ILifeVacuum(ILifeEntity, StateVacuumEntity):
 
     async def async_clean_zone(self, zone, repeats=1):
         self._unsupported("clean zone")
+
+    async def async_save_zone(self, name, zone, repeats=1):
+        self._unsupported("save zone")
+
+    async def async_delete_zone(self, name):
+        self._unsupported("delete zone")
 
     async def async_set_schedule(self, **kwargs):
         self._unsupported("set schedule")
@@ -342,6 +358,10 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
         # Where the robot stands when the entity comes up: what a later status is
         # compared with to spot a new clean.
         self._last_activity = self.activity
+        # The saved zones are an attribute: show a save or a delete at once.
+        if self.coordinator.supports_zone_clean:
+            self.async_on_remove(saved_zones_manager(self.coordinator).add_listener(
+                lambda _changed, _removed: self.async_write_ha_state()))
 
     async def async_will_remove_from_hass(self) -> None:
         self._cancel_nudge(force=True)
@@ -594,6 +614,9 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
         attrs = self._tuya_attributes()
         if self.coordinator.room_names:
             attrs["rooms"] = self.coordinator.room_names
+        saved = getattr(self.coordinator, "saved_zones", None)
+        if saved is not None and saved.zones:
+            attrs["saved_zones"] = saved.zones
         return attrs
 
     def _room_id(self, room) -> int:
@@ -645,6 +668,37 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
         except ValueError as err:
             raise HomeAssistantError(str(err)) from err
         await self._write_run(CLEAN_ZONE_CODE, value)
+
+    def _require_zones(self, action: str) -> None:
+        if not self.coordinator.supports_zone_clean:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="command_unsupported",
+                translation_placeholders={
+                    "action": action,
+                    "device": self.api.device.get("product_name") or "this vacuum",
+                },
+            )
+
+    async def async_save_zone(self, name, zone, repeats=1):
+        """Keep the rectangles under a name (overwriting one of the same name)."""
+        self._require_zones("save zone")
+        try:
+            await saved_zones_manager(self.coordinator).async_save(name, zone, repeats)
+        except ValueError as err:
+            raise HomeAssistantError(str(err)) from err
+
+    async def async_delete_zone(self, name):
+        self._require_zones("delete zone")
+        try:
+            await saved_zones_manager(self.coordinator).async_delete(name)
+        except KeyError as err:
+            raise HomeAssistantError(
+                translation_domain=DOMAIN, translation_key="zone_unknown",
+                translation_placeholders={
+                    "zone": str(name),
+                    "zones": ", ".join(sorted(saved_zones_manager(self.coordinator).zones)) or "none",
+                },
+            ) from err
 
     async def async_get_segments(self):
         """The rooms of the vacuum's map, for Home Assistant's area cleaning.

@@ -75,6 +75,9 @@
     },
     "voice_not_shuffled": {
       "message": "The chosen voice has nothing to shuffle: pick a pack whose pack.json says \"shuffle\": true."
+    },
+    "zone_unknown": {
+      "message": "\"{zone}\" is not a saved zone. Saved zones: {zones}."
     }
   },
   "entity": {
@@ -304,6 +307,9 @@
       },
       "shuffle_voice_now": {
         "name": "Shuffle the voice"
+      },
+      "clean_saved_zone": {
+        "name": "Clean: {name}"
       }
     },
     "number": {
@@ -397,6 +403,34 @@
         "slot": {
           "name": "Slot",
           "description": "Schedule 1-7 to remove."
+        }
+      }
+    },
+    "save_zone": {
+      "name": "Save zone",
+      "description": "Keeps rectangles under a name, with a button that cleans them (ILIFE Clean laser models). Saving under an existing name replaces it.",
+      "fields": {
+        "name": {
+          "name": "Name",
+          "description": "The zone's name; its button is called \"Clean: <name>\"."
+        },
+        "zone": {
+          "name": "Zones",
+          "description": "Up to 5 rectangles [x1, y1, x2, y2] in map cells, as for Clean zone."
+        },
+        "repeats": {
+          "name": "Passes",
+          "description": "1, or 2 to clean each zone twice."
+        }
+      }
+    },
+    "delete_zone": {
+      "name": "Delete saved zone",
+      "description": "Forgets a saved zone and removes its button.",
+      "fields": {
+        "name": {
+          "name": "Name",
+          "description": "The saved zone to delete."
         }
       }
     }
