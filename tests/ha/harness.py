@@ -112,6 +112,8 @@ class FakeLink:
     the acknowledgement was lost (or never sent, for a non-timeout error)."""
 
     answers = True
+    # Status codes the robot reports at connect on top of the fixture's (e.g. mid-clean).
+    initial: dict = {}
     instances: list[FakeLink] = []
 
     def __init__(self, _device_id, _key, host, on_dps, on_state) -> None:
@@ -119,7 +121,7 @@ class FakeLink:
         self.connected = False
         self.failures = 0
         self._on_dps, self._on_state = on_dps, on_state
-        self.status = {DPMAP.dp_for(k): v for k, v in A30["status"].items()
+        self.status = {DPMAP.dp_for(k): v for k, v in {**A30["status"], **FakeLink.initial}.items()
                        if DPMAP.dp_for(k)}
         self.frames: list[dict] = []
         self.errors: list[Exception] = []
