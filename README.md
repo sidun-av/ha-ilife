@@ -96,11 +96,17 @@ Two things worth knowing about how these robots take orders:
   than a full clean. It is sent the way Start is, with the run and pause flags, since
   some models (A30 Pro) ignore a mode written on its own; choosing the dock value
   sends the robot home, like Return to base.
-- **A30 Pro: the suction is re-applied after a start.** Its firmware can start a
-  clean with the fan at the lowest level while reporting the one it was set to, and
-  writing that same level again does nothing. So 10 s after a start, a room clean
-  or a zone clean, the integration steps the suction to another level and back,
-  provided the robot is cleaning and the level was not changed meanwhile. Other
+- **A30 Pro: the suction is re-applied after every start.** This is a firmware bug:
+  the robot starts a clean with its fan low while reporting the level it was set to,
+  and writing that same level again does nothing; changing the level away and back
+  fixes it at once. A live test on 2026-10-24 confirmed it in three runs: with
+  carpet boost on, with it off, and with the water off, the fan got louder after
+  the change every time. The ILIFE Clean app has the same problem (its own starts
+  run weak until the level is changed by hand). So 10 s after any new clean — from
+  Home Assistant, the app, a schedule or the robot's button — the integration steps
+  the suction to another level and back, provided the robot is still cleaning and
+  the level was not changed meanwhile. A resume after a pause is the same run and is
+  left alone, as is a clean already running when Home Assistant starts. Other
   models are left alone.
 
 ## Installation (HACS)

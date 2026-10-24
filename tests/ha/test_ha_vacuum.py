@@ -105,6 +105,75 @@ async def test_unconfirmed_start_still_gets_the_nudge(hass, cached_robot):
     assert link.frames[1:] == [{"suction": "normal"}, {"suction": "strong"}]
 
 
+def _suction_frames(link):
+    return [f for f in link.frames if "suction" in f]
+
+
+async def test_start_from_the_app_is_nudged_too(hass, cached_robot):
+    """A clean started outside Home Assistant (app, schedule, the robot's button)
+    has the same weak fan: the robot leaving the dock to clean gets the nudge."""
+    entry, link = await _setup_lan(hass, cached_robot)
+    link.push(status="smart", power_go=True)
+    await hass.async_block_till_done()
+    assert len(_nudge_tasks(entry)) == 1
+    await _settle(hass)
+    assert _suction_frames(link) == [{"suction": "normal"}, {"suction": "strong"}]
+
+
+async def test_start_from_home_assistant_is_nudged_once(hass, cached_robot):
+    """Our own start nudges itself; the status it brings back is not a second start,
+    not even when it only shows with a later update."""
+    _entry, link = await _setup_lan(hass, cached_robot)
+    await _vacuum(hass, "start")
+    link.push(status="standby", power_go=False)   # a status blip, then cleaning again
+    link.push(status="smart", power_go=True)
+    await hass.async_block_till_done()
+    await _settle(hass)
+    assert _suction_frames(link) == [{"suction": "normal"}, {"suction": "strong"}]
+
+
+async def test_resume_after_a_pause_is_not_nudged(hass, cached_robot):
+    """A resume carries on the same run; only a new clean gets the nudge."""
+    _entry, link = await _setup_lan(hass, cached_robot)
+    link.push(status="smart", power_go=True)
+    await hass.async_block_till_done()
+    await _settle(hass)
+    nudged = len(_suction_frames(link))
+    link.push(status="paused", pause=True)
+    await hass.async_block_till_done()
+    assert hass.states.get(entity_id(hass, "vacuum")).state == "paused"
+    link.push(status="smart", pause=False)
+    await hass.async_block_till_done()
+    await _settle(hass)
+    assert len(_suction_frames(link)) == nudged == 2
+
+
+async def test_cleaning_at_setup_is_not_nudged(hass, cached_robot):
+    """Already cleaning when Home Assistant starts: how the run began is unknown."""
+    cached_robot()
+    FakeLink.initial = {"status": "smart", "power_go": True}
+    try:
+        entry = await _setup(hass, local=True)
+    finally:
+        FakeLink.initial = {}
+    link = FakeLink.instances[-1]
+    await _settle(hass)
+    assert not _nudge_tasks(entry)
+    assert not _suction_frames(link)
+
+
+async def test_app_start_on_other_models_is_left_alone(hass, cached_robot):
+    cached_robot("otherproduct0000")
+    FakeClient.product_id = "otherproduct0000"
+    entry = await _setup(hass, local=True)
+    link = FakeLink.instances[-1]
+    link.push(status="smart", power_go=True)
+    await hass.async_block_till_done()
+    await _settle(hass)
+    assert not _nudge_tasks(entry)
+    assert not _suction_frames(link)
+
+
 # -- a pause whose acknowledgement was lost --------------------------------------- #
 
 async def test_unconfirmed_pause_stays_a_pause(hass, cached_robot):

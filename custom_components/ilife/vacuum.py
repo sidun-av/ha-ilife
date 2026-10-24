@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
+import time
 
 import voluptuous as vol
 
@@ -88,6 +89,10 @@ SUCTION_NUDGE_DELAY = 10
 # took effect, which is the no-op change the nudge exists to avoid. One second is
 # a margin over the LAN round trip, not a measured minimum.
 SUCTION_NUDGE_GAP = 1
+# How long after our own start (or room/zone clean) the robot entering CLEANING is
+# taken as that start, already nudged, rather than a new one from elsewhere. Covers a
+# cloud round trip and the next poll.
+OWN_START_WINDOW = 60
 
 SERVICE_CLEAN_ROOMS = "clean_rooms"
 CLEAN_ROOMS_SCHEMA = {
@@ -313,6 +318,13 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
         self._suction_nudge = product_id in TUYA_SUCTION_NUDGE_PRODUCTS
         self._nudge_task = None
         self._nudge_writing = False
+        # A clean started anywhere (the app, a schedule, the robot's button) needs the
+        # nudge too: it is spotted as the activity entering CLEANING (see
+        # _handle_coordinator_update). Our own run commands nudge themselves, so the
+        # transition they cause is skipped for a while after one was sent: over the
+        # cloud the robot's new status only shows with a later poll.
+        self._last_activity = None
+        self._run_sent_at = None
 
     @property
     def supported_features(self):
@@ -324,6 +336,12 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
             features |= clean_area
         return features
 
+    async def async_added_to_hass(self) -> None:
+        await super().async_added_to_hass()
+        # Where the robot stands when the entity comes up: what a later status is
+        # compared with to spot a new clean.
+        self._last_activity = self.activity
+
     async def async_will_remove_from_hass(self) -> None:
         self._cancel_nudge(force=True)
         await super().async_will_remove_from_hass()
@@ -333,6 +351,16 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
         power_go = data.get(TUYA_DP_POWER_GO)
         self._pause.on_status(data.get(TUYA_DP_STATUS),
                               power_go if isinstance(power_go, bool) else None)
+        activity = self.activity
+        # A new clean, not a resume: the firmware bug is at the start of a run, and
+        # the first status after setup says nothing about how the run began.
+        own_start = self._run_sent_at is not None \
+            and time.monotonic() - self._run_sent_at < OWN_START_WINDOW
+        if activity == VacuumActivity.CLEANING and not own_start \
+                and self._last_activity not in (None, VacuumActivity.CLEANING,
+                                                VacuumActivity.PAUSED):
+            self._reassert_suction()
+        self._last_activity = activity
         super()._handle_coordinator_update()
 
     @property
@@ -448,22 +476,27 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
         if self._is_paused and self._cmd_resume:
             await self._send_many(self._cmd_resume)
             return
+        self._run_sent_at = time.monotonic()
         try:
             await self._run(self._cmd_start, "start")
         except HomeAssistantError as err:
             if _unconfirmed(err):
                 # Most likely started: the nudge itself checks that it runs.
                 self._reassert_suction()
+            else:
+                self._run_sent_at = None    # it did not run: a start from elsewhere is new
             raise
         self._reassert_suction()
 
     def _reassert_suction(self) -> None:
         """Make the fan really run at the level the robot reports, once it is off.
 
-        An A30 Pro started cleans with its fan at the lowest level while reporting
-        "strong", and writing "strong" again was a no-op; changing the level away and
-        back fixed it at once. So after a start, step through another level and back,
-        on the models in TUYA_SUCTION_NUDGE_PRODUCTS only. It runs in the background,
+        A firmware bug: an A30 Pro starts cleans with its fan low while reporting the
+        level it was set to, and writing that level again is a no-op; changing the
+        level away and back fixes it at once (confirmed live 2026-10-24, three runs:
+        with and without carpet boost, water off; the app's own starts have it too).
+        So after any start, step through another level and back, on the models in
+        TUYA_SUCTION_NUDGE_PRODUCTS only. It runs in the background,
         tied to the config entry so an unload cancels it: the start itself has
         already gone through."""
         if not self._suction_nudge:
@@ -632,12 +665,15 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
     async def _write_run(self, code, value):
         """A room or zone clean: a new run, so it ends a pause and gets the suction
         nudge, also when its acknowledgement was lost (it most likely started)."""
+        self._run_sent_at = time.monotonic()
         try:
             await self._write(code, value)
         except HomeAssistantError as err:
             if _unconfirmed(err):
                 self._pause.on_command_sent()
                 self._reassert_suction()
+            else:
+                self._run_sent_at = None
             raise
         self._pause.on_command_sent()
         self._reassert_suction()
