@@ -42,6 +42,7 @@ from .const import (
     TUYA_DP_TOTAL_CLEAN_TIME,
     TUYA_MODE_FULL_CLEAN,
     TUYA_STATUS_CLEANING,
+    TUYA_STATUS_CHARGING,
     TUYA_STATUS_DOCKED,
     TUYA_STATUS_IDLE,
     TUYA_STATUS_PAUSED,
@@ -404,6 +405,11 @@ class TuyaVacuum(TuyaEntity, StateVacuumEntity):
         fault = data.get(TUYA_DP_FAULT)
         if fault:
             attrs["fault"] = fault
+        # The robot's own status: the card tells charging from a full battery by it.
+        status = data.get(TUYA_DP_STATUS)
+        if status is not None:
+            attrs["status"] = status
+            attrs["charging"] = str(status).lower() in TUYA_STATUS_CHARGING
         for key, code in (
             ("total_clean_count", TUYA_DP_TOTAL_CLEAN_COUNT),
             ("total_clean_area", TUYA_DP_TOTAL_CLEAN_AREA),

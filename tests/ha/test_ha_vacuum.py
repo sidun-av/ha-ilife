@@ -210,3 +210,19 @@ async def test_refused_pause_is_not_tracked(hass, cached_robot):
     assert hass.states.get(entity_id(hass, "vacuum")).state == "cleaning"
     # The refusal is the robot's answer: the cloud is not asked to relay it.
     assert not [c for c in FakeClient.instances[-1].sent if "pause" in str(c)]
+
+
+# -- Charging -------------------------------------------------------------------- #
+
+async def test_status_and_charging_attributes(hass, cached_robot):
+    """The card tells charging from a full battery by the robot's own status."""
+    _entry, link = await _setup_lan(hass, cached_robot)
+    link.push(status="base_charging")
+    await hass.async_block_till_done()
+    state = hass.states.get(entity_id(hass, "vacuum"))
+    assert state.attributes["status"] == "base_charging"
+    assert state.attributes["charging"] is True
+    link.push(status="charge_done")
+    await hass.async_block_till_done()
+    state = hass.states.get(entity_id(hass, "vacuum"))
+    assert state.attributes["charging"] is False

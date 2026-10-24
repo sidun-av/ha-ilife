@@ -283,7 +283,9 @@ class TuyaVoiceSelect(TuyaEntity, SelectEntity):
     def extra_state_attributes(self):
         attrs = {"pack_id": self._voice.current, "url": self._voice.last_url}
         report = self._voice.report
-        if report:
+        # Only a report about the pack sent last says anything about it (the robot's
+        # idle report carries id 0).
+        if report and report.get("id") == self._voice.last_id:
             attrs.update({f"robot_{k}": v for k, v in report.items()})
         return attrs
 

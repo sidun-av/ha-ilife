@@ -117,6 +117,9 @@ TUYA_MODE_FULL_CLEAN = ("smart", "auto", "clean", "smart_clean", "autoclean")
 TUYA_STATUS_DOCKED = {"charging", "charge_done", "chargecompleted", "standby_charge",
                       "base_charging", "base_sleeping", "adapter_charging",
                       "adapter_sleeping", "continuation_charging"}
+# Docked statuses in which the battery is actually taking charge (a full one reads
+# charge_done / base_sleeping).
+TUYA_STATUS_CHARGING = {"charging", "base_charging", "adapter_charging", "continuation_charging"}
 TUYA_STATUS_RETURNING = {"goto_charge", "docking", "back_charge"}
 TUYA_STATUS_IDLE = {"standby", "sleep"}
 TUYA_STATUS_PAUSED = {"pause", "paused"}

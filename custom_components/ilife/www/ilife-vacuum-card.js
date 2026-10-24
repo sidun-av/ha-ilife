@@ -28,7 +28,7 @@ const T = {
     empty_bin: "Empty bin", live: "Live", offline: "Offline", battery: "battery", last_run: "Last cleaning", floor_plan: "Floor plan", no_map: "No map yet",
     rooms: "Rooms", clean_rooms: "Clean selected",
     close: "Close", no_map_yet: "Waiting for the map image…", dirs: { forward: "Forward", backward: "Backward", left: "Left", right: "Right", rcstop: "Stop" },
-    voice: "Voice", shuffle_voice: "Shuffle", mode_full: "Full", mode_rooms: "Rooms", mode_zones: "Zones", add_zone: "Add zone", clean_zones: "Clean zones", zone_hint: "Drag across the map to draw a zone", m: "m", program: "Program", efficiency: "Cleaning efficiency", y_mop: "Y-shaped mopping", carpet_boost: "Carpet boost",
+    voice: "Voice", shuffle_voice: "Shuffle", charging: "Charging", mode_full: "Full", mode_rooms: "Rooms", mode_zones: "Zones", add_zone: "Add zone", clean_zones: "Clean zones", zone_hint: "Drag across the map to draw a zone", m: "m", program: "Program", efficiency: "Cleaning efficiency", y_mop: "Y-shaped mopping", carpet_boost: "Carpet boost",
     volume: "Volume", dnd: "Do not disturb", resume_after_charge: "Resume after charging", auto_empty: "Auto-empty at dock",
     cycles: "Cycles", area: "Area", total_time: "Total time", brush: "Brush", filter: "Filter",
     side_brush: "Side brush", reset: "Reset", cancel: "Cancel", reset_confirm: "Reset {part} to 100%?",
@@ -55,7 +55,7 @@ const T = {
     empty_bin: "Opróżnij pojemnik", live: "Na żywo", offline: "Offline", battery: "baterii", last_run: "Ostatnie sprzątanie", floor_plan: "Plan mieszkania", no_map: "Brak mapy",
     rooms: "Pokoje", clean_rooms: "Sprzątaj wybrane",
     close: "Zamknij", no_map_yet: "Czekam na obraz mapy…", dirs: { forward: "Do przodu", backward: "Do tyłu", left: "W lewo", right: "W prawo", rcstop: "Stop" },
-    voice: "Głos", shuffle_voice: "Wymieszaj", mode_full: "Całość", mode_rooms: "Pokoje", mode_zones: "Strefy", add_zone: "Dodaj strefę", clean_zones: "Sprzątaj strefy", zone_hint: "Przeciągnij po mapie, aby narysować strefę", m: "m", program: "Program", efficiency: "Dokładność", y_mop: "Mopowanie w kształcie Y", carpet_boost: "Wzmocnienie na dywanie",
+    voice: "Głos", shuffle_voice: "Wymieszaj", charging: "Ładowanie", mode_full: "Całość", mode_rooms: "Pokoje", mode_zones: "Strefy", add_zone: "Dodaj strefę", clean_zones: "Sprzątaj strefy", zone_hint: "Przeciągnij po mapie, aby narysować strefę", m: "m", program: "Program", efficiency: "Dokładność", y_mop: "Mopowanie w kształcie Y", carpet_boost: "Wzmocnienie na dywanie",
     volume: "Głośność", dnd: "Nie przeszkadzać", resume_after_charge: "Dokończ po naładowaniu", auto_empty: "Auto-opróżnianie w stacji",
     faults: {
       bumper_fault: "Zablokowany zderzak", obs_fault: "Czujnik przeszkód", wall_fault: "Czujnik ściany", cliff_fault: "Czujnik upadku",
@@ -104,7 +104,7 @@ const T = {
     volume: "Volume", dnd: "Ne pas déranger", resume_after_charge: "Reprendre après la recharge", auto_empty: "Vidage automatique",
     rooms: "Pièces", clean_rooms: "Nettoyer la sélection",
     close: "Fermer", no_map_yet: "En attente de l’image de la carte…", dirs: { forward: "Avancer", backward: "Reculer", left: "Gauche", right: "Droite", rcstop: "Arrêt" },
-    voice: "Voix", shuffle_voice: "Mélanger", mode_full: "Tout", mode_rooms: "Pièces", mode_zones: "Zones", add_zone: "Ajouter une zone", clean_zones: "Nettoyer les zones", zone_hint: "Glissez sur la carte pour tracer une zone", m: "m", program: "Programme", efficiency: "Efficacité de nettoyage", y_mop: "Serpillière en Y", carpet_boost: "Boost tapis",
+    voice: "Voix", shuffle_voice: "Mélanger", charging: "En charge", mode_full: "Tout", mode_rooms: "Pièces", mode_zones: "Zones", add_zone: "Ajouter une zone", clean_zones: "Nettoyer les zones", zone_hint: "Glissez sur la carte pour tracer une zone", m: "m", program: "Programme", efficiency: "Efficacité de nettoyage", y_mop: "Serpillière en Y", carpet_boost: "Boost tapis",
     cycles: "Cycles", area: "Surface", total_time: "Temps cumulé", brush: "Brosse", filter: "Filtre",
     side_brush: "Brosse latérale", reset: "Réinitialiser", cancel: "Annuler", reset_confirm: "Réinitialiser {part} à 100% ?",
     m2_cleaned: "m² nettoyés", minutes: "minutes", no_history: "Aucun nettoyage récent.",
@@ -130,7 +130,7 @@ const T = {
     empty_bin: "Очистить пылесборник", live: "Сейчас", offline: "Не в сети", battery: "батареи", last_run: "Последняя уборка", floor_plan: "План", no_map: "Карты пока нет",
     rooms: "Комнаты", clean_rooms: "Убрать выбранные",
     close: "Закрыть", no_map_yet: "Жду изображение карты…", dirs: { forward: "Вперёд", backward: "Назад", left: "Влево", right: "Вправо", rcstop: "Стоп" },
-    voice: "Озвучка", shuffle_voice: "Перемешать", mode_full: "Полная", mode_rooms: "Комнаты", mode_zones: "Зоны", add_zone: "Добавить зону", clean_zones: "Убрать зоны", zone_hint: "Проведите пальцем по карте, чтобы нарисовать зону", m: "м", program: "Программа", efficiency: "Тщательность уборки", y_mop: "Y-образная влажная уборка", carpet_boost: "Усиление на коврах",
+    voice: "Озвучка", shuffle_voice: "Перемешать", charging: "Заряжается", mode_full: "Полная", mode_rooms: "Комнаты", mode_zones: "Зоны", add_zone: "Добавить зону", clean_zones: "Убрать зоны", zone_hint: "Проведите пальцем по карте, чтобы нарисовать зону", m: "м", program: "Программа", efficiency: "Тщательность уборки", y_mop: "Y-образная влажная уборка", carpet_boost: "Усиление на коврах",
     volume: "Громкость", dnd: "Не беспокоить", resume_after_charge: "Продолжить после зарядки", auto_empty: "Автоочистка на базе",
     faults: {
       bumper_fault: "Застрял бампер", obs_fault: "Датчик препятствий", wall_fault: "Датчик стены", cliff_fault: "Датчик перепада",
@@ -560,7 +560,12 @@ class IlifeVacuumCard extends HTMLElement {
           .vc-batt{display:flex;align-items:center;gap:6px;height:28px;padding:4px 10px;border-radius:999px;background:var(--secondary-background-color);
             font-size:13px;font-weight:600;position:relative;overflow:hidden;flex:none;}
           .vc-batt ha-icon{--mdc-icon-size:17px;}
-          .vc-battbar{position:absolute;left:0;bottom:0;height:3px;background:currentColor;border-radius:2px;transition:width .3s;}
+          /* The pill fills from the left with the charge, in the level's colour. */
+          .vc-batt{--bc:var(--secondary-text-color);color:var(--bc);background:color-mix(in srgb,var(--bc) 10%,var(--secondary-background-color));}
+          .vc-batt>*:not(.vc-battbar){position:relative;z-index:1;}
+          .vc-battbar{position:absolute;left:0;top:0;bottom:0;background:color-mix(in srgb,var(--bc) 24%,transparent);transition:width .3s;}
+          .vc-batt.charging .vc-battbar{animation:vccharge 2.4s ease-in-out infinite;}
+          @keyframes vccharge{0%,100%{opacity:1;}50%{opacity:.45;}}
           .vc-map{position:relative;margin-top:14px;border-radius:18px;background:var(--secondary-background-color);
             aspect-ratio:4/3;overflow:hidden;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--divider-color) 70%,transparent);
             display:flex;align-items:center;justify-content:center;}
@@ -697,8 +702,8 @@ class IlifeVacuumCard extends HTMLElement {
           .vc-zrs{bottom:-13px;right:-13px;cursor:nwse-resize;}
           .vc-zsize{position:absolute;left:0;right:0;top:100%;margin-top:4px;text-align:center;font-size:12px;font-weight:600;white-space:nowrap;
             color:var(--primary-text-color);text-shadow:0 0 3px var(--card-background-color),0 0 3px var(--card-background-color);pointer-events:none;}
-          .vc-zbar{display:flex;align-items:center;gap:10px;margin-top:10px;}
-          .vc-zbar .vc-zhint{flex:1;min-width:0;font-size:12px;color:var(--secondary-text-color);}
+          .vc-zbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:8px 10px;margin-top:10px;}
+          .vc-zbar .vc-zhint{order:3;flex-basis:100%;font-size:12px;color:var(--secondary-text-color);}
           .vc-sadd:disabled{opacity:.45;cursor:default;}
           .vc-problem{display:flex;align-items:center;gap:5px;margin-top:3px;font-size:12px;font-weight:600;color:var(--error-color,#db4437);}
           .vc-problem ha-icon{--mdc-icon-size:15px;}
@@ -1472,8 +1477,17 @@ class IlifeVacuumCard extends HTMLElement {
       if (bv != null) {
         q("battval").textContent = Math.round(bv) + "%";
         const lvl = Math.round(bv / 10) * 10;
-        q("batticon").setAttribute("icon", lvl >= 100 ? "mdi:battery" : lvl <= 0 ? "mdi:battery-outline" : `mdi:battery-${lvl}`);
-        q("batt").style.color = bv <= 15 ? "var(--error-color,#db4437)" : bv <= 30 ? "var(--warning-color,#f9a825)" : "var(--secondary-text-color)";
+        // Charging: the robot's own status when the backend reports it, else docked
+        // and not yet full.
+        const charging = vs.attributes.charging !== undefined ? vs.attributes.charging === true
+          : vs.state === "docked" && bv < 100;
+        q("batticon").setAttribute("icon", charging
+          ? (lvl <= 0 ? "mdi:battery-charging-outline" : `mdi:battery-charging-${Math.max(10, lvl)}`)
+          : lvl >= 100 ? "mdi:battery" : lvl <= 0 ? "mdi:battery-outline" : `mdi:battery-${lvl}`);
+        q("batt").style.setProperty("--bc", bv < 20 ? "var(--error-color,#db4437)"
+          : bv < 50 ? "var(--warning-color,#f9a825)" : "var(--success-color,#43a047)");
+        q("batt").classList.toggle("charging", charging);
+        q("batt").title = charging ? t.charging : "";
         q("battbar").style.width = Math.max(2, Math.min(100, bv)) + "%";
         q("batt").hidden = false;
       } else q("batt").hidden = true;
