@@ -27,7 +27,8 @@ const T = {
     carpet: "Carpet recognition", manual: "Manual control", schedules: "Schedules", history: "History",
     empty_bin: "Empty bin", live: "Live", offline: "Offline", battery: "battery", last_run: "Last cleaning", floor_plan: "Floor plan", no_map: "No map yet",
     rooms: "Rooms", clean_rooms: "Clean selected",
-    mode_full: "Full", mode_rooms: "Rooms", mode_zones: "Zones", add_zone: "Add zone", clean_zones: "Clean zones", zone_hint: "Add a zone, then drag it and pull its corner", m: "m", program: "Program", efficiency: "Cleaning efficiency", y_mop: "Y-shaped mopping", carpet_boost: "Carpet boost",
+    close: "Close", no_map_yet: "Waiting for the map image…", dirs: { forward: "Forward", backward: "Backward", left: "Left", right: "Right", rcstop: "Stop" },
+    mode_full: "Full", mode_rooms: "Rooms", mode_zones: "Zones", add_zone: "Add zone", clean_zones: "Clean zones", zone_hint: "Drag across the map to draw a zone", m: "m", program: "Program", efficiency: "Cleaning efficiency", y_mop: "Y-shaped mopping", carpet_boost: "Carpet boost",
     volume: "Volume", dnd: "Do not disturb", resume_after_charge: "Resume after charging", auto_empty: "Auto-empty at dock",
     cycles: "Cycles", area: "Area", total_time: "Total time", brush: "Brush", filter: "Filter",
     side_brush: "Side brush", reset: "Reset", cancel: "Cancel", reset_confirm: "Reset {part} to 100%?",
@@ -53,7 +54,8 @@ const T = {
     carpet: "Rozpoznawanie dywanów", manual: "Sterowanie ręczne", schedules: "Harmonogramy", history: "Historia",
     empty_bin: "Opróżnij pojemnik", live: "Na żywo", offline: "Offline", battery: "baterii", last_run: "Ostatnie sprzątanie", floor_plan: "Plan mieszkania", no_map: "Brak mapy",
     rooms: "Pokoje", clean_rooms: "Sprzątaj wybrane",
-    mode_full: "Całość", mode_rooms: "Pokoje", mode_zones: "Strefy", add_zone: "Dodaj strefę", clean_zones: "Sprzątaj strefy", zone_hint: "Dodaj strefę, przeciągnij ją i rozciągnij za róg", m: "m", program: "Program", efficiency: "Dokładność", y_mop: "Mopowanie w kształcie Y", carpet_boost: "Wzmocnienie na dywanie",
+    close: "Zamknij", no_map_yet: "Czekam na obraz mapy…", dirs: { forward: "Do przodu", backward: "Do tyłu", left: "W lewo", right: "W prawo", rcstop: "Stop" },
+    mode_full: "Całość", mode_rooms: "Pokoje", mode_zones: "Strefy", add_zone: "Dodaj strefę", clean_zones: "Sprzątaj strefy", zone_hint: "Przeciągnij po mapie, aby narysować strefę", m: "m", program: "Program", efficiency: "Dokładność", y_mop: "Mopowanie w kształcie Y", carpet_boost: "Wzmocnienie na dywanie",
     volume: "Głośność", dnd: "Nie przeszkadzać", resume_after_charge: "Dokończ po naładowaniu", auto_empty: "Auto-opróżnianie w stacji",
     faults: {
       bumper_fault: "Zablokowany zderzak", obs_fault: "Czujnik przeszkód", wall_fault: "Czujnik ściany", cliff_fault: "Czujnik upadku",
@@ -69,7 +71,8 @@ const T = {
     side_brush: "Szczotka boczna", reset: "Resetuj", cancel: "Anuluj", reset_confirm: "Zresetować {part} do 100%?",
     m2_cleaned: "m² posprzątane", minutes: "min", no_history: "Brak ostatnich sprzątań.",
     not_found: "Nie znaleziono odkurzacza ILIFE.", today: "Dziś", yesterday: "Wczoraj",
-    active: "aktywne", session: "sprzątanie", sessions: "sprzątań", sleeping: "uśpiony",
+    active: "aktywne", session: "sprzątanie", sessions: "sprzątań",
+    session_forms: { one: "sprzątanie", few: "sprzątania", many: "sprzątań", other: "sprzątania" }, sleeping: "uśpiony",
     days: ["Poniedziałek", "Wtorek", "Środa", "Czwartek", "Piątek", "Sobota", "Niedziela"],
     dshort: ["Pn", "Wt", "Śr", "Cz", "Pt", "So", "Nd"],
     whole_home: "Całe mieszkanie", add: "Dodaj", save: "Zapisz", delete: "Usuń", edit_schedule: "Harmonogram",
@@ -87,10 +90,21 @@ const T = {
     start: "Démarrer", pause: "Pause", resume: "Reprendre", stop: "Stop", dock: "Base", locate: "Localiser",
     overview: "Aperçu", settings: "Réglages", suction: "Aspiration", water: "Eau", mode: "Mode",
     carpet: "Reconnaissance des tapis", manual: "Pilotage manuel", schedules: "Programmations", history: "Historique",
+    faults: {
+      bumper_fault: "Pare-chocs bloqué", obs_fault: "Capteur d’obstacles", wall_fault: "Capteur de mur", cliff_fault: "Capteur de vide",
+      land_fault: "Soulevé du sol", nosewheel_fault: "Roue avant", l_brush_fault: "Brosse latérale gauche",
+      r_brush_fault: "Brosse latérale droite", brush_fault: "Brosse latérale", l_wheel_fault: "Roue gauche", r_wheel_fault: "Roue droite",
+      m_brush_fault: "Brosse principale", fan_fault: "Ventilateur", waterpump_fault: "Pompe à eau", air_pump_fault: "Pompe à air",
+      garbage_fault: "Bac à poussière absent", water_box_fault: "Réservoir d’eau absent", filter_fault: "Filtre",
+      battery_fault: "Batterie", gyro_fault: "Gyroscope", radar_fault: "Capteur laser", camera_fault: "Caméra",
+      stuck_fault: "Robot coincé", flow_fault: "Débit d’eau", other_fault: "Autre erreur", low_light_fault: "Trop sombre",
+      water1_fault: "Réservoir d’eau propre", water2_fault: "Réservoir d’eau sale", explore_fault: "Échec de la cartographie",
+    },
     empty_bin: "Vider le bac", live: "En direct", offline: "Hors ligne", battery: "batterie", last_run: "Dernier passage", floor_plan: "Plan", no_map: "Pas encore de carte",
     volume: "Volume", dnd: "Ne pas déranger", resume_after_charge: "Reprendre après la recharge", auto_empty: "Vidage automatique",
     rooms: "Pièces", clean_rooms: "Nettoyer la sélection",
-    mode_full: "Tout", mode_rooms: "Pièces", mode_zones: "Zones", add_zone: "Ajouter une zone", clean_zones: "Nettoyer les zones", zone_hint: "Ajoutez une zone, déplacez-la et tirez son coin", m: "m", program: "Programme", efficiency: "Efficacité de nettoyage", y_mop: "Serpillière en Y", carpet_boost: "Boost tapis",
+    close: "Fermer", no_map_yet: "En attente de l’image de la carte…", dirs: { forward: "Avancer", backward: "Reculer", left: "Gauche", right: "Droite", rcstop: "Arrêt" },
+    mode_full: "Tout", mode_rooms: "Pièces", mode_zones: "Zones", add_zone: "Ajouter une zone", clean_zones: "Nettoyer les zones", zone_hint: "Glissez sur la carte pour tracer une zone", m: "m", program: "Programme", efficiency: "Efficacité de nettoyage", y_mop: "Serpillière en Y", carpet_boost: "Boost tapis",
     cycles: "Cycles", area: "Surface", total_time: "Temps cumulé", brush: "Brosse", filter: "Filtre",
     side_brush: "Brosse latérale", reset: "Réinitialiser", cancel: "Annuler", reset_confirm: "Réinitialiser {part} à 100% ?",
     m2_cleaned: "m² nettoyés", minutes: "minutes", no_history: "Aucun nettoyage récent.",
@@ -115,7 +129,8 @@ const T = {
     carpet: "Распознавание ковров", manual: "Ручное управление", schedules: "Расписания", history: "История",
     empty_bin: "Очистить пылесборник", live: "Сейчас", offline: "Не в сети", battery: "батареи", last_run: "Последняя уборка", floor_plan: "План", no_map: "Карты пока нет",
     rooms: "Комнаты", clean_rooms: "Убрать выбранные",
-    mode_full: "Полная", mode_rooms: "Комнаты", mode_zones: "Зоны", add_zone: "Добавить зону", clean_zones: "Убрать зоны", zone_hint: "Добавьте зону, перетащите её и потяните за угол", m: "м", program: "Программа", efficiency: "Тщательность уборки", y_mop: "Y-образная влажная уборка", carpet_boost: "Усиление на коврах",
+    close: "Закрыть", no_map_yet: "Жду изображение карты…", dirs: { forward: "Вперёд", backward: "Назад", left: "Влево", right: "Вправо", rcstop: "Стоп" },
+    mode_full: "Полная", mode_rooms: "Комнаты", mode_zones: "Зоны", add_zone: "Добавить зону", clean_zones: "Убрать зоны", zone_hint: "Проведите пальцем по карте, чтобы нарисовать зону", m: "м", program: "Программа", efficiency: "Тщательность уборки", y_mop: "Y-образная влажная уборка", carpet_boost: "Усиление на коврах",
     volume: "Громкость", dnd: "Не беспокоить", resume_after_charge: "Продолжить после зарядки", auto_empty: "Автоочистка на базе",
     faults: {
       bumper_fault: "Застрял бампер", obs_fault: "Датчик препятствий", wall_fault: "Датчик стены", cliff_fault: "Датчик перепада",
@@ -228,7 +243,9 @@ function drawMapCells(canvas, cells, maxW, maxH, path) {
 // an affine map both ways, or null when the camera has none. Cells are the robot's
 // frame (y up) that ilife.clean_zone takes; pixels are the camera image's own.
 function zoneCalibration(attrs) {
-  const pts = attrs && attrs.calibration_points;
+  try { return zoneCalibrationOf(attrs && attrs.calibration_points); } catch (err) { return null; }
+}
+function zoneCalibrationOf(pts) {
   if (!Array.isArray(pts) || pts.length < 3) return null;
   const [p0, p1, p2] = pts;
   const a = p1.vacuum.x - p0.vacuum.x, b = p2.vacuum.x - p0.vacuum.x;
@@ -256,6 +273,8 @@ function zoneCalibration(attrs) {
 
 const MAX_ZONES = 5;
 
+const esc = (x) => String(x).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
 class IlifeVacuumCard extends HTMLElement {
   setConfig(config) {
     if (!config) throw new Error("Invalid configuration");
@@ -269,17 +288,24 @@ class IlifeVacuumCard extends HTMLElement {
     this._config = config;
     this._built = false;
     this._padOpen = false;
+    this._drag = null;
     this.innerHTML = "";
   }
   set hass(hass) {
+    const prev = this._hass;
     this._hass = hass;
+    // Home Assistant hands a new hass on every state change anywhere: skip the
+    // render when none of this vacuum's entities (nor the language) changed.
+    if (this._built && prev && this._watch && prev.language === hass.language && prev.locale === hass.locale
+        && this._watch.every((id) => prev.states[id] === hass.states[id])) return;
     this._lang = cardLang(hass);
     // The room list is part of the layout: rebuild when the app's rooms change.
+    // So is the Zones mode, once the map camera has shown a calibration (it is not
+    // taken away again when the camera blinks unavailable).
     const vac = this._ent?.vacuum || this._config.entity;
-    // So is the mode switch: zones need the map camera's calibration.
     const camId = this._ent?.map;
-    const roomSig = JSON.stringify(hass.states[vac]?.attributes.rooms || {})
-      + (camId && zoneCalibration(hass.states[camId]?.attributes) ? "|zones" : "");
+    if (camId && zoneCalibration(hass.states[camId]?.attributes)) this._calSeen = true;
+    const roomSig = JSON.stringify(hass.states[vac]?.attributes.rooms || {}) + (this._calSeen ? "|zones" : "");
     if (this._built && roomSig !== this._roomSig) this._built = false;
     this._roomSig = roomSig;
     if (!this._built) this._build();
@@ -383,7 +409,7 @@ class IlifeVacuumCard extends HTMLElement {
     return `<div class="vc-field"><div class="vc-mlabel">${label}</div>
       <div class="vc-seg" data-seg="${key}" style="--n:${opts.length}">
         <div class="vc-thumb"></div>
-        ${opts.map((o) => `<button class="vc-pill" data-val="${o}">${fmt(o)}</button>`).join("")}
+        ${opts.map((o) => `<button class="vc-pill" data-val="${esc(o)}">${esc(fmt(o))}</button>`).join("")}
       </div></div>`;
   }
 
@@ -395,7 +421,7 @@ class IlifeVacuumCard extends HTMLElement {
     const e = this._ent;
     if (!e.vacuum) { this.innerHTML = `<ha-card><div style="padding:18px">${t.not_found}</div></ha-card>`; this._built = true; return; }
     const vs = hass.states[e.vacuum] || { attributes: {} };
-    const dir = (id, icon) => e.buttons[id] ? `<button class="vc-dir" data-act="${id}"><ha-icon icon="${icon}"></ha-icon></button>` : `<span></span>`;
+    const dir = (id, icon) => e.buttons[id] ? `<button class="vc-dir" data-act="${id}" aria-label="${t.dirs?.[id] || id}"><ha-icon icon="${icon}"></ha-icon></button>` : `<span></span>`;
 
     let sched = "";
     for (let n = 1; n <= 7; n++) {
@@ -407,7 +433,6 @@ class IlifeVacuumCard extends HTMLElement {
       </div>`;
     }
     const strip = t.days.map((d, i) => `<span class="vc-daypill" data-day="${i + 1}">${(t.dmini || [])[i] || d[0]}</span>`).join("");
-    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
     // ILIFE Clean laser models: {room id: name as in the app} (vacuum attribute).
     const rooms = vs.attributes.rooms || {};
     const roomIds = Object.keys(rooms).sort((a, b) => a - b);
@@ -419,10 +444,18 @@ class IlifeVacuumCard extends HTMLElement {
     const showMap = has("map") && e.map, showRooms = has("rooms") && roomIds.length;
     // Full / Rooms / Zones, as in the app: with the start button, the mode decides
     // what it starts. Without it the rooms block keeps its own button.
-    const canZone = showMap && has("controls") && !!zoneCalibration(hass.states[e.map]?.attributes);
+    if (e.map && zoneCalibration(hass.states[e.map]?.attributes)) this._calSeen = true;
+    const canZone = showMap && has("controls") && !!this._calSeen;
     const modes = has("controls") ? ["full", ...(showRooms ? ["rooms"] : []), ...(canZone ? ["zones"] : [])] : [];
     this._modes = modes;
-    if (!modes.includes(this._mode)) this._mode = "full";
+    this._drag = null;
+    // The mode the user picked survives a mode being unavailable for a while.
+    this._mode = modes.includes(this._wantMode) ? this._wantMode : "full";
+    // The entities whose changes re-render the card (see set hass).
+    const ids = [];
+    const walk = (v) => { if (typeof v === "string" && v.includes(".")) ids.push(v); else if (v && typeof v === "object") Object.values(v).forEach(walk); };
+    walk(e);
+    this._watch = [...new Set(ids)];
 
     this.innerHTML = `
       <ha-card class="ilife-card">
@@ -458,7 +491,8 @@ class IlifeVacuumCard extends HTMLElement {
             grid-template-columns:repeat(4,1fr);grid-template-rows:1fr 1fr;gap:16px;
             flex:1;min-height:0;}
           .vc.full .vc-block{margin-top:0;min-height:0;overflow:auto;}
-          .vc.full .blk-map{grid-column:1 / 3;grid-row:1 / 3;overflow:hidden;display:flex;flex-direction:column;}
+          .vc.full .blk-map{grid-column:1 / 3;grid-row:1 / 3;overflow:auto;display:flex;flex-direction:column;}
+          .vc.full .blk-map .vc-map{min-height:260px;}
           .vc.full .blk-map .vc-map{aspect-ratio:auto;flex:1;min-height:0;}
           .vc.full .blk-stats{grid-column:3;grid-row:1;}
           .vc.full .blk-settings{grid-column:3;grid-row:2;}
@@ -615,7 +649,8 @@ class IlifeVacuumCard extends HTMLElement {
           .vc-sday{font-size:14px;}
           .vc-stime{padding:6px 8px;border-radius:10px;background:var(--card-background-color);color:var(--primary-text-color);border:1px solid var(--divider-color);font-size:14px;font-weight:600;}
           .vc-switch{position:relative;display:inline-block;width:44px;height:24px;flex:none;}
-          .vc-switch input{display:none;}
+          .vc-switch input{position:absolute;inset:0;width:100%;height:100%;margin:0;opacity:0;cursor:pointer;z-index:1;}
+          .vc-switch input:focus-visible + .vc-slider{outline:2px solid var(--primary-color);outline-offset:2px;}
           .vc-slider{position:absolute;inset:0;background:var(--divider-color);border-radius:24px;transition:.2s;cursor:pointer;}
           .vc-slider:before{content:"";position:absolute;height:18px;width:18px;left:3px;top:3px;background:#fff;border-radius:50%;transition:.2s;}
           .vc-switch input:checked + .vc-slider{background:var(--primary-color);}
@@ -642,7 +677,11 @@ class IlifeVacuumCard extends HTMLElement {
           .vc-modes{margin-top:14px;}
           .vc.zoning .vc-map{aspect-ratio:1/1;}
           .vc.zoning .vc-mapimg{max-width:94%;max-height:94%;}
-          .vc-zones{position:absolute;z-index:2;pointer-events:none;}
+          .vc-zones{position:absolute;z-index:4;touch-action:none;cursor:crosshair;}
+          .vc.zoning .vc-scrim,.vc.zoning .vc-badge{pointer-events:none;}
+          .vc-zbtn::before{content:"";position:absolute;inset:-9px;border-radius:50%;}
+          .vc-pass{min-height:32px;min-width:40px;}
+          .vc-sadd{min-height:34px;}
           .vc-zone{position:absolute;pointer-events:auto;touch-action:none;cursor:move;border:2px dashed #fff;
             background:color-mix(in srgb,var(--primary-color) 32%,transparent);box-shadow:0 0 0 1px rgba(0,0,0,.25);}
           .vc-zbtn{position:absolute;width:26px;height:26px;border-radius:50%;border:none;padding:0;background:#fff;color:var(--primary-color);
@@ -705,7 +744,7 @@ class IlifeVacuumCard extends HTMLElement {
           ${showMap || has("controls") || showRooms ? `<div class="vc-block blk-map">
           ${showMap ? `<div class="vc-map">
             <div class="glow"></div><div class="grid"></div>
-            <img class="vc-mapimg" data-el="map" alt="map">
+            <img class="vc-mapimg" data-el="map" alt="${t.blocks.map}">
             <canvas class="vc-mapimg" data-el="heromap" hidden></canvas>
             ${canZone ? `<div class="vc-zones" data-el="zones" hidden></div>` : ""}
             <div class="vc-nomap" data-el="nomap" hidden><ha-icon icon="mdi:map-search-outline"></ha-icon><span>${t.no_map}</span></div>
@@ -723,7 +762,7 @@ class IlifeVacuumCard extends HTMLElement {
           ${showRooms ? `<div class="vc-rooms" data-el="rooms">
             <div class="vc-sec"><span class="vc-mlabel">${t.rooms}</span>
               <div class="vc-passes">${[1, 2].map((n) => `<button class="vc-pass" data-pass="${n}">${n}×</button>`).join("")}</div></div>
-            <div class="vc-chips">${roomIds.map((id) => `<button class="vc-chip" data-room="${id}">${esc(rooms[id])}</button>`).join("")}</div>
+            <div class="vc-chips">${roomIds.map((id) => `<button class="vc-chip" data-room="${esc(id)}">${esc(rooms[id])}</button>`).join("")}</div>
             <button class="vc-rgo" data-el="roomgo" disabled${has("controls") ? " hidden" : ""}><ha-icon icon="mdi:broom"></ha-icon><span data-el="roomgotxt">${t.clean_rooms}</span></button>
           </div>` : ""}
           ${has("controls") ? `<button class="vc-cta" data-el="cta"><ha-icon data-el="ctaicon" icon="mdi:play"></ha-icon><span data-el="ctatxt">${t.start}</span></button>
@@ -750,7 +789,7 @@ class IlifeVacuumCard extends HTMLElement {
             <input type="range" class="vc-range" data-el="volume" min="${vol.attributes.min ?? 0}" max="${vol.attributes.max ?? 100}" step="${vol.attributes.step ?? 10}">
             <span class="vc-volval vc-num" data-el="volval"></span></div>` : ""}
           ${Object.keys(e.buttons).length ? `
-          <div class="vc-fold" data-el="fold"><span class="vc-mlabel">${t.manual}</span><ha-icon class="chev" icon="mdi:chevron-down"></ha-icon></div>
+          <div class="vc-fold" data-el="fold" role="button" tabindex="0"><span class="vc-mlabel">${t.manual}</span><ha-icon class="chev" icon="mdi:chevron-down"></ha-icon></div>
           <div data-el="padbox" hidden>
             <div class="vc-pad">
               <span></span>${dir("forward", "mdi:arrow-up-bold")}<span></span>
@@ -773,7 +812,7 @@ class IlifeVacuumCard extends HTMLElement {
           <div class="vc-modal" data-el="modal" hidden>
             <div class="vc-modal-bg" data-el="modalbg"></div>
             <div class="vc-modal-panel">
-              <div class="vc-modal-head"><span class="t" data-el="mcap"></span><button data-el="mclose">✕</button></div>
+              <div class="vc-modal-head"><span class="t" data-el="mcap"></span><button data-el="mclose" aria-label="${t.close}">✕</button></div>
               <div class="vc-modal-map"><canvas data-el="mcanvas"></canvas></div>
               <div class="vc-modal-stats vc-num" data-el="mstats"></div>
             </div>
@@ -791,7 +830,7 @@ class IlifeVacuumCard extends HTMLElement {
           ${e.tsched && has("schedules") ? `<div class="vc-modal" data-el="sedit" hidden>
             <div class="vc-modal-bg" data-el="seditbg"></div>
             <div class="vc-modal-panel vc-sedit">
-              <div class="vc-modal-head"><span class="t" data-el="sedittitle"></span><button data-el="seditclose">✕</button></div>
+              <div class="vc-modal-head"><span class="t" data-el="sedittitle"></span><button data-el="seditclose" aria-label="${t.close}">✕</button></div>
               <div class="vc-srow"><span class="vc-mlabel">${t.time}</span><input type="time" class="vc-stime vc-setime" data-el="setime"></div>
               <div class="vc-chips vc-sedays">${t.dshort.map((d, i) => `<button class="vc-chip" data-day="${i}">${d}</button>`).join("")}</div>
               <div class="vc-seg" data-el="setype" style="--n:${roomIds.length ? 2 : 1}"><div class="vc-thumb"></div>
@@ -909,7 +948,7 @@ class IlifeVacuumCard extends HTMLElement {
     this.querySelectorAll(".vc-seg").forEach((seg) => seg.addEventListener("click", (ev) => {
       const pill = ev.target.closest(".vc-pill"); if (!pill) return;
       const key = seg.dataset.seg, val = pill.dataset.val;
-      if (key === "cmode") { this._mode = val; this._saveZones(); this._update(); }
+      if (key === "cmode") { this._mode = this._wantMode = val; this._saveZones(); this._update(); }
       else if (key === "fan") call("vacuum", "set_fan_speed", { entity_id: e.vacuum, fan_speed: val });
       else if (key === "water") call("select", "select_option", { entity_id: e.water, option: val });
       else if (key === "mode") call("select", "select_option", { entity_id: e.mode, option: val });
@@ -935,6 +974,14 @@ class IlifeVacuumCard extends HTMLElement {
     this.querySelectorAll(".vc-sen").forEach((c) => c.addEventListener("change", () => call("switch", c.checked ? "turn_on" : "turn_off", { entity_id: c.dataset.ent })));
     this.querySelectorAll(".vc-stime[data-ent]").forEach((t) => t.addEventListener("change", () => call("time", "set_value", { entity_id: t.dataset.ent, time: t.value + ":00" })));
     q("fold")?.addEventListener("click", () => { this._padOpen = !this._padOpen; q("padbox").hidden = !this._padOpen; q("root").classList.toggle("padopen", this._padOpen); });
+    q("fold")?.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); q("fold").click(); } });
+    // Esc closes whichever dialog is open.
+    q("root")?.addEventListener("keydown", (ev) => {
+      if (ev.key !== "Escape") return;
+      if (q("modal") && !q("modal").hidden) this._showHistView(null);
+      if (q("sedit") && !q("sedit").hidden) { q("sedit").hidden = true; this._sedit = null; }
+      if (q("confirm") && !q("confirm").hidden) q("confirmno").click();
+    });
     q("mclose")?.addEventListener("click", () => this._showHistView(null));
     q("modalbg")?.addEventListener("click", () => this._showHistView(null));
     q("kpis")?.addEventListener("click", (ev) => {
@@ -1022,13 +1069,12 @@ class IlifeVacuumCard extends HTMLElement {
     const sig = JSON.stringify(items) + this._lang;
     if (sig !== this._tschedSig) {
       this._tschedSig = sig;
-      const esc = (x) => String(x).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
       list.innerHTML = items.length ? items.map((s) => {
         const days = s.days.length === 7 ? t.every_day : s.days.map((d) => t.dshort[d]).join(", ");
         const what = s.type === "rooms" ? (s.room_names || []).join(", ") : t.whole_home;
-        return `<div class="vc-lrow vc-trow${s.enabled ? "" : " off"}" data-slot="${s.slot}">
+        return `<div class="vc-lrow vc-trow${s.enabled ? "" : " off"}" data-slot="${esc(s.slot)}" role="button" tabindex="0">
           <span class="vc-tmeta"><span class="vc-ttime vc-num">${esc(s.time)}</span><span class="vc-tdays">${esc(days)}</span>
-            <span class="vc-tsum">${esc(what)} · ${s.cycles}×</span></span><span></span>
+            <span class="vc-tsum">${esc(what)} · ${esc(s.cycles)}×</span></span><span></span>
           <label class="vc-switch"><input type="checkbox" class="vc-ten" data-slot="${s.slot}"${s.enabled ? " checked" : ""}><span class="vc-slider"></span></label></div>`;
       }).join("") : `<div class="vc-empty">—</div>`;
       list.querySelectorAll(".vc-trow").forEach((row) => row.addEventListener("click", (ev) => {
@@ -1057,21 +1103,34 @@ class IlifeVacuumCard extends HTMLElement {
   _zoneKey() { return "ilife-vacuum-card:zones:" + this._ent.vacuum; }
   _loadZones() {
     if (this._zonesFor === this._ent.vacuum) return;
+    const switched = this._zonesFor !== undefined;
     this._zonesFor = this._ent.vacuum;
-    this._zones = []; this._zonePasses = 1;
+    this._zones = []; this._zonePasses = 1; this._zonesMap = null;
+    if (switched) { this._roomSel = new Set(); this._wantMode = null; }
     try {
       const saved = JSON.parse(localStorage.getItem(this._zoneKey()) || "null");
       if (saved) {
         this._zones = (saved.zones || []).filter((z) => Array.isArray(z) && z.length === 4 && z.every(Number.isFinite)).slice(0, MAX_ZONES);
         this._zonePasses = saved.passes === 2 ? 2 : 1;
+        this._zonesMap = saved.map_id ?? null;
+        this._wantMode = saved.mode || null;
         if (this._modes.includes(saved.mode)) this._mode = saved.mode;
       }
     } catch (err) { /* no storage: start empty */ }
   }
   _saveZones() {
     try {
-      localStorage.setItem(this._zoneKey(), JSON.stringify({ zones: this._zones, passes: this._zonePasses, mode: this._mode }));
+      localStorage.setItem(this._zoneKey(), JSON.stringify({ zones: this._zones, passes: this._zonePasses,
+        mode: this._wantMode || this._mode, map_id: this._zonesMap }));
     } catch (err) { /* no storage */ }
+  }
+  // Zones are cells of one map: after the robot re-maps (a new map_id) they point
+  // elsewhere, so they are dropped rather than sent.
+  _checkZoneMap() {
+    const id = this._hass.states[this._ent.map]?.attributes.map_id;
+    if (id == null) return;
+    if (this._zonesMap != null && this._zonesMap !== id && this._zones.length) this._zones = [];
+    if (this._zonesMap !== id) { this._zonesMap = id; this._saveZones(); }
   }
 
   _wireZones() {
@@ -1083,44 +1142,105 @@ class IlifeVacuumCard extends HTMLElement {
     }));
     q("zadd")?.addEventListener("click", () => this._addZone());
     const img = q("map");
-    if (img) img.addEventListener("load", () => this._layoutZones());
+    // The calibration that belongs to the image on screen: the attributes can run
+    // ahead of the image, which is only fetched every 20 s.
+    if (img) img.addEventListener("load", () => {
+      this._imgCal = zoneCalibration(this._hass.states[this._ent.map]?.attributes);
+      this._syncModes();
+    });
     if (!box) return;
     box.addEventListener("pointerdown", (ev) => {
-      const zEl = ev.target.closest(".vc-zone"); if (!zEl) return;
+      if (this._drag || (ev.pointerType === "mouse" && ev.button !== 0)) return;   // keep the first finger
+      if (ev.target.closest(".vc-zdel")) return;    // deleted on click, below
+      const zEl = ev.target.closest(".vc-zone");
+      if (!zEl) {
+        // Draw a new zone by dragging across the map, as in the app.
+        if (this._zones.length >= MAX_ZONES || !this._zoneGeo()) return;
+        ev.preventDefault();
+        const b = box.getBoundingClientRect();
+        this._drag = { kind: "draw", i: null, el: null, x: ev.clientX, y: ev.clientY,
+          ax: ev.clientX - b.left, ay: ev.clientY - b.top, id: ev.pointerId };
+        box.setPointerCapture(ev.pointerId);
+        return;
+      }
       const i = +zEl.dataset.i;
       ev.preventDefault();
-      if (ev.target.closest(".vc-zdel")) {
-        this._zones.splice(i, 1); this._saveZones(); this._update(); return;
-      }
       const r = this._zoneRect(this._zones[i]); if (!r) return;
       this._drag = { i, el: zEl, kind: ev.target.closest(".vc-zrs") ? "size" : "move",
-        x: ev.clientX, y: ev.clientY, r };
+        x: ev.clientX, y: ev.clientY, r, id: ev.pointerId, orig: this._zones[i].slice() };
       zEl.setPointerCapture(ev.pointerId);
     });
+    box.addEventListener("click", (ev) => {
+      const del = ev.target.closest(".vc-zdel"); if (!del) return;
+      this._zones.splice(+del.closest(".vc-zone").dataset.i, 1);
+      this._saveZones(); this._update();
+    });
     box.addEventListener("pointermove", (ev) => {
-      const d = this._drag; if (!d) return;
+      const d = this._drag; if (!d || ev.pointerId !== d.id) return;
       const W = box.clientWidth, H = box.clientHeight, dx = ev.clientX - d.x, dy = ev.clientY - d.y;
       const min = this._zoneMinPx();
+      if (d.kind === "draw") {
+        const cx = Math.max(0, Math.min(W, d.ax + dx)), cy = Math.max(0, Math.min(H, d.ay + dy));
+        const r = { l: Math.min(d.ax, cx), t: Math.min(d.ay, cy), w: Math.abs(cx - d.ax), h: Math.abs(cy - d.ay) };
+        if (d.i === null) {
+          if (Math.max(r.w, r.h) < 8) return;         // a tap, not a drag yet
+          const z = this._rectZone(r); if (!z) return;
+          d.i = this._zones.length;
+          this._zones.push(z);
+          this._renderZones();
+          d.el = box.querySelector(`.vc-zone[data-i="${d.i}"]`);
+        }
+        const z = this._rectZone(r); if (!z) return;
+        this._zones[d.i] = z;
+        this._placeZone(d.el, z);
+        return;
+      }
       let { l, t, w, h } = d.r;
       if (d.kind === "move") {
         l = Math.max(0, Math.min(W - w, l + dx)); t = Math.max(0, Math.min(H - h, t + dy));
       } else {
-        w = Math.max(min, Math.min(W - l, w + dx)); h = Math.max(min, Math.min(H - t, h + dy));
+        w = Math.min(W - l, Math.max(min, w + dx)); h = Math.min(H - t, Math.max(min, h + dy));
       }
-      this._zones[d.i] = this._rectZone({ l, t, w, h });
-      this._placeZone(d.el, this._zones[d.i]);
+      const z = this._rectZone({ l, t, w, h }); if (!z) return;
+      this._zones[d.i] = z;
+      this._placeZone(d.el, z);
     });
-    const end = () => { if (this._drag) { this._drag = null; this._saveZones(); this._update(); } };
+    const end = (ev) => {
+      const d = this._drag; if (!d || ev.pointerId !== d.id) return;
+      this._drag = null;
+      if (ev.type === "pointercancel") {
+        // The system took the gesture over (a back swipe...): undo it.
+        if (d.kind === "draw") { if (d.i !== null) this._zones.splice(d.i, 1); }
+        else this._zones[d.i] = d.orig;
+        this._update(); return;
+      }
+      // A drawn zone smaller than the minimum grows to it from its first corner.
+      if (d.kind === "draw" && d.i !== null) {
+        const r = this._zoneRect(this._zones[d.i]), min = this._zoneMinPx();
+        if (r && (r.w < min || r.h < min)) {
+          r.w = Math.max(r.w, min); r.h = Math.max(r.h, min);
+          r.l = Math.min(r.l, box.clientWidth - r.w); r.t = Math.min(r.t, box.clientHeight - r.h);
+          this._zones[d.i] = this._rectZone(r);
+        }
+      }
+      this._saveZones(); this._update();
+    };
     box.addEventListener("pointerup", end);
     box.addEventListener("pointercancel", end);
+    box.addEventListener("lostpointercapture", end);
   }
 
   // The overlay's geometry: image pixels -> overlay pixels is a plain scale.
+  // `object-fit: contain` can letterbox the picture inside the element (the
+  // full-page layout sizes it by height): the overlay covers the picture only.
   _zoneGeo() {
     const img = this.querySelector('[data-el="map"]');
-    const cal = zoneCalibration(this._hass.states[this._ent.map]?.attributes);
+    const cal = this._imgCal;
     if (!img || img.hidden || !img.naturalWidth || !img.offsetWidth || !cal) return null;
-    return { img, cal, k: img.offsetWidth / img.naturalWidth };
+    const k = Math.min(img.offsetWidth / img.naturalWidth, img.offsetHeight / img.naturalHeight);
+    const w = img.naturalWidth * k, h = img.naturalHeight * k;
+    return { img, cal, k, left: img.offsetLeft + (img.offsetWidth - w) / 2,
+      top: img.offsetTop + (img.offsetHeight - h) / 2, w, h };
   }
   _zoneMinPx() {
     const g = this._zoneGeo(); if (!g) return 20;
@@ -1135,7 +1255,7 @@ class IlifeVacuumCard extends HTMLElement {
     return { l, t, w: Math.abs(b[0] - a[0]) * g.k, h: Math.abs(b[1] - a[1]) * g.k };
   }
   _rectZone(r) {
-    const g = this._zoneGeo();
+    const g = this._zoneGeo(); if (!g) return null;
     const a = g.cal.toCell(r.l / g.k, r.t / g.k), b = g.cal.toCell((r.l + r.w) / g.k, (r.t + r.h) / g.k);
     return [Math.min(a[0], b[0]), Math.min(a[1], b[1]), Math.max(a[0], b[0]), Math.max(a[1], b[1])];
   }
@@ -1164,8 +1284,15 @@ class IlifeVacuumCard extends HTMLElement {
     const g = this._mode === "zones" ? this._zoneGeo() : null;
     box.hidden = !g;
     if (!g) return;
-    Object.assign(box.style, { left: g.img.offsetLeft + "px", top: g.img.offsetTop + "px",
-      width: g.img.offsetWidth + "px", height: g.img.offsetHeight + "px" });
+    Object.assign(box.style, { left: g.left + "px", top: g.top + "px", width: g.w + "px", height: g.h + "px" });
+    // New elements only when the count changed: a hass update must not replace the
+    // node under a finger.
+    if (box.children.length !== this._zones.length) this._renderZones();
+    else box.querySelectorAll(".vc-zone").forEach((el) => this._placeZone(el, this._zones[+el.dataset.i]));
+  }
+
+  _renderZones() {
+    const box = this.querySelector('[data-el="zones"]'); if (!box) return;
     box.innerHTML = this._zones.map((z, i) => `<div class="vc-zone" data-i="${i}">
       <button class="vc-zbtn vc-zdel" aria-label="${this._t.delete}"><ha-icon icon="mdi:close"></ha-icon></button>
       <span class="vc-zbtn vc-zrs"><ha-icon icon="mdi:arrow-top-left-bottom-right"></ha-icon></span>
@@ -1181,9 +1308,12 @@ class IlifeVacuumCard extends HTMLElement {
     q("root")?.classList.toggle("zoning", mode === "zones");
     if (q("rooms") && hasControls) q("rooms").hidden = mode !== "rooms";
     if (q("zbar")) {
+      this._checkZoneMap();
+      const geo = this._zoneGeo();
       q("zbar").hidden = mode !== "zones";
-      q("zadd").disabled = this._zones.length >= MAX_ZONES;
-      q("zhint").hidden = this._zones.length > 0;
+      q("zadd").disabled = this._zones.length >= MAX_ZONES || !geo;
+      q("zhint").textContent = geo ? t.zone_hint : t.no_map_yet;
+      q("zhint").hidden = !!geo && this._zones.length > 0;
       this.querySelectorAll(".vc-zbar .vc-pass").forEach((b) => b.classList.toggle("on", +b.dataset.zpass === this._zonePasses));
     }
     this._layoutZones();
@@ -1295,7 +1425,7 @@ class IlifeVacuumCard extends HTMLElement {
   }
 
   _kpi(icon, val, label, gauge, resetKey) {
-    return `<div class="vc-kpi">${resetKey ? `<button class="vc-kpi-reset" data-reset="${resetKey}" title="${this._t.reset}"><ha-icon icon="mdi:restore"></ha-icon></button>` : ""}<div class="ic"><ha-icon icon="${icon}"></ha-icon></div>
+    return `<div class="vc-kpi">${resetKey ? `<button class="vc-kpi-reset" data-reset="${resetKey}" title="${this._t.reset}" aria-label="${this._t.reset}"><ha-icon icon="mdi:restore"></ha-icon></button>` : ""}<div class="ic"><ha-icon icon="${icon}"></ha-icon></div>
       <div class="v vc-num">${val}</div><div class="l">${label}</div>
       ${gauge != null ? `<div class="vc-gauge"><i style="width:${Math.max(0, Math.min(100, gauge))}%;${gauge <= 15 ? "background:var(--warning-color,#f9a825)" : ""}"></i></div>` : ""}</div>`;
   }
@@ -1411,11 +1541,11 @@ class IlifeVacuumCard extends HTMLElement {
     const img = q("map"), hero = q("heromap");
     if (img && hero) {
       let usedHero = false;
-      if (vs.state !== "cleaning") {
+      if (vs.state !== "cleaning" && this._mode !== "zones") {
         const last = cleans.find((c) => c.map);
         const dec = last && decodeCleanMap(last.map);
         if (dec && dec.cells.length) {
-          this._heroCells = dec.cells;
+          if (this._heroSrc !== last.map) { this._heroSrc = last.map; this._heroCells = dec.cells; }
           hero.hidden = false; img.hidden = true; usedHero = true;
           this._fitHero();
           if (q("badgetxt") && online) q("badgetxt").textContent = t.last_run;
@@ -1427,6 +1557,12 @@ class IlifeVacuumCard extends HTMLElement {
         || (this._imgOk !== true && (!cam || cam.state === "unavailable")));
       if (!usedHero) { this._heroCells = null; hero.hidden = true; img.hidden = noMap; }
       if (q("nomap")) q("nomap").hidden = !noMap;
+    }
+    if (e.map) {
+      const ma = hass.states[e.map]?.attributes || {};
+      const calSig = JSON.stringify([ma.calibration_points, ma.map_id]);
+      if (this._calSig !== undefined && calSig !== this._calSig && ma.calibration_points) this._refreshMap();
+      this._calSig = calSig;
     }
     if (this._zones) this._syncModes();
     const totArea = sensorArea != null
@@ -1454,14 +1590,16 @@ class IlifeVacuumCard extends HTMLElement {
       q("kpis").innerHTML = k;
     }
     if (q("histcount")) q("histcount").textContent = cycles ? `${cycles} ${this._plural(cycles)}` : "";
-    if (q("hist")) {
+    const histSig = cleans.slice(0, 12).map((c) => `${c.record_id ?? c.start}:${c.area}:${c.duration}`).join() + this._lang;
+    if (q("hist") && histSig !== this._histSig) {
+      this._histSig = histSig;
       const maxA = Math.max(1, ...cleans.map((c) => Number(c.area) || 0));
       q("hist").innerHTML = cleans.length
-        ? cleans.slice(0, 12).map((c, i) => `<div class="vc-hrow" data-idx="${i}">
+        ? cleans.slice(0, 12).map((c, i) => `<div class="vc-hrow" data-idx="${i}" role="button" tabindex="0">
             <span class="vc-hthumb"></span>
             <span class="vc-hmeta"><div class="vc-hwhen">${this._fmtWhen(c.start)}</div>
               <div class="vc-hsub"><span style="display:inline-block;width:${Math.round((Number(c.area) || 0) / maxA * 100)}%;max-width:60px;height:3px;border-radius:2px;background:color-mix(in srgb,var(--primary-color) 60%,transparent);vertical-align:middle"></span></div></span>
-            <span class="vc-harea vc-num">${c.area ?? "?"} m² · ${c.duration ?? "?"} ${t.min.trim()}</span>
+            <span class="vc-harea vc-num">${esc(c.area ?? "?")} m² · ${esc(c.duration ?? "?")} ${t.min.trim()}</span>
             <ha-icon class="vc-hchev" icon="mdi:chevron-right"></ha-icon></div>`).join("")
         : `<div class="vc-empty">${t.no_history}</div>`;
       q("hist").querySelectorAll(".vc-hrow").forEach((row) => {
@@ -1473,6 +1611,7 @@ class IlifeVacuumCard extends HTMLElement {
         if (dec && dec.cells.length) { const cv = document.createElement("canvas"); th.innerHTML = ""; th.appendChild(cv); drawMapCells(cv, dec.cells, 34, 34); }
         else th.innerHTML = `<ha-icon icon="mdi:broom" style="--mdc-icon-size:16px;color:var(--secondary-text-color)"></ha-icon>`;
         row.addEventListener("click", () => { if (c && (c.map || c.thumb)) this._showHistView(c); });
+        row.addEventListener("keydown", (ev) => { if (ev.key === "Enter" || ev.key === " ") { ev.preventDefault(); row.click(); } });
       });
     }
 
@@ -1487,13 +1626,19 @@ class IlifeVacuumCard extends HTMLElement {
     this.querySelectorAll(".vc-stime[data-ent]").forEach((t2) => { const s = hass.states[t2.dataset.ent]; if (s && s.state && s.state.length >= 5 && document.activeElement !== t2) t2.value = s.state.slice(0, 5); });
   }
 
-  connectedCallback() { if (this._built && !this._mapTimer) this._startMapTimer(); }
+  connectedCallback() {
+    if (!this._built) return;
+    if (!this._mapTimer) this._startMapTimer();
+    this._observeWidth();
+  }
   disconnectedCallback() {
     if (this._mapTimer) clearInterval(this._mapTimer);
     this._mapTimer = null;
     if (this._ro) this._ro.disconnect();
     if (this._roMap) this._roMap.disconnect();
     if (this._fitRaf && typeof cancelAnimationFrame === "function") cancelAnimationFrame(this._fitRaf);
+    this._fitRaf = 0;
+    this._drag = null;
   }
 }
 if (!customElements.get("ilife-vacuum-card")) customElements.define("ilife-vacuum-card", IlifeVacuumCard);
@@ -1539,4 +1684,4 @@ if (!customElements.get("ilife-vacuum-card-editor")) customElements.define("ilif
 window.customCards = window.customCards || [];
 window.customCards.push({ type: "ilife-vacuum-card", name: "ILIFE Vacuum Card",
   description: "All-in-one card for the ILIFE vacuum (map, controls, schedules, clickable history); `show` picks the blocks.", preview: true });
-console.info("%c ILIFE-VACUUM-CARD %c 0.8.0 loaded ", "color:#fff;background:#7cadff;border-radius:3px 0 0 3px;padding:2px", "background:#333;color:#fff;border-radius:0 3px 3px 0;padding:2px");
+console.info(`%c ILIFE-VACUUM-CARD %c ${new URL(import.meta.url).searchParams.get("v") || "dev"} loaded `, "color:#fff;background:#7cadff;border-radius:3px 0 0 3px;padding:2px", "background:#333;color:#fff;border-radius:0 3px 3px 0;padding:2px");
