@@ -13,6 +13,7 @@ from .const import BACKEND_ILIFE_CLEAN, DOMAIN, TUYA_CONSUMABLES, TUYA_DP_RESET_
 from .entity import ILifeEntity
 from .tuya_api import TuyaError
 from .tuya_entity import TuyaEntity, tuya_command_error
+from .voice import supports_voice, voice_manager
 
 # (translation_key, icon, CleanDirection)
 DIRECTION_BUTTONS = [
@@ -43,6 +44,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
             if TUYA_DP_RESET_MAP in functions:
                 entities.append(TuyaResetButton(
                     coordinator, TUYA_DP_RESET_MAP, "reset_map", "mdi:map-marker-remove"))
+            if supports_voice(coordinator):
+                voice = voice_manager(hass, coordinator)
+                await voice.async_prepare()
+                entities.append(TuyaVoiceShuffleButton(coordinator, voice))
     else:
         for coordinator in data["coordinators"].values():
             entities += [ILifeDirectionButton(coordinator, *b) for b in DIRECTION_BUTTONS]
@@ -121,3 +126,18 @@ class ILifeResetButton(_Base):
         except ILifeError as err:
             raise HomeAssistantError(str(err)) from err
         await self.coordinator.async_request_refresh()
+
+
+class TuyaVoiceShuffleButton(TuyaEntity, ButtonEntity):
+    """A new random pick of the current voice pack, sent now (see voice.py)."""
+
+    _attr_translation_key = "shuffle_voice_now"
+    _attr_icon = "mdi:shuffle"
+
+    def __init__(self, coordinator, voice):
+        super().__init__(coordinator)
+        self._voice = voice
+        self._attr_unique_id = f"{self.api.device_id}_shuffle_voice_now"
+
+    async def async_press(self):
+        await self._voice.async_reshuffle()

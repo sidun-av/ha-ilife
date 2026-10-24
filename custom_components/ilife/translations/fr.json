@@ -72,6 +72,9 @@
     },
     "local_unconfirmed": {
       "message": "L'aspirateur n'a pas confirmé la commande sur le réseau local. Il l'a très probablement exécutée : vérifiez avant de la renvoyer."
+    },
+    "voice_not_shuffled": {
+      "message": "La voix choisie n’a rien à mélanger : choisissez un pack dont le pack.json indique \"shuffle\": true."
     }
   },
   "entity": {
@@ -188,6 +191,12 @@
           "get_path": "Trajet",
           "get_both": "Carte et trajet"
         }
+      },
+      "voice_pack": {
+        "name": "Voix",
+        "state": {
+          "official": "Officielle"
+        }
       }
     },
     "switch": {
@@ -229,6 +238,9 @@
       },
       "auto_empty": {
         "name": "Vidage automatique à la base"
+      },
+      "shuffle_voice": {
+        "name": "Mélanger la voix après chaque nettoyage"
       }
     },
     "time": {
@@ -289,6 +301,9 @@
       },
       "reset_map": {
         "name": "Réinitialiser la carte"
+      },
+      "shuffle_voice_now": {
+        "name": "Mélanger la voix"
       }
     },
     "number": {

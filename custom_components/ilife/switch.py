@@ -21,6 +21,7 @@ from .tuya_api import TuyaError
 from .tuya_dpmap import setting_value
 from .tuya_dynamic import unknown_functions
 from .tuya_entity import TuyaEntity, tuya_command_error
+from .voice import supports_voice, voice_manager
 
 # Thing-model Boolean DPs worth a switch: {code: (translation key, icon)}.
 MODEL_SWITCHES = {
@@ -45,6 +46,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
                 if meta.get("access") == "rw" and meta.get("type") == "bool" \
                         and code not in coordinator.spec_functions:
                     entities.append(TuyaModelSwitch(coordinator, code, key, icon))
+            if supports_voice(coordinator):
+                voice = voice_manager(hass, coordinator)
+                await voice.async_prepare()
+                entities.append(TuyaVoiceShuffleSwitch(coordinator, voice))
     else:
         for coordinator in data["coordinators"].values():
             entities.append(ILifeCarpetSwitch(coordinator))
@@ -180,3 +185,26 @@ class ILifeScheduleSwitch(ILifeEntity, SwitchEntity):
 
     async def async_turn_off(self, **kwargs):
         await self._set(0)
+
+
+class TuyaVoiceShuffleSwitch(TuyaEntity, SwitchEntity):
+    """Rebuild the current voice pack with a new random pick after each clean
+    (packs whose pack.json says "shuffle": true; see voice.py)."""
+
+    _attr_translation_key = "shuffle_voice"
+    _attr_icon = "mdi:shuffle-variant"
+
+    def __init__(self, coordinator, voice):
+        super().__init__(coordinator)
+        self._voice = voice
+        self._attr_unique_id = f"{self.api.device_id}_shuffle_voice"
+
+    @property
+    def is_on(self):
+        return self._voice.shuffle
+
+    async def async_turn_on(self, **kwargs):
+        await self._voice.async_set_shuffle(True)
+
+    async def async_turn_off(self, **kwargs):
+        await self._voice.async_set_shuffle(False)

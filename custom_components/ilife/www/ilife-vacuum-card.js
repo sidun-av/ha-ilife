@@ -28,7 +28,7 @@ const T = {
     empty_bin: "Empty bin", live: "Live", offline: "Offline", battery: "battery", last_run: "Last cleaning", floor_plan: "Floor plan", no_map: "No map yet",
     rooms: "Rooms", clean_rooms: "Clean selected",
     close: "Close", no_map_yet: "Waiting for the map image…", dirs: { forward: "Forward", backward: "Backward", left: "Left", right: "Right", rcstop: "Stop" },
-    mode_full: "Full", mode_rooms: "Rooms", mode_zones: "Zones", add_zone: "Add zone", clean_zones: "Clean zones", zone_hint: "Drag across the map to draw a zone", m: "m", program: "Program", efficiency: "Cleaning efficiency", y_mop: "Y-shaped mopping", carpet_boost: "Carpet boost",
+    voice: "Voice", shuffle_voice: "Shuffle", mode_full: "Full", mode_rooms: "Rooms", mode_zones: "Zones", add_zone: "Add zone", clean_zones: "Clean zones", zone_hint: "Drag across the map to draw a zone", m: "m", program: "Program", efficiency: "Cleaning efficiency", y_mop: "Y-shaped mopping", carpet_boost: "Carpet boost",
     volume: "Volume", dnd: "Do not disturb", resume_after_charge: "Resume after charging", auto_empty: "Auto-empty at dock",
     cycles: "Cycles", area: "Area", total_time: "Total time", brush: "Brush", filter: "Filter",
     side_brush: "Side brush", reset: "Reset", cancel: "Cancel", reset_confirm: "Reset {part} to 100%?",
@@ -55,7 +55,7 @@ const T = {
     empty_bin: "Opróżnij pojemnik", live: "Na żywo", offline: "Offline", battery: "baterii", last_run: "Ostatnie sprzątanie", floor_plan: "Plan mieszkania", no_map: "Brak mapy",
     rooms: "Pokoje", clean_rooms: "Sprzątaj wybrane",
     close: "Zamknij", no_map_yet: "Czekam na obraz mapy…", dirs: { forward: "Do przodu", backward: "Do tyłu", left: "W lewo", right: "W prawo", rcstop: "Stop" },
-    mode_full: "Całość", mode_rooms: "Pokoje", mode_zones: "Strefy", add_zone: "Dodaj strefę", clean_zones: "Sprzątaj strefy", zone_hint: "Przeciągnij po mapie, aby narysować strefę", m: "m", program: "Program", efficiency: "Dokładność", y_mop: "Mopowanie w kształcie Y", carpet_boost: "Wzmocnienie na dywanie",
+    voice: "Głos", shuffle_voice: "Wymieszaj", mode_full: "Całość", mode_rooms: "Pokoje", mode_zones: "Strefy", add_zone: "Dodaj strefę", clean_zones: "Sprzątaj strefy", zone_hint: "Przeciągnij po mapie, aby narysować strefę", m: "m", program: "Program", efficiency: "Dokładność", y_mop: "Mopowanie w kształcie Y", carpet_boost: "Wzmocnienie na dywanie",
     volume: "Głośność", dnd: "Nie przeszkadzać", resume_after_charge: "Dokończ po naładowaniu", auto_empty: "Auto-opróżnianie w stacji",
     faults: {
       bumper_fault: "Zablokowany zderzak", obs_fault: "Czujnik przeszkód", wall_fault: "Czujnik ściany", cliff_fault: "Czujnik upadku",
@@ -104,7 +104,7 @@ const T = {
     volume: "Volume", dnd: "Ne pas déranger", resume_after_charge: "Reprendre après la recharge", auto_empty: "Vidage automatique",
     rooms: "Pièces", clean_rooms: "Nettoyer la sélection",
     close: "Fermer", no_map_yet: "En attente de l’image de la carte…", dirs: { forward: "Avancer", backward: "Reculer", left: "Gauche", right: "Droite", rcstop: "Arrêt" },
-    mode_full: "Tout", mode_rooms: "Pièces", mode_zones: "Zones", add_zone: "Ajouter une zone", clean_zones: "Nettoyer les zones", zone_hint: "Glissez sur la carte pour tracer une zone", m: "m", program: "Programme", efficiency: "Efficacité de nettoyage", y_mop: "Serpillière en Y", carpet_boost: "Boost tapis",
+    voice: "Voix", shuffle_voice: "Mélanger", mode_full: "Tout", mode_rooms: "Pièces", mode_zones: "Zones", add_zone: "Ajouter une zone", clean_zones: "Nettoyer les zones", zone_hint: "Glissez sur la carte pour tracer une zone", m: "m", program: "Programme", efficiency: "Efficacité de nettoyage", y_mop: "Serpillière en Y", carpet_boost: "Boost tapis",
     cycles: "Cycles", area: "Surface", total_time: "Temps cumulé", brush: "Brosse", filter: "Filtre",
     side_brush: "Brosse latérale", reset: "Réinitialiser", cancel: "Annuler", reset_confirm: "Réinitialiser {part} à 100% ?",
     m2_cleaned: "m² nettoyés", minutes: "minutes", no_history: "Aucun nettoyage récent.",
@@ -130,7 +130,7 @@ const T = {
     empty_bin: "Очистить пылесборник", live: "Сейчас", offline: "Не в сети", battery: "батареи", last_run: "Последняя уборка", floor_plan: "План", no_map: "Карты пока нет",
     rooms: "Комнаты", clean_rooms: "Убрать выбранные",
     close: "Закрыть", no_map_yet: "Жду изображение карты…", dirs: { forward: "Вперёд", backward: "Назад", left: "Влево", right: "Вправо", rcstop: "Стоп" },
-    mode_full: "Полная", mode_rooms: "Комнаты", mode_zones: "Зоны", add_zone: "Добавить зону", clean_zones: "Убрать зоны", zone_hint: "Проведите пальцем по карте, чтобы нарисовать зону", m: "м", program: "Программа", efficiency: "Тщательность уборки", y_mop: "Y-образная влажная уборка", carpet_boost: "Усиление на коврах",
+    voice: "Озвучка", shuffle_voice: "Перемешать", mode_full: "Полная", mode_rooms: "Комнаты", mode_zones: "Зоны", add_zone: "Добавить зону", clean_zones: "Убрать зоны", zone_hint: "Проведите пальцем по карте, чтобы нарисовать зону", m: "м", program: "Программа", efficiency: "Тщательность уборки", y_mop: "Y-образная влажная уборка", carpet_boost: "Усиление на коврах",
     volume: "Громкость", dnd: "Не беспокоить", resume_after_charge: "Продолжить после зарядки", auto_empty: "Автоочистка на базе",
     faults: {
       bumper_fault: "Застрял бампер", obs_fault: "Датчик препятствий", wall_fault: "Датчик стены", cliff_fault: "Датчик перепада",
@@ -305,7 +305,10 @@ class IlifeVacuumCard extends HTMLElement {
     const vac = this._ent?.vacuum || this._config.entity;
     const camId = this._ent?.map;
     if (camId && zoneCalibration(hass.states[camId]?.attributes)) this._calSeen = true;
-    const roomSig = JSON.stringify(hass.states[vac]?.attributes.rooms || {}) + (this._calSeen ? "|zones" : "");
+    // And the voice packs on offer.
+    const voiceId = this._ent?.voice;
+    const roomSig = JSON.stringify(hass.states[vac]?.attributes.rooms || {}) + (this._calSeen ? "|zones" : "")
+      + (voiceId ? JSON.stringify(hass.states[voiceId]?.attributes.options || []) : "");
     if (this._built && roomSig !== this._roomSig) this._built = false;
     this._roomSig = roomSig;
     if (!this._built) this._build();
@@ -348,7 +351,7 @@ class IlifeVacuumCard extends HTMLElement {
     const tk = (id) => reg[id]?.translation_key || "";
     const dom = (id) => id.split(".")[0];
     const e = { vacuum: cfgEnt || null, map: null, water: null, mode: null, carpet: null,
-      efficiency: null, program: null, ymop: null, boost: null, tsched: null,
+      efficiency: null, program: null, voice: null, voiceshuffle: null, ymop: null, boost: null, tsched: null,
       dnd: null, resume: null, autoempty: null, volume: null, problem: null,
       battery: null, history: null, online: null, brush: null, side: null, filter: null,
       curarea: null, curtime: null, totalarea: null, totaltime: null, totalcount: null,
@@ -364,6 +367,7 @@ class IlifeVacuumCard extends HTMLElement {
         else if (k === "cleaning_mode") e.mode = id;
         else if (k === "cleaning_efficiency") e.efficiency = id;
         else if (k === "cleaning_program") e.program = id;
+        else if (k === "voice_pack") e.voice = id;
       }
       else if (d === "switch") {
         if (k === "carpet") e.carpet = id;
@@ -379,6 +383,7 @@ class IlifeVacuumCard extends HTMLElement {
         const map = { forward: "forward", backward: "backward", left: "left", right: "right", rc_pause: "rcstop", dust_collection: "dust",
           reset_main_brush: "resetmain", reset_side_brush: "resetside", reset_filter: "resetfilter" };
         if (map[k]) e.buttons[map[k]] = id;
+        else if (k === "shuffle_voice_now") e.voiceshuffle = id;
       } else if (d === "sensor") {
         const dc = hass.states[id]?.attributes.device_class;
         if (dc === "battery") e.battery = id;
@@ -682,6 +687,7 @@ class IlifeVacuumCard extends HTMLElement {
           .vc-zbtn::before{content:"";position:absolute;inset:-9px;border-radius:50%;}
           .vc-pass{min-height:32px;min-width:40px;}
           .vc-sadd{min-height:34px;}
+          .vc-vshuf{display:flex;justify-content:flex-end;margin-top:-4px;}
           .vc-zone{position:absolute;pointer-events:auto;touch-action:none;cursor:move;border:2px dashed #fff;
             background:color-mix(in srgb,var(--primary-color) 32%,transparent);box-shadow:0 0 0 1px rgba(0,0,0,.25);}
           .vc-zbtn{position:absolute;width:26px;height:26px;border-radius:50%;border:none;padding:0;background:#fff;color:var(--primary-color);
@@ -783,6 +789,8 @@ class IlifeVacuumCard extends HTMLElement {
           ${this._seg(t.mode, "mode", (e.mode && hass.states[e.mode]?.attributes.options) || [], e.mode && hass.states[e.mode])}
           ${this._seg(t.program, "prog", (e.program && hass.states[e.program]?.attributes.options) || [], e.program && hass.states[e.program])}
           ${this._seg(t.efficiency, "eff", (e.efficiency && hass.states[e.efficiency]?.attributes.options) || [], e.efficiency && hass.states[e.efficiency])}
+          ${this._seg(t.voice, "voice", (e.voice && hass.states[e.voice]?.attributes.options) || [], e.voice && hass.states[e.voice])}
+          ${e.voice && e.voiceshuffle ? `<div class="vc-vshuf"><button class="vc-sadd" data-el="voiceshuffle"><ha-icon icon="mdi:shuffle"></ha-icon>${t.shuffle_voice}</button></div>` : ""}
           ${toggles.length ? `<div class="vc-list">${toggles.map(([id, icon, label]) => `<div class="vc-lrow"><span class="lbl"><ha-icon icon="${icon}"></ha-icon>${label}</span><span></span>
             <label class="vc-switch"><input type="checkbox" class="vc-tog" data-ent="${id}"><span class="vc-slider"></span></label></div>`).join("")}</div>` : ""}
           ${vol ? `<div class="vc-lrow vc-volrow"><span class="lbl"><ha-icon icon="mdi:volume-high"></ha-icon>${t.volume}</span>
@@ -954,6 +962,7 @@ class IlifeVacuumCard extends HTMLElement {
       else if (key === "mode") call("select", "select_option", { entity_id: e.mode, option: val });
       else if (key === "eff") call("select", "select_option", { entity_id: e.efficiency, option: val });
       else if (key === "prog") call("select", "select_option", { entity_id: e.program, option: val });
+      else if (key === "voice") call("select", "select_option", { entity_id: e.voice, option: val });
     }));
     this.querySelectorAll(".vc-tog").forEach((c) => c.addEventListener("change", () => call("switch", c.checked ? "turn_on" : "turn_off", { entity_id: c.dataset.ent })));
     q("volume")?.addEventListener("input", (ev) => { q("volval").textContent = ev.target.value + "%"; });
@@ -969,6 +978,7 @@ class IlifeVacuumCard extends HTMLElement {
     this.querySelectorAll(".vc-rooms .vc-pass").forEach((b) => b.addEventListener("click", () => { this._passes = +b.dataset.pass; this._syncRooms(); }));
     this._wireScheduleEditor(call);
     q("roomgo")?.addEventListener("click", () => this._cleanRooms(call));
+    q("voiceshuffle")?.addEventListener("click", () => call("button", "press", { entity_id: e.voiceshuffle }));
     this._syncRooms();
     this._wireZones();
     this.querySelectorAll(".vc-sen").forEach((c) => c.addEventListener("change", () => call("switch", c.checked ? "turn_on" : "turn_off", { entity_id: c.dataset.ent })));
@@ -1505,6 +1515,7 @@ class IlifeVacuumCard extends HTMLElement {
     if (e.mode) this._setActive("mode", hass.states[e.mode]?.state);
     if (e.efficiency) this._setActive("eff", hass.states[e.efficiency]?.state);
     if (e.program) this._setActive("prog", hass.states[e.program]?.state);
+    if (e.voice) this._setActive("voice", hass.states[e.voice]?.state);
 
     this.querySelectorAll(".vc-tog").forEach((c) => {
       if (document.activeElement !== c) c.checked = hass.states[c.dataset.ent]?.state === "on";

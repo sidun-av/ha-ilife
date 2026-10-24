@@ -461,6 +461,50 @@ log; other models get the features only if they report the same data points.
 need drawing on the map; use the app), and the live path on models that do not
 publish a realtime map (see above).
 
+## Voice packs (ILIFE Clean)
+
+Models whose spec has `voice_data` (dp 35; confirmed on the **A30 Pro**) get a
+**Voice** select, a **Shuffle the voice after each clean** switch and a **Shuffle
+the voice** button. The card shows the select in its settings, with the button
+next to it.
+
+Packs live in `<config>/ilife_voice/`, one directory each:
+
+```
+ilife_voice/
+  leather/
+    pack.json              {"name": "Leather bags", "shuffle": false}
+    audio_cloud/005.wav    one file for prompt 005 ...
+  witcher/
+    pack.json              {"name": "Witcher", "shuffle": true}
+    audio_cloud/005/1.wav  ... or several candidates, one picked at random
+    audio_cloud/005/2.wav
+```
+
+- Prompts are the official pack's numbers (`001`–`104`, a few missing), as WAV,
+  PCM 16-bit mono 24 kHz. A pack only needs the prompts it changes: the others
+  come from the official pack, which the integration downloads once into
+  `ilife_voice/official/` (that is also the **Official** option).
+- New directories show up in the select the next time a voice is chosen or
+  shuffled, or after a restart.
+- Choosing a voice builds the archive into `ilife_voice/.build/`, serves it from
+  Home Assistant at `/ilife_voice/<file>.tgz` (no login; the robot downloads it
+  itself) and writes the install frame to dp 35. Home Assistant's **local** URL
+  must be plain `http://` (Settings → System → Network), because that is what the
+  robot fetches.
+- **The frame is limited to 128 bytes**, which leaves the URL about 75
+  characters. The official pack's own CDN URL is longer: that is why the app
+  times out when it switches the language, and why the integration serves the
+  official pack itself too.
+- **Randomness is from one clean to the next.** The robot plays one fixed file per
+  prompt, so it cannot pick among candidates itself. With the switch on, a pack
+  with `"shuffle": true` is rebuilt with a new random pick after each clean (once
+  the robot heads back to the dock) and sent again; the button does it at once.
+- The robot does not say through the cloud which pack it plays, so the select
+  shows the one last sent from Home Assistant. When it reports an install over
+  the LAN (`aa 00 07 35` frames), the select's `robot_status` attribute shows it
+  (`downloading`, `downloaded`, `in_use`, `failed`).
+
 ## 🙏 Help wanted — testers for other ILIFE models
 
 The code is written to be generic, so other 3irobotix‑based ILIFE vacuums have a

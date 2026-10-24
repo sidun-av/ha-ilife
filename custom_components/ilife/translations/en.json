@@ -72,6 +72,9 @@
     },
     "local_unconfirmed": {
       "message": "The vacuum did not confirm the command over the local network. It has most likely carried it out: check it before sending it again."
+    },
+    "voice_not_shuffled": {
+      "message": "The chosen voice has nothing to shuffle: pick a pack whose pack.json says \"shuffle\": true."
     }
   },
   "entity": {
@@ -188,6 +191,12 @@
           "get_path": "Path",
           "get_both": "Map and path"
         }
+      },
+      "voice_pack": {
+        "name": "Voice",
+        "state": {
+          "official": "Official"
+        }
       }
     },
     "switch": {
@@ -229,6 +238,9 @@
       },
       "auto_empty": {
         "name": "Auto-empty at dock"
+      },
+      "shuffle_voice": {
+        "name": "Shuffle the voice after each clean"
       }
     },
     "time": {
@@ -289,6 +301,9 @@
       },
       "reset_map": {
         "name": "Reset map"
+      },
+      "shuffle_voice_now": {
+        "name": "Shuffle the voice"
       }
     },
     "number": {

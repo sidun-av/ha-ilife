@@ -27,6 +27,7 @@ from .tuya_api import TuyaError
 from .tuya_dynamic import mode_commands, range_values, unknown_functions
 from .tuya_entity import TuyaEntity, tuya_command_error
 from .tuya_rooms import CLEAN_SETTINGS_CODE, PROGRAMS, active_program, with_program
+from .voice import supports_voice, voice_manager
 
 # Generic Enum DPs whose name and values are translated (translation key = code);
 # any other keeps its code as the name.
@@ -58,6 +59,10 @@ async def async_setup_entry(hass, entry, async_add_entities):
             for code, meta in unknown_functions(
                 coordinator.spec, coordinator.data or {}, "Enum").items():
                 entities.append(TuyaGenericSelect(coordinator, code, meta))
+            if supports_voice(coordinator):
+                voice = voice_manager(hass, coordinator)
+                await voice.async_prepare()
+                entities.append(TuyaVoiceSelect(coordinator, voice))
     else:
         for coordinator in data["coordinators"].values():
             entities += [ILifeWaterSelect(coordinator), ILifeCleanModeSelect(coordinator)]
@@ -251,3 +256,36 @@ class TuyaGenericSelect(_TuyaSelectBase):
 
     async def async_select_option(self, option):
         await self._send(self._code, option)
+
+
+class TuyaVoiceSelect(TuyaEntity, SelectEntity):
+    """The robot's voice: the official one or a pack from <config>/ilife_voice
+    (see voice.py). The robot does not say which pack it plays, so this is the
+    one last sent from here."""
+
+    _attr_translation_key = "voice_pack"
+    _attr_icon = "mdi:account-voice"
+
+    def __init__(self, coordinator, voice):
+        super().__init__(coordinator)
+        self._voice = voice
+        self._attr_unique_id = f"{self.api.device_id}_voice_pack"
+
+    @property
+    def options(self):
+        return self._voice.options
+
+    @property
+    def current_option(self):
+        return self._voice.option_for(self._voice.current)
+
+    @property
+    def extra_state_attributes(self):
+        attrs = {"pack_id": self._voice.current, "url": self._voice.last_url}
+        report = self._voice.report
+        if report:
+            attrs.update({f"robot_{k}": v for k, v in report.items()})
+        return attrs
+
+    async def async_select_option(self, option):
+        await self._voice.async_select(option)

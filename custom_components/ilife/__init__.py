@@ -254,6 +254,8 @@ class ILifeTuyaCoordinator(DataUpdateCoordinator):
         self._history_next = _time.monotonic() + 30
         self._history_fast_until = 0.0
         self._was_cleaning = False
+        # Voice packs (voice.py), made by the first platform that needs them.
+        self.voice = None
         # LAN link (Tuya local protocol 3.3), started after the first refresh.
         self.local: TuyaLocalLink | None = None
         self._dpmap: DpMap | None = None
@@ -297,6 +299,8 @@ class ILifeTuyaCoordinator(DataUpdateCoordinator):
         """A finished run is stored within a minute or so: look for it right away,
         then every minute for a while, instead of on the idle 5-minute cadence."""
         cleaning = str(status.get(TUYA_DP_STATUS) or "").lower() in TUYA_STATUS_CLEANING
+        if self.voice is not None:
+            self.voice.on_status(status.get(TUYA_DP_STATUS))
         if self._was_cleaning and not cleaning:
             self._history_next = 0.0
             self._history_fast_until = _time.monotonic() + 600
